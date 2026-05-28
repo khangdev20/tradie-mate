@@ -1,0 +1,14 @@
+> Execution order: `90`  
+> Parent phase: [Phase 2 — Transition & Grow (M9–M18)](../phase_2_transition_grow.md)  
+> Previous: [📌 Module 2.4: Profiles & Customer Reviews](./04_module_2_4_profiles_customer_reviews.md)
+
+## 🧪 Phase 2 Module Test Cases
+
+| Module | Required Automated Test Cases | Required UI / Manual Test Cases |
+| --- | --- | --- |
+| 2.1 Customer Live Geolocation Tracking | Service/domain behaviour coverage for tracking token expiry, location consent rules, stale-location calculation, ETA fallback copy, and Firestore batch limits. Integration tests for `start-commute`, customer token auth, inactive/expired sessions, and ending tracking. Contract tests mock Mapbox route updates and Firestore writes without live provider dependency. | Component tests for tradie tracking control, customer map loading/stale/offline states, ETA badge state, call button, and cancel dialog. Manual device test: start commute, open customer link in browser, pause GPS, and confirm polling remains capped at 5000ms. |
+| 2.2 Tradie Onboarding & Document Verification | Service/domain behaviour coverage for document type rules, expiry parsing, OCR confidence thresholds, verification decision mapping, and dispatch blocking for expired documents. Integration tests for upload, OCR callback, manual review override, and `/jobs/assign` rejection when required docs are expired. Adapter tests mock AWS Textract, Google Document AI, and storage failures. | Component tests for `DocumentUploadStepper`, camera capture error, crop/retry, verification badge states, pending review, expired warning, and checklist completion. Manual test with good photo, blurry photo, expired insurance, and manual override. |
+| 2.3 Google & Apple SSO Authentication | Service/domain behaviour coverage for provider account-linking rules, email collision handling, token issuer/audience validation, and Apple private relay email handling. Integration tests for Google login, Apple login, existing phone account linking, duplicate profile prevention, and revoked token rejection. | Component tests for provider buttons, loading/error states, linked account display, and App Store Apple-first compliance state. Manual iOS simulator test for Apple Sign In and Android/web test for Google Sign In. |
+| 2.4 Profiles & Customer Reviews | Service/domain behaviour coverage for review eligibility, rating bounds, duplicate prevention, public profile visibility, and review summary aggregation. Integration tests for public profile fetch, review creation with valid tracking token, invalid token rejection, completed/paid job requirement, and tradie reply ownership. | Component tests for public profile card, trust badges, review capture form, rating input, thank-you state, duplicate lock, and reply form. Manual customer web test from tracking/review link on mobile viewport. |
+
+---

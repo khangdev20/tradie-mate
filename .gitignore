@@ -1,0 +1,40 @@
+# OS files
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# dependencies
+**/node_modules/
+
+# build and test outputs
+**/dist/
+**/build/
+**/coverage/
+**/.tsbuildinfo
+
+# environment files
+**/.env
+**/.env.*
+!**/.env.example
+
+# logs and temp files
+*.log
+**/*.log
+*.pid
+*.seed
+*.pid.lock
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+tmp/
+temp/
+
+# local editor files
+.idea/
+.vscode/
+
+# React Native generated output
+tradie-mate-app/ios/build/
+tradie-mate-app/scratch/TestApp/
+

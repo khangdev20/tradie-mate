@@ -1,0 +1,28 @@
+# fastlane/Fastfile
+
+platform :ios do
+  desc "Push a new beta build to TestFlight"
+  lane :beta do
+    increment_build_number
+    build_app(scheme: "TradieMate", configuration: "Release")
+    upload_to_testflight
+  end
+
+  desc "Push a new release build to the App Store"
+  lane :release do
+    increment_version_number
+    build_app
+    upload_to_app_store(
+      submit_for_review: true,
+      automatic_release: false,
+    )
+  end
+end
+
+platform :android do
+  desc "Submit a new Beta Build to Google Play"
+  lane :beta do
+    gradle(task: "bundle", build_type: "Release")
+    upload_to_play_store(track: "internal")
+  end
+end

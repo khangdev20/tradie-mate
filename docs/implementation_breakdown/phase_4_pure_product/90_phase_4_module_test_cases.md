@@ -1,0 +1,14 @@
+> Execution order: `90`  
+> Parent phase: [Phase 4 — Pure Product (M31+)](../phase_4_pure_product.md)  
+> Previous: [📌 Module 4.4: Marketplace & Payment Escrow](./04_module_4_4_marketplace_payment_escrow.md)
+
+## 🧪 Phase 4 Module Test Cases
+
+| Module | Required Automated Test Cases | Required UI / Manual Test Cases |
+| --- | --- | --- |
+| 4.1 Multi-State Licence Verification Automation | Service/domain behaviour coverage for registry adapter normalization, suspended/expired/cancelled decision rules, renewal reminder timing, false-positive manual override, and audit event creation. Worker tests for weekly cron selection, provider timeout retry, and state-specific parser failure. Integration tests confirm expired credentials block job eligibility without deleting history. | Component tests for urgency banner, blocked dashboard state, credential update flow, verification status timeline, and manual override notes. Manual test with dummy NSW/QLD/VIC registry payloads and support override. |
+| 4.2 Enterprise & Property Management Portal | Service/domain behaviour coverage for dispatch eligibility, service-area filtering, route cost preview, property job priority, and role permissions. Integration tests for enterprise job creation, assignment, reschedule, Mapbox route reuse, property manager visibility, and audit log writes. | Component tests for dispatch map, assignable tradie list, property job queue, route preview modal, drag reschedule, and permission-denied portal state. Manual test: create enterprise job, dispatch to verified tradie, reschedule with cost confirmation. |
+| 4.3 AI Voice Agent (Vapi.ai Integration) | Service/domain behaviour coverage for script template rendering, business-hours rules, emergency escalation, unavailable service handling, and call outcome classification. Integration tests for Vapi webhook signature validation, raw webhook persistence, idempotent replay, lead creation, and low-confidence fallback to manual review. | Component tests for call script editor, business hours editor, call outcome review card, lead acceptance flow, and disabled voice-agent entitlement. Manual Vapi test call: bookable job, out-of-hours call, emergency call, and unsupported service call. |
+| 4.4 Marketplace & Payment Escrow | Service/domain behaviour coverage for escrow state transitions, commission calculation, dispute deadline rules, release eligibility, refund/partial release rules, and marketplace entitlement checks. Integration tests for escrow creation, Stripe Connect transfer, customer release, dispute open/resolve, duplicate webhook replay, and audit trail integrity. | Component tests for tradie marketplace job card, customer escrow release page, dispute evidence uploader, escrow status badge, and cancellation/refund states. Manual Stripe test-mode flow: fund escrow, complete job, release funds, open dispute, resolve dispute. |
+
+---

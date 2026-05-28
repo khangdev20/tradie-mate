@@ -1,0 +1,214 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum TradeType {
+  PLUMBER
+  ELECTRICIAN
+  CARPENTER
+  HVAC
+  PAINTER
+  OTHER
+}
+
+enum JobStatus {
+  UPCOMING
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum InvoiceStatus {
+  DRAFT
+  SENT
+  PAID
+  OVERDUE
+}
+
+enum DocumentType {
+  TRADE_LICENCE
+  PUBLIC_LIABILITY
+  WHITE_CARD
+  POLICE_CHECK
+}
+
+enum VerificationStatus {
+  PENDING
+  VERIFIED
+  EXPIRED
+  REJECTED
+}
+
+model Tradie {
+  id                 String           @id @default(uuid()) @db.Uuid
+  auth_user_id       String           @unique @db.Uuid
+  abn                String?          @unique
+  first_name         String
+  last_name          String
+  phone              String           @unique
+  email              String           @unique
+  trade_type         TradeType
+  abn_verified_at    DateTime?
+  licence_verified   Boolean          @default(false)
+  is_active          Boolean          @default(true)
+  hourly_rate        Decimal          @db.Decimal(10, 2)
+  service_radius_km  Int
+  created_at         DateTime         @default(now())
+  updated_at         DateTime         @updatedAt
+  
+  customers          Customer[]
+  jobs               Job[]
+  invoices           Invoice[]
+  documents          TradeDocument[]
+  locations          Location[]
+  xero_connection    XeroConnection?
+
+  @@index([abn])
+  @@index([auth_user_id])
+  @@index([trade_type])
+  @@map("tradies")
+}
+
+model Customer {
+  id         String   @id @default(uuid()) @db.Uuid
+  name       String
+  phone      String
+  email      String
+  address    String
+  tradie_id  String   @db.Uuid
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  tradie     Tradie   @relation(fields: [tradie_id], references: [id])
+  jobs       Job[]
+
+  @@map("customers")
+}
+
+model Job {
+  id           String    @id @default(uuid()) @db.Uuid
+  tradie_id    String    @db.Uuid
+  customer_id  String    @db.Uuid
+  title        String
+  description  String?
+  address      String
+  scheduled_at DateTime
+  status       JobStatus @default(UPCOMING)
+  started_at   DateTime?
+  completed_at DateTime?
+  notes        String?
+  photos       String[]
+  created_at   DateTime  @default(now())
+  updated_at   DateTime  @updatedAt
+
+  tradie       Tradie    @relation(fields: [tradie_id], references: [id])
+  customer     Customer  @relation(fields: [customer_id], references: [id])
+  invoices     Invoice[]
+  locations    Location[]
+
+  @@index([tradie_id, status])
+  @@index([scheduled_at])
+  @@map("jobs")
+}
+
+model Invoice {
+  id                       String        @id @default(uuid()) @db.Uuid
+  job_id                   String        @db.Uuid
+  tradie_id                String        @db.Uuid
+  invoice_number           Int
+  status                   InvoiceStatus @default(DRAFT)
+  subtotal                 Decimal       @db.Decimal(10, 2)
+  gst_amount               Decimal       @db.Decimal(10, 2)
+  total                    Decimal       @db.Decimal(10, 2)
+  currency                 String        @default("AUD")
+  due_date                 DateTime
+  paid_at                  DateTime?
+  stripe_payment_intent_id String?
+  xero_invoice_id          String?
+  signature_data           String?       @db.Text
+  pdf_url                  String?
+  created_at               DateTime      @default(now())
+  updated_at               DateTime      @updatedAt
+
+  job                      Job           @relation(fields: [job_id], references: [id])
+  tradie                   Tradie        @relation(fields: [tradie_id], references: [id])
+  items                    InvoiceItem[]
+
+  @@unique([tradie_id, invoice_number])
+  @@index([tradie_id, created_at])
+  @@index([stripe_payment_intent_id])
+  @@map("invoices")
+}
+
+model InvoiceItem {
+  id          String   @id @default(uuid()) @db.Uuid
+  invoice_id  String   @db.Uuid
+  description String
+  qty         Decimal  @db.Decimal(10, 2)
+  unit_price  Decimal  @db.Decimal(10, 2)
+  line_total  Decimal  @db.Decimal(10, 2)
+  sort_order  Int
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  invoice     Invoice  @relation(fields: [invoice_id], references: [id])
+
+  @@map("invoice_items")
+}
+
+model TradeDocument {
+  id                String             @id @default(uuid()) @db.Uuid
+  tradie_id         String             @db.Uuid
+  doc_type          DocumentType
+  issuing_authority String
+  doc_number        String
+  issued_at         DateTime
+  expires_at        DateTime
+  status            VerificationStatus @default(PENDING)
+  storage_url       String
+  verified_at       DateTime?
+  verified_by       String?
+  created_at        DateTime           @default(now())
+  updated_at        DateTime           @updatedAt
+
+  tradie            Tradie             @relation(fields: [tradie_id], references: [id])
+
+  @@index([tradie_id, doc_type, expires_at])
+  @@map("trade_documents")
+}
+
+model Location {
+  id          String   @id @default(uuid()) @db.Uuid
+  tradie_id   String   @db.Uuid
+  job_id      String?  @db.Uuid
+  lat         Decimal  @db.Decimal(10, 7)
+  lng         Decimal  @db.Decimal(10, 7)
+  accuracy    Float
+  recorded_at DateTime
+  created_at  DateTime @default(now())
+
+  tradie      Tradie   @relation(fields: [tradie_id], references: [id])
+  job         Job?     @relation(fields: [job_id], references: [id])
+
+  @@map("locations")
+}
+
+model XeroConnection {
+  id                String    @id @default(uuid()) @db.Uuid
+  tradie_id         String    @unique @db.Uuid
+  tenant_id         String
+  access_token      String    @db.Text
+  refresh_token     String    @db.Text
+  token_expires_at  DateTime
+  connected_at      DateTime  @default(now())
+  disconnected_at   DateTime?
+
+  tradie            Tradie    @relation(fields: [tradie_id], references: [id])
+
+  @@map("xero_connections")
+}

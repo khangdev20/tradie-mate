@@ -1,0 +1,33 @@
+# dependencies
+node_modules/
+
+# build outputs
+dist/
+coverage/
+.tsbuildinfo
+*.tsbuildinfo
+
+# environment and secrets
+.env
+.env.*
+!.env.example
+
+# logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# runtime and temp files
+.DS_Store
+.vscode/
+.idea/
+tmp/
+temp/
+
+# local database/dev artifacts
+*.sqlite
+*.sqlite3
+drizzle/*.db
+

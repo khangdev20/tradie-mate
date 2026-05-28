@@ -1,0 +1,96 @@
+# Resolve react_native_pods.rb with node to allow for hoisting
+require Pod::Executable.execute_command('node', ['-p',
+  'require.resolve(
+    "react-native/scripts/react_native_pods.rb",
+    {paths: [process.argv[1]]},
+  )', __dir__]).strip
+
+source 'https://cdn.cocoapods.org/'
+
+platform :ios, '16.0'
+prepare_react_native_project!
+
+target 'TradieMate' do
+  use_frameworks! :linkage => :static
+  config = use_native_modules!
+
+  use_react_native!(
+    :path => config[:reactNativePath],
+    # An absolute path to your application root.
+    :app_path => "#{Pod::Config.instance.installation_root}/.."
+  )
+
+  pod 'FirebaseMessaging'
+  pod 'FirebaseFirestore', :modular_headers => true
+  pod 'GoogleMaps'
+  pod 'Stripe'
+
+  # WatermelonDB requires its own vendored simdjson (NOT the CocoaPods version)
+  pod 'simdjson', :path => '../node_modules/@nozbe/simdjson', :modular_headers => true
+  pod 'WatermelonDB', :path => '../node_modules/@nozbe/watermelondb', :modular_headers => true
+
+  post_install do |installer|
+    react_native_post_install(
+      installer,
+      config[:reactNativePath],
+      :mac_catalyst_enabled => false,
+      # :ccache_enabled => true
+    )
+
+    installer.pods_project.targets.each do |target|
+      target.build_configurations.each do |config|
+        config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '16.0'
+        # no per-config RNFB patches needed here
+      end
+
+      # Patch Sentry to use C++17 to avoid "std::allocator does not support const types" in C++20
+      if target.name == 'Sentry'
+        target.build_configurations.each do |config|
+          config.build_settings['CLANG_CXX_LANGUAGE_STANDARD'] = 'c++17'
+        end
+      end
+
+      # Patch Sentry header: std::vector<const T> is ill-formed in Xcode 26's libc++ even with C++17
+      sentry_header = "#{installer.sandbox.root}/Sentry/Sources/Sentry/include/SentryThreadMetadataCache.hpp"
+      if File.exist?(sentry_header)
+        content = File.read(sentry_header)
+        patched = content.gsub('std::vector<const ThreadHandleMetadataPair>', 'std::vector<ThreadHandleMetadataPair>')
+        File.write(sentry_header, patched) if patched != content
+      end
+
+      # Patch WatermelonDB to remove simdjson dependency if present
+      if target.name == 'WatermelonDB'
+        target.build_configurations.each do |config|
+          config.build_settings['SWIFT_VERSION'] = '5.0'
+        end
+      end
+
+      # Patch RNFB: in Xcode 26, framework modules have strict cross-module isolation.
+      # Changing RNFB module maps from 'framework module' to 'module' relaxes the rules
+      # so that React-Core headers can be included without triggering hard errors.
+      if target.name.start_with?('RNFB')
+        modulemap_path = "#{installer.sandbox.root}/Target Support Files/#{target.name}/#{target.name}.modulemap"
+        if File.exist?(modulemap_path)
+          content = File.read(modulemap_path)
+          patched = content.gsub(/^framework module /, 'module ')
+          File.write(modulemap_path, patched) if patched != content
+        end
+      end
+
+      # Patch RNReanimated: hermes/inspector/RuntimeAdapter.h was removed in newer Hermes;
+      # disable the old V1 debugger integration to avoid the missing header.
+      # The xcconfig sets HERMES_ENABLE_DEBUGGER=1 for Debug, which triggers inclusion of
+      # the now-missing hermes/inspector/RuntimeAdapter.h via Registration.h.
+      if target.name == 'RNReanimated'
+        ['debug', 'release'].each do |config_name|
+          xcconfig_path = "#{installer.sandbox.root}/Target Support Files/RNReanimated/RNReanimated.#{config_name}.xcconfig"
+          if File.exist?(xcconfig_path)
+            content = File.read(xcconfig_path)
+            patched = content.gsub('= $(inherited) HERMES_ENABLE_DEBUGGER=1', '= $(inherited)')
+            File.write(xcconfig_path, patched) if patched != content
+          end
+        end
+      end
+    end
+  end
+end
