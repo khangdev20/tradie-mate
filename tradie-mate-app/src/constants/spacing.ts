@@ -1,12 +1,15 @@
 // src/constants/spacing.ts
 export const Spacing = {
-  xs:  4,
-  sm:  8,
-  md:  16,
-  lg:  24,
-  xl:  32,
-  xxl: 40,
-  xxxl: 48,
+  xs: 4,     // sp1
+  sm: 8,     // sp2
+  sp3: 12,   // sp3
+  md: 16,    // sp4
+  sp5: 20,   // sp5
+  lg: 24,    // sp6
+  xl: 32,    // sp8
+  xxl: 40,   // sp10
+  xxxl: 48,  // sp12
+  sp16: 64,  // sp16
   gutter: 16,
   marginMobile: 16,
   stackSm: 8,
@@ -15,20 +18,19 @@ export const Spacing = {
 }
 
 export const Radius = {
-  sm:      2,
-  base:    4,
-  md:      6,
-  lg:      8,
-  xl:      12,
-  full:    9999,
+  xs:      4,
+  sm:      8,    // elements
+  md:      12,   // cards
+  lg:      16,   // modals
+  pill:    20,   // badges / chips
+  full:    9999, // avatars
 
   // Semantic mappings
-  card:    8,
-  element: 4,
-  pill:    9999,
+  card:    12,
+  element: 8,
   circle:  9999,
 }
 
 export const TouchTarget = {
-  min: 48, // 48px min height for all interactive elements
+  min: 44, // 44px min touch target bounding box for gloved hands
 }

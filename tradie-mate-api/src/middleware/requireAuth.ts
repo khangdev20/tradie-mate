@@ -4,19 +4,39 @@ import { supabaseAuth } from '../config/supabase'
 import { db } from '../config/db'
 import { tradies } from '../db/schema/tradies'
 
+import { env } from '../config/env'
+
 export const requireAuth = async (request: FastifyRequest, reply: FastifyReply) => {
   const token = request.headers.authorization?.replace('Bearer ', '')
   if (!token) {
     return reply.status(401).send({ error: 'Authentication required' })
   }
 
-  const { data: { user }, error } = await supabaseAuth.auth.getUser(token)
+  let user: any = null
+  let error: any = null
+
+  if (env.NODE_ENV === 'development' && token.startsWith('mock-token')) {
+    user = {
+      id: '00000000-0000-0000-0000-000000000000',
+      aud: 'authenticated',
+      email: 'test@tradiemate.com',
+      phone: '+61412345678',
+      app_metadata: {},
+      user_metadata: { first_name: 'Dave', last_name: 'Plumber', trade_type: 'PLUMBER' },
+      exp: Math.floor(Date.now() / 1000) + 3600 * 24 * 365,
+    }
+  } else {
+    try {
+      const { data, error: err } = await supabaseAuth.auth.getUser(token)
+      user = data?.user
+      error = err
+    } catch (e: any) {
+      error = e
+    }
+  }
   
   if (error || !user) {
-    // Check for specific expiry error if possible, or just return 401
-    // Supabase JS doesn't always give a clear 'TOKEN_EXPIRED' code in getUser
-    // but the error message often contains 'expired'
-    if (error?.message.includes('expired')) {
+    if (error?.message?.includes('expired')) {
       return reply.status(401).send({ error: 'Token expired', code: 'TOKEN_EXPIRED' })
     }
     return reply.status(401).send({ error: 'Invalid token' })

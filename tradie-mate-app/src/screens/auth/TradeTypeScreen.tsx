@@ -26,19 +26,9 @@ export const TradeTypeScreen = ({ navigation }: any) => {
   const [selectedTrade, setSelectedTrade] = useState<string | null>(null)
   const { register, isLoading } = useAuthStore()
 
-  const handleContinue = async () => {
+  const handleContinue = () => {
     if (!selectedTrade) return
-
-    try {
-      await register({
-        first_name: 'Tradie', // In a real app, collect this in a previous screen or here
-        last_name: 'User',
-        trade_type: selectedTrade as any,
-      })
-      // Auth store updates state, RootNavigator handles navigation to Dashboard
-    } catch (err: any) {
-      Alert.alert('Error', err.message || 'Registration failed')
-    }
+    navigation.navigate('ABN', { tradeType: selectedTrade })
   }
 
   const renderTradeItem = ({ item }: { item: typeof TRADES[0] }) => {

@@ -3,6 +3,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import { PhoneScreen } from '../../screens/auth/PhoneScreen'
 import { OTPScreen } from '../../screens/auth/OTPScreen'
 import { TradeTypeScreen } from '../../screens/auth/TradeTypeScreen'
+import { ABNScreen } from '../../screens/auth/ABNScreen'
 import { LoginScreen } from '../../screens/auth/LoginScreen'
 import { RegisterScreen } from '../../screens/auth/RegisterScreen'
 import { ForgotPasswordScreen } from '../../screens/auth/ForgotPasswordScreen'
@@ -23,6 +24,7 @@ export function AuthNavigator() {
       <Stack.Screen name="Phone" component={PhoneScreen} />
       <Stack.Screen name="OTP" component={OTPScreen} />
       <Stack.Screen name="TradeType" component={TradeTypeScreen} />
+      <Stack.Screen name="ABN" component={ABNScreen} />
       <Stack.Screen name="Register" component={RegisterScreen} />
       <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
     </Stack.Navigator>

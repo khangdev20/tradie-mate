@@ -1,7 +1,7 @@
 import {
   pgTable, bigserial, uuid, decimal,
   real, timestamp, text, boolean, integer,
-  index,
+  index, varchar, jsonb
 } from 'drizzle-orm/pg-core'
 import { sql } from 'drizzle-orm'
 import { tradies } from './tradies'
@@ -49,3 +49,40 @@ export const trackingSessions = pgTable('tracking_sessions', {
   index('tracking_sessions_tradie_active_idx').on(table.tradieId, table.isActive),
   index('tracking_sessions_job_idx').on(table.jobId),
 ])
+
+export const geocodedAddresses = pgTable('geocoded_addresses', {
+  id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+  normalizedAddress: text('normalized_address').notNull(),
+  formattedAddress: text('formatted_address').notNull(),
+  latitudeMicro: integer('latitude_micro').notNull(), // latitude * 1_000_000
+  longitudeMicro: integer('longitude_micro').notNull(), // longitude * 1_000_000
+  confidence: integer('confidence').notNull(), // 0-100
+  provider: varchar('provider', { length: 50 }).default('MAPBOX').notNull(),
+  providerPlaceId: varchar('provider_place_id', { length: 255 }),
+  createdAt: timestamp('created_at', { withTimezone: true }).default(sql`now()`).notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).default(sql`now()`).notNull(),
+})
+
+export const routeCache = pgTable('route_cache', {
+  id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+  originGeohash: varchar('origin_geohash', { length: 20 }).notNull(),
+  destinationGeohash: varchar('destination_geohash', { length: 20 }).notNull(),
+  profile: varchar('profile', { length: 40 }).default('driving-traffic').notNull(),
+  distanceMeters: integer('distance_meters').notNull(),
+  durationSeconds: integer('duration_seconds').notNull(),
+  trafficDurationSeconds: integer('traffic_duration_seconds'),
+  polyline: text('polyline').notNull(),
+  providerPayload: jsonb('provider_payload'),
+  expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).default(sql`now()`).notNull(),
+})
+
+export const locationEvents = pgTable('location_events', {
+  id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+  tradieId: uuid('tradie_id').notNull().references(() => tradies.id, { onDelete: 'cascade' }),
+  jobId: uuid('job_id').references(() => jobs.id, { onDelete: 'set null' }),
+  eventType: varchar('event_type', { length: 80 }).notNull(), // PERMISSION_GRANTED | PERMISSION_DENIED | ROUTE_STARTED | ROUTE_FAILED | STALE_LOCATION
+  metadata: jsonb('metadata'),
+  createdAt: timestamp('created_at', { withTimezone: true }).default(sql`now()`).notNull(),
+})
+

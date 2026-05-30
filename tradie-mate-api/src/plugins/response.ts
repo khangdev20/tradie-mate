@@ -3,6 +3,11 @@ import { FastifyInstance, FastifyPluginAsync } from 'fastify'
 
 const responseWrapperPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
   fastify.addHook('onSend', async (request, reply, payload) => {
+    // Skip wrapping Swagger system endpoints
+    if (request.url.startsWith('/docs')) {
+      return payload
+    }
+
     // Only wrap success responses (HTTP 2xx)
     if (reply.statusCode < 200 || reply.statusCode >= 300) {
       return payload

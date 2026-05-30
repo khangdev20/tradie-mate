@@ -49,7 +49,13 @@ const processQueue = (error: any, token: string | null = null) => {
 }
 
 api.interceptors.response.use(
-  (response) => response.data,
+  (response) => {
+    const res = response.data
+    if (res && typeof res === 'object' && res.success === true && 'data' in res) {
+      return res.data
+    }
+    return res
+  },
   async (error) => {
     const originalRequest = error.config
 

@@ -13,6 +13,10 @@ import { authRoutes } from './routes/auth'
 import { tradieRoutes } from './routes/tradies'
 import { jobRoutes } from './routes/jobs'
 import { invoiceRoutes } from './routes/invoices'
+import { paymentRoutes } from './routes/payments'
+import { billingRoutes } from './routes/billing'
+import { mapRoutes } from './routes/maps'
+import { syncRoutes } from './routes/sync'
 import { stripeWebhookHandler } from './routes/webhooks/stripe'
 
 export async function buildApp() {
@@ -51,6 +55,7 @@ export async function buildApp() {
 
   await fastify.register(swagger, {
     openapi: {
+      openapi: '3.0.0',
       info: {
         title: 'TradieMate API',
         description: 'Job management SaaS for AU tradies',
@@ -80,6 +85,10 @@ export async function buildApp() {
   await fastify.register(tradieRoutes, { prefix: '/tradies' })
   await fastify.register(jobRoutes, { prefix: '/jobs' })
   await fastify.register(invoiceRoutes, { prefix: '/invoices' })
+  await fastify.register(paymentRoutes, { prefix: '/payments' })
+  await fastify.register(billingRoutes, { prefix: '/billing' })
+  await fastify.register(mapRoutes, { prefix: '/maps' })
+  await fastify.register(syncRoutes, { prefix: '/sync' })
 
   // Webhooks (Raw body needed for Stripe signature)
   fastify.post('/webhooks/stripe', { 
@@ -88,3 +97,4 @@ export async function buildApp() {
 
   return fastify
 }
+

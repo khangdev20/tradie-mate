@@ -37,7 +37,7 @@ export async function getDashboardStats(tradieId: string) {
     db
       .select({
         pendingCount:   sql<number>`count(*) filter (where status in ('DRAFT','SENT'))`,
-        todayRevenue:   sql<number>`coalesce(sum(total_cents) filter (where status = 'PAID' and paid_at >= ${todayStart} and paid_at < ${todayEnd}), 0)`,
+        todayRevenue:   sql<number>`coalesce(sum(total_cents) filter (where status = 'PAID' and paid_at >= ${todayStart.toISOString()} and paid_at < ${todayEnd.toISOString()}), 0)`,
       })
       .from(invoices)
       .where(eq(invoices.tradieId, tradieId)),
@@ -63,23 +63,17 @@ export async function getDashboardStats(tradieId: string) {
   }
 }
 export const registerTradieHandler = async (
-  request: FastifyRequest<{
-    Body: {
-      first_name: string
-      last_name: string
-      trade_type: "PLUMBER" | "ELECTRICIAN" | "CARPENTER" | "HVAC" | "PAINTER" | "TILER" | "ROOFER" | "OTHER"
-      abn?: string
-    }
-  }>,
+  request: FastifyRequest<any>,
   reply: FastifyReply
 ) => {
-  const { first_name, last_name, trade_type, abn } = request.body
+  const { first_name, last_name, trade_type, abn } = request.body as any
+  const user = request.user as any
 
   // Check no existing tradie for this auth_user_id
   const [existingTradie] = await db
     .select()
     .from(tradies)
-    .where(eq(tradies.authUserId, request.user.id))
+    .where(eq(tradies.authUserId, user.id))
     .limit(1)
 
   if (existingTradie) {
@@ -88,10 +82,10 @@ export const registerTradieHandler = async (
 
   // Insert tradie record
   const [newTradie] = await db.insert(tradies).values({
-    authUserId: request.user.id,
+    authUserId: user.id,
     firstName: first_name,
     lastName: last_name,
-    phone: request.user.phone!, // from Supabase auth
+    phone: user.phone ?? '', // from Supabase auth
     tradeType: trade_type,
     abn: abn,
     isActive: true,
@@ -100,3 +94,17 @@ export const registerTradieHandler = async (
 
   return { tradie_id: newTradie.id, is_new_user: false }
 }
+
+export const getDashboardStatsHandler = async (
+  request: FastifyRequest<any>,
+  reply: FastifyReply
+) => {
+  const tradieId = request.tradie.id
+  const stats = await getDashboardStats(tradieId)
+  return {
+    success: true,
+    data: stats
+  }
+}
+
+

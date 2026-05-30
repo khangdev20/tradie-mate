@@ -38,3 +38,7 @@ temp/
 tradie-mate-app/ios/build/
 tradie-mate-app/scratch/TestApp/
 
+# AI Agent directories
+.gemini/
+
+

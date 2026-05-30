@@ -79,3 +79,10 @@ export const invoiceItems = pgTable('invoice_items', {
 }, (table) => [
   index('invoice_items_invoice_idx').on(table.invoiceId),
 ])
+
+export const invoiceSequence = pgTable('invoice_sequence', {
+  tradieId: uuid('tradie_id').primaryKey().references(() => tradies.id, { onDelete: 'cascade' }),
+  counter:  integer('counter').default(0).notNull(),
+})
+
+

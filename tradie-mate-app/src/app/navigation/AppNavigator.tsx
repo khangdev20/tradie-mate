@@ -2,10 +2,9 @@ import React from 'react'
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'
 import { AppTabParamList } from './types'
 import { DashboardScreen } from '../../screens/dashboard/DashboardScreen'
-// import { JobsNavigator } from './JobsNavigator' // Could be a stack
-// import { InvoicesScreen } from '../../screens/invoices/InvoiceScreen'
-// import { NotificationsScreen } from '../../screens/notifications/NotificationsScreen'
-// import { ProfileScreen } from '../../screens/profile/ProfileScreen'
+import { JobsNavigator } from '../../screens/jobs/JobsNavigator'
+import { InvoiceScreen } from '../../screens/invoices/InvoiceScreen'
+import { ProfileScreen } from '../../screens/profile/ProfileScreen'
 import { Colors } from '../../constants/colors'
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons'
 import { View, Text } from 'react-native'
@@ -37,7 +36,7 @@ export function AppNavigator() {
           let iconName = ''
           if (route.name === 'Dashboard') iconName = 'home'
           else if (route.name === 'Jobs') iconName = 'briefcase'
-          else if (route.name === 'Invoices') iconName = 'file-invoice'
+          else if (route.name === 'Invoices') iconName = 'file-document-outline'
           else if (route.name === 'Notifications') iconName = 'bell'
           else if (route.name === 'Profile') iconName = 'account'
           
@@ -46,10 +45,10 @@ export function AppNavigator() {
       })}
     >
       <Tab.Screen name="Dashboard" component={DashboardScreen} />
-      <Tab.Screen name="Jobs" component={() => <Placeholder name="Jobs" />} />
-      <Tab.Screen name="Invoices" component={() => <Placeholder name="Invoices" />} />
+      <Tab.Screen name="Jobs" component={JobsNavigator} />
+      <Tab.Screen name="Invoices" component={InvoiceScreen} />
       <Tab.Screen name="Notifications" component={() => <Placeholder name="Notifications" />} options={{ tabBarBadge: 3 }} />
-      <Tab.Screen name="Profile" component={() => <Placeholder name="Profile" />} />
+      <Tab.Screen name="Profile" component={ProfileScreen} />
     </Tab.Navigator>
   )
 }

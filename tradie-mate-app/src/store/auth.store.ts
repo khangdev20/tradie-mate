@@ -60,6 +60,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     set({ isLoading: true, error: null })
     try {
       const normalised = phone.startsWith('0') ? '+61' + phone.slice(1) : phone
+      
+      // Dev mode test phone mock bypass
+      if (__DEV__ && normalised === '+61412345678') {
+        return
+      }
+
       const { error } = await supabase.auth.signInWithOtp({ phone: normalised })
       if (error) throw error
     } catch (err: any) {
@@ -74,18 +80,38 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     set({ isLoading: true, error: null })
     try {
       const normalised = phone.startsWith('0') ? '+61' + phone.slice(1) : phone
-      const { data, error } = await supabase.auth.verifyOtp({
-        phone: normalised,
-        token: otp,
-        type:  'sms',
-      })
-      if (error) throw error
-
-      const session = data.session!
       
-      const result = await api.post('/auth/otp/verify', {
-        phone: normalised, otp,
-      }) as any
+      let session: any = null
+      let result: any = null
+
+      if (__DEV__ && normalised === '+61412345678' && otp === '123456') {
+        result = await api.post('/auth/otp/verify', {
+          phone: normalised, otp,
+        }) as any
+
+        session = {
+          access_token: result.access_token,
+          refresh_token: result.refresh_token,
+          expires_at: Math.floor(Date.now() / 1000) + result.expires_in,
+          user: {
+            id: '00000000-0000-0000-0000-000000000000',
+            email: 'test@tradiemate.com',
+            phone: normalised,
+          }
+        }
+      } else {
+        const { data, error } = await supabase.auth.verifyOtp({
+          phone: normalised,
+          token: otp,
+          type:  'sms',
+        })
+        if (error) throw error
+        session = data.session!
+
+        result = await api.post('/auth/otp/verify', {
+          phone: normalised, otp,
+        }) as any
+      }
 
       TokenStorage.saveSession({
         access_token:  session.access_token,
@@ -234,6 +260,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       const refreshToken = TokenStorage.getRefreshToken()
       if (!refreshToken) { get().logout(); return }
 
+      if (__DEV__ && refreshToken.startsWith('mock-refresh-token')) {
+        return
+      }
+
       const { data, error } = await supabase.auth.refreshSession({
         refresh_token: refreshToken,
       })
@@ -253,7 +283,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   logout: async () => {
     try {
-      await supabase.auth.signOut()
+      const refreshToken = TokenStorage.getRefreshToken()
+      if (!(__DEV__ && refreshToken?.startsWith('mock-refresh-token'))) {
+        await supabase.auth.signOut()
+      }
       if (get().activeProvider === 'google') await signOutGoogle()
     } catch {}
     TokenStorage.clearSession()

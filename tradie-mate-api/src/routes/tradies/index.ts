@@ -1,5 +1,5 @@
 import { FastifyInstance } from 'fastify'
-import { registerTradieHandler } from './handler'
+import { registerTradieHandler, getDashboardStatsHandler } from './handler'
 import { registerTradieSchema } from './schema'
 import { requireAuth } from '../../middleware/requireAuth'
 
@@ -8,4 +8,9 @@ export async function tradieRoutes(fastify: FastifyInstance) {
     schema: registerTradieSchema,
     preHandler: [requireAuth] 
   }, registerTradieHandler)
+
+  fastify.get('/dashboard', {
+    preHandler: [requireAuth]
+  }, getDashboardStatsHandler)
 }
+
