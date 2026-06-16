@@ -12,14 +12,14 @@ export async function deviceRoutes(fastify: FastifyInstance) {
    * POST /api/v1/devices/fcm-token
    * Save or update the FCM push notification token for this tradie's device.
    */
-  fastify.post<{
-    Body: { token: string }
-  }>('/fcm-token', async (request, reply) => {
+  fastify.post('/fcm-token', async (request: FastifyRequest<{
+    Body: { token: string; platform?: 'ios' | 'android' }
+  }>, reply) => {
     const { token } = request.body
     const tradieId = request.tradie.id
 
-    if (!token || typeof token !== 'string' || token.trim().length === 0) {
-      throw new AppError('FCM token is required.', 400, 'MISSING_FCM_TOKEN')
+    if (!token?.trim()) {
+      throw new AppError('FCM token is required.', 400, 'VALIDATION_ERROR')
     }
 
     await db

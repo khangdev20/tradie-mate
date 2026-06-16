@@ -6,10 +6,9 @@ import { customers } from '../../db/schema/customers'
 import { trackingSessions } from '../../db/schema/location'
 import { marketplaceBookings } from '../../db/schema/marketplace'
 import { redisConnection } from '../../config/redis'
-import { eq, and, asc } from 'drizzle-orm'
-import { JobService, JobStatus } from '../../services/job.service'
+import { eq, and, asc, count, sql } from 'drizzle-orm'
+import { JobService, JobStatus, CreateJobInput } from '../../services/job.service'
 import { EntitlementService } from '../../services/entitlement.service'
-import { MapboxService } from '../../services/mapbox.service'
 import { AppError } from '../../utils/errors'
 import { firestore } from '../../config/firebase'
 import { env } from '../../config/env'
@@ -32,20 +31,28 @@ export async function jobRoutes(fastify: FastifyInstance) {
       conditions.push(eq(jobs.status, status as any))
     }
 
-    const jobList = await db
-      .select()
+    const [totalResult] = await db
+      .select({ total: count() })
       .from(jobs)
+      .where(and(...conditions))
+
+    const jobRows = await db
+      .select({ job: jobs, customer: customers })
+      .from(jobs)
+      .leftJoin(customers, eq(jobs.customerId, customers.id))
       .where(and(...conditions))
       .limit(limit)
       .offset(offset)
       .orderBy(asc(jobs.scheduledAt))
+
+    const jobList = jobRows.map((row) => JobService.formatJobResponse(row.job, row.customer))
 
     return {
       success: true,
       data: {
         jobs: jobList,
         meta: {
-          total: jobList.length,
+          total: Number(totalResult?.total ?? 0),
           limit,
           offset,
         },
@@ -63,59 +70,22 @@ export async function jobRoutes(fastify: FastifyInstance) {
   })
 
   // 3. Create job
-  fastify.post<{
-    Body: {
-      customerId?: string
-      title: string
-      description?: string
-      jobType?: string
-      address: string
-      scheduledAt?: string
-      estimatedDurationMin?: number
-      urgency?: 'EMERGENCY' | 'TODAY' | 'THIS_WEEK' | 'FLEXIBLE'
-      source?: 'MANUAL' | 'PHONE_CALL' | 'CUSTOMER_BOOKING' | 'REFERRAL'
-    }
-  }>('/', async (request, reply) => {
+  fastify.post<{ Body: CreateJobInput }>('/', async (request, reply) => {
     const tradieId = request.tradie.id
     const body = request.body
 
-    // A. Check subscription limits
-    await EntitlementService.requireUsageLimit(tradieId, 'jobsCreated', 'maxJobsPerMonth')
-
-    // B. Geocode address via MapboxService
-    let lat = '0'
-    let lng = '0'
-    try {
-      const geocode = await MapboxService.geocodeAddress(body.address)
-      lat = geocode.latitude.toString()
-      lng = geocode.longitude.toString()
-    } catch (err) {
-      console.warn('Geocoding failed for job address:', err)
+    if (!body.title?.trim() || !body.address?.trim()) {
+      throw new AppError('Job title and address are required.', 400, 'VALIDATION_ERROR')
     }
 
-    // C. Insert job
-    const [newJob] = await db
-      .insert(jobs)
-      .values({
-        tradieId,
-        customerId: body.customerId ?? null,
-        title: body.title,
-        description: body.description ?? null,
-        jobType: body.jobType ?? 'Repair',
-        status: 'UPCOMING',
-        urgency: body.urgency ?? 'FLEXIBLE',
-        source: body.source ?? 'MANUAL',
-        scheduledAt: body.scheduledAt ? new Date(body.scheduledAt) : new Date(),
-        estimatedDurationMin: body.estimatedDurationMin ?? 60,
-        address: body.address,
-        lat,
-        lng,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      })
-      .returning()
+    await EntitlementService.requireUsageLimit(tradieId, 'jobsCreated', 'maxJobsPerMonth')
 
-    // D. Increment subscription usage counter
+    const newJob = await JobService.createJob(tradieId, {
+      ...body,
+      title: body.title.trim(),
+      address: body.address.trim(),
+    })
+
     await EntitlementService.incrementUsage(tradieId, 'jobsCreated')
 
     return reply.status(201).send({
@@ -124,14 +94,32 @@ export async function jobRoutes(fastify: FastifyInstance) {
     })
   })
 
-  // 4. Update status
+  // 4. Update job notes
+  fastify.patch<{ Params: { id: string }; Body: { notes: string } }>('/:id', async (request) => {
+    const { notes } = request.body
+    if (notes === undefined) {
+      throw new AppError('Notes field is required.', 400, 'VALIDATION_ERROR')
+    }
+
+    const updated = await JobService.updateNotes(request.params.id, request.tradie.id, notes)
+    return {
+      success: true,
+      data: updated,
+    }
+  })
+
+  // 5. Update status
   fastify.patch<{
     Params: { id: string }
     Body: { status: JobStatus }
   }>('/:id/status', async (request) => {
     const { status } = request.body
     if (!status) {
-      throw new AppError('Status is required', 400)
+      throw new AppError('Status is required', 400, 'VALIDATION_ERROR')
+    }
+
+    if (status === 'COMMUTING') {
+      await EntitlementService.requireEntitlement(request.tradie.id, 'customerTrackingEnabled')
     }
 
     const updatedJob = await JobService.transitionStatus(
@@ -146,13 +134,13 @@ export async function jobRoutes(fastify: FastifyInstance) {
     }
   })
 
-  // 5. Start commute — creates tracking session + Firestore doc + Twilio SMS
+  // 6. Start commute — creates tracking session + Firestore doc + Twilio SMS
   fastify.post<{ Params: { id: string } }>('/:id/start-commute', async (request, reply) => {
     const { id: jobId } = request.params
     const tradieId = request.tradie.id
     const tradie = request.tradie
 
-    // Check entitlement
+    // Entitlement check (belt-and-suspenders alongside status transition guard)
     await EntitlementService.requireEntitlement(tradieId, 'customerTrackingEnabled')
 
     // Verify job ownership
@@ -218,7 +206,6 @@ export async function jobRoutes(fastify: FastifyInstance) {
     const trackingUrl = `https://tradiemate.com.au/track/${trackingToken}`
     if (job.customerId) {
       try {
-        // Attempt to load customer phone from the job's customer record
         const [customer] = await db
           .select({ phone: customers.phone })
           .from(customers)
@@ -231,14 +218,12 @@ export async function jobRoutes(fastify: FastifyInstance) {
             to: customer.phone,
             body: `${tradieName} is en route. Track arrival: ${trackingUrl}`,
           })
-          // Mark tracking link sent
           await db
             .update(jobs)
             .set({ trackingLinkSentAt: new Date() })
             .where(eq(jobs.id, jobId))
         }
       } catch (smsErr) {
-        // Non-fatal — log but don't fail the request
         fastify.log.warn({ smsErr, jobId }, 'Failed to send tracking SMS')
       }
     }
@@ -253,21 +238,18 @@ export async function jobRoutes(fastify: FastifyInstance) {
     })
   })
 
-  // 6. End commute — closes tracking session + deletes Firestore doc
+  // 7. End commute — closes tracking session + deletes Firestore doc
   fastify.post<{ Params: { id: string } }>('/:id/end-commute', async (request) => {
     const { id: jobId } = request.params
     const tradieId = request.tradie.id
 
-    // Verify job ownership
     await JobService.getJobWithOwnerCheck(jobId, tradieId)
 
-    // Deactivate tracking session
     await db
       .update(trackingSessions)
       .set({ isActive: false, endedAt: new Date() })
       .where(and(eq(trackingSessions.jobId, jobId), eq(trackingSessions.tradieId, tradieId)))
 
-    // Remove Firestore tracking document
     try {
       await firestore.collection('tracking').doc(jobId).delete()
     } catch (fsErr) {
@@ -280,7 +262,7 @@ export async function jobRoutes(fastify: FastifyInstance) {
     }
   })
 
-  // 7. Reschedule job
+  // 8. Reschedule job
   fastify.patch<{
     Params: { id: string }
     Body: { scheduledAt: string; estimatedDurationMin?: number }
@@ -290,7 +272,7 @@ export async function jobRoutes(fastify: FastifyInstance) {
     const tradieId = request.tradie.id
 
     if (!scheduledAt) {
-      throw new AppError('scheduledAt is required.', 400, 'MISSING_SCHEDULED_AT')
+      throw new AppError('scheduledAt is required.', 400, 'VALIDATION_ERROR')
     }
 
     const newDate = new Date(scheduledAt)
@@ -298,7 +280,6 @@ export async function jobRoutes(fastify: FastifyInstance) {
       throw new AppError('Invalid scheduledAt date format.', 400, 'INVALID_DATE')
     }
 
-    // Verify ownership
     await JobService.getJobWithOwnerCheck(jobId, tradieId)
 
     const updateValues: Record<string, any> = {
@@ -326,7 +307,7 @@ export async function jobRoutes(fastify: FastifyInstance) {
     }
   })
 
-  // 8. Approve job completion (marketplace escrow release trigger)
+  // 9. Approve job completion (marketplace escrow release trigger)
   fastify.post<{ Params: { id: string } }>('/:id/approve-completion', async (request) => {
     const { id: jobId } = request.params
     const tradieId = request.tradie.id
@@ -337,7 +318,6 @@ export async function jobRoutes(fastify: FastifyInstance) {
       throw new AppError('Job must be COMPLETED before approval.', 400, 'INVALID_JOB_STATE')
     }
 
-    // Trigger escrow release via BullMQ (placeholder — queue must be running)
     try {
       const escrowQueue = new Queue('escrow-release', { connection: redisConnection })
       await escrowQueue.add('release', { jobId, tradieId }, { attempts: 3 })
@@ -351,7 +331,7 @@ export async function jobRoutes(fastify: FastifyInstance) {
     }
   })
 
-  // 9. Dispute job (marketplace escrow dispute)
+  // 10. Dispute job (marketplace escrow dispute)
   fastify.post<{
     Params: { id: string }
     Body: { reason: string }
@@ -381,6 +361,4 @@ export async function jobRoutes(fastify: FastifyInstance) {
       data: { message: 'Dispute submitted. Our team will review within 24 hours.' },
     }
   })
-
 }
-

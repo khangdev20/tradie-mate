@@ -109,7 +109,7 @@ export function InvoiceScreen({ route, navigation }: any) {
       items: items.map(item => ({
         description: item.description,
         quantity: item.qty,
-        unitPrice: item.priceCents
+        unitPriceCents: item.priceCents
       }))
     }
 
