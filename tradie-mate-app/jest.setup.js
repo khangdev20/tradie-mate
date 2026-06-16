@@ -63,6 +63,22 @@ jest.mock('@react-native-community/netinfo', () => ({
   addEventListener: jest.fn(() => jest.fn()),
 }))
 
+jest.mock('react-native-url-polyfill/auto', () => ({}))
+
+jest.mock('@supabase/supabase-js', () => ({
+  createClient: jest.fn(() => ({
+    auth: {
+      onAuthStateChange: jest.fn(() => ({
+        data: { subscription: { unsubscribe: jest.fn() } },
+      })),
+      signInWithOtp: jest.fn(() => Promise.resolve({ error: null })),
+      verifyOtp: jest.fn(() => Promise.resolve({ data: { session: null }, error: null })),
+      refreshSession: jest.fn(() => Promise.resolve({ data: { session: null }, error: null })),
+      signOut: jest.fn(() => Promise.resolve()),
+    },
+  })),
+}))
+
 jest.mock('react-native-mmkv', () => ({
   MMKV: jest.fn().mockImplementation(() => {
     const values = new Map()
