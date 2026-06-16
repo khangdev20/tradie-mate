@@ -79,6 +79,11 @@ export const registerTradieHandler = async (
 ) => {
   const { first_name, last_name, trade_type, abn } = request.body as any
   const user = request.user as any
+  const cleanAbn = abn ? String(abn).replace(/\s/g, '') : null
+
+  if (!cleanAbn) {
+    return reply.status(400).send({ error: 'ABN is required', code: 'ABN_REQUIRED' })
+  }
 
   const [existingTradie] = await db
     .select()
@@ -97,11 +102,12 @@ export const registerTradieHandler = async (
     })
   }
 
-  if (!abn || !ABNService.validateLuhn(abn)) {
+  let abnDetails: Awaited<ReturnType<typeof ABNService.lookup>> = null
+  if (!ABNService.validateLuhn(cleanAbn)) {
     throw new AppError('Invalid ABN format. Please check the number and try again.', 400, 'ABN_INVALID')
   }
 
-  const abnDetails = await ABNService.lookup(abn)
+  abnDetails = await ABNService.lookup(cleanAbn)
   if (!abnDetails || !abnDetails.active) {
     throw new AppError(
       'ABN could not be verified with the ATO. Please check the number or contact support.',
@@ -118,7 +124,7 @@ export const registerTradieHandler = async (
       lastName: last_name,
       phone: user.phone ?? '',
       tradeType: trade_type,
-      abn: abn.replace(/\s/g, ''),
+      abn: cleanAbn,
       abnEntityName: abnDetails.entityName,
       abnGstRegistered: abnDetails.gstRegistered,
       abnVerifiedAt: new Date(),

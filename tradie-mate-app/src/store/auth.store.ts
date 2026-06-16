@@ -48,6 +48,13 @@ interface AuthState {
   clearError: () => void
 }
 
+const unwrapApiData = <T = any>(response: any): T => {
+  if (response && typeof response === 'object' && 'success' in response && 'data' in response) {
+    return response.data as T
+  }
+  return response as T
+}
+
 export const useAuthStore = create<AuthState>((set, get) => ({
   session:         null,
   tradieId:        TokenStorage.getTradieId(),
@@ -85,9 +92,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       let result: any = null
 
       if (__DEV__ && normalised === '+61412345678' && otp === '123456') {
-        result = await api.post('/auth/otp/verify', {
+        result = unwrapApiData(await api.post('/auth/otp/verify', {
           phone: normalised, otp,
-        }) as any
+        }) as any)
 
         session = {
           access_token: result.access_token,
@@ -108,9 +115,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         if (error) throw error
         session = data.session!
 
-        result = await api.post('/auth/otp/verify', {
+        result = unwrapApiData(await api.post('/auth/otp/verify', {
           phone: normalised, otp,
-        }) as any
+        }) as any)
       }
 
       TokenStorage.saveSession({
@@ -135,10 +142,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     set({ isLoading: true, error: null })
     try {
       const { idToken } = await signInWithGoogle()
-      const result = await api.post('/auth/oauth/callback', {
+      const result = unwrapApiData(await api.post('/auth/oauth/callback', {
         provider: 'google',
         id_token: idToken,
-      }) as any
+      }) as any)
 
       TokenStorage.saveSession({
         access_token:  result.access_token,
@@ -162,12 +169,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     set({ isLoading: true, error: null })
     try {
       const { identityToken, fullName, email } = await signInWithApple()
-      const result = await api.post('/auth/oauth/callback', {
+      const result = unwrapApiData(await api.post('/auth/oauth/callback', {
         provider: 'apple',
         id_token: identityToken,
         full_name: fullName ? `${fullName.givenName} ${fullName.familyName}` : null,
         email,
-      }) as any
+      }) as any)
 
       TokenStorage.saveSession({
         access_token:  result.access_token,
@@ -190,7 +197,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   loginWithEmail: async (email, password) => {
     set({ isLoading: true, error: null })
     try {
-      const result = await api.post('/auth/email/login', { email, password }) as any
+      const result = unwrapApiData(await api.post('/auth/email/login', { email, password }) as any)
       TokenStorage.saveSession({
         access_token:  result.access_token,
         refresh_token: result.refresh_token,
@@ -209,7 +216,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   registerWithEmail: async (data) => {
     set({ isLoading: true, error: null })
     try {
-      const result = await api.post('/auth/email/register', data) as any
+      const result = unwrapApiData(await api.post('/auth/email/register', data) as any)
       TokenStorage.saveSession({
         access_token:  result.access_token,
         refresh_token: result.refresh_token,
@@ -239,7 +246,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   register: async (data) => {
     set({ isLoading: true, error: null })
     try {
-      const result = await api.post('/tradies/register', data) as any
+      const result = unwrapApiData(await api.post('/tradies/register', data) as any)
       TokenStorage.saveSession({
         access_token:  TokenStorage.getAccessToken()!,
         refresh_token: TokenStorage.getRefreshToken()!,

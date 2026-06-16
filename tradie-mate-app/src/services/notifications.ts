@@ -1,21 +1,53 @@
 // src/services/notifications.ts
-// import notifee, { AndroidImportance, EventType } from '@notifee/react-native'
-// import messaging from '@react-native-firebase/messaging'
+import notifee, { AndroidImportance } from '@notifee/react-native'
+import messaging from '@react-native-firebase/messaging'
+import api from './apiService'
 
 export async function setupNotificationChannels() {
-  /*
   await notifee.createChannel({
-    id: 'jobs', name: 'New Jobs',
+    id: 'jobs',
+    name: 'Jobs',
     importance: AndroidImportance.HIGH,
     sound: 'default',
   })
-  */
+
+  await notifee.createChannel({
+    id: 'payments',
+    name: 'Payments',
+    importance: AndroidImportance.DEFAULT,
+    sound: 'default',
+  })
 }
 
 export function setupFCMHandlers() {
-  /*
-  messaging().onMessage(async remoteMessage => {
-    console.log('FCM Message received:', remoteMessage)
+  return messaging().onMessage(async remoteMessage => {
+    const title = remoteMessage.notification?.title ?? 'TradieMate'
+    const body = remoteMessage.notification?.body ?? 'You have a new update.'
+    const channelId = remoteMessage.data?.category === 'payments' ? 'payments' : 'jobs'
+
+    await notifee.displayNotification({
+      title,
+      body,
+      android: {
+        channelId,
+        pressAction: { id: 'default' },
+        actions: [
+          { title: 'View Details', pressAction: { id: 'view-details' } },
+        ],
+      },
+    })
   })
-  */
+}
+
+export async function registerDeviceForPushNotifications() {
+  const settings = await notifee.requestPermission()
+  if (settings.authorizationStatus < 1) {
+    return { registered: false, reason: 'permission_denied' as const }
+  }
+
+  await messaging().registerDeviceForRemoteMessages()
+  const token = await messaging().getToken()
+  await api.post('/devices/fcm-token', { token })
+
+  return { registered: true as const }
 }

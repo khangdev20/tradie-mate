@@ -148,7 +148,9 @@ export function JobDetailScreen({ route, navigation }: any) {
         
         // Start background locations if Commuting
         if (newStatus === 'COMMUTING') {
-          startTracking(jobId)
+          startTracking(jobId).catch((error) => {
+            console.warn('Unable to start commute tracking:', error)
+          })
         } else {
           stopTracking()
         }

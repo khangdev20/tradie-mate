@@ -72,7 +72,11 @@ export const useOfflineQueueStore = create<OfflineQueueState>()(
           const response = (await api.post('/sync', {
             queue: queue.map((item) => ({
               action: item.action,
-              payload: item.payload,
+              payload: {
+                ...item.payload,
+                timestamp: item.payload?.timestamp ?? item.timestamp,
+                localOperationId: item.id,
+              },
               idempotencyKey: item.idempotencyKey,
             })),
           })) as any

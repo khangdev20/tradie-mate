@@ -6,7 +6,7 @@ import { customers } from '../../db/schema/customers'
 import { trackingSessions } from '../../db/schema/location'
 import { marketplaceBookings } from '../../db/schema/marketplace'
 import { redisConnection } from '../../config/redis'
-import { eq, and, asc, count, sql } from 'drizzle-orm'
+import { eq, and, asc, count } from 'drizzle-orm'
 import { JobService, JobStatus, CreateJobInput } from '../../services/job.service'
 import { EntitlementService } from '../../services/entitlement.service'
 import { AppError } from '../../utils/errors'
@@ -31,19 +31,20 @@ export async function jobRoutes(fastify: FastifyInstance) {
       conditions.push(eq(jobs.status, status as any))
     }
 
+    const whereClause = and(...conditions)
     const [totalResult] = await db
       .select({ total: count() })
       .from(jobs)
-      .where(and(...conditions))
+      .where(whereClause)
 
     const jobRows = await db
       .select({ job: jobs, customer: customers })
       .from(jobs)
       .leftJoin(customers, eq(jobs.customerId, customers.id))
-      .where(and(...conditions))
+      .where(whereClause)
+      .orderBy(asc(jobs.scheduledAt))
       .limit(limit)
       .offset(offset)
-      .orderBy(asc(jobs.scheduledAt))
 
     const jobList = jobRows.map((row) => JobService.formatJobResponse(row.job, row.customer))
 

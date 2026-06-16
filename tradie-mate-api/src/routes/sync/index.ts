@@ -42,7 +42,7 @@ export async function syncRoutes(fastify: FastifyInstance) {
             const [job] = await tx
               .select({ updatedAt: jobs.updatedAt })
               .from(jobs)
-              .where(eq(jobs.id, jobId))
+              .where(and(eq(jobs.id, jobId), eq(jobs.tradieId, tradieId)))
               .limit(1)
 
             if (!job) {
@@ -66,7 +66,7 @@ export async function syncRoutes(fastify: FastifyInstance) {
                 status,
                 updatedAt: new Date(timestamp), // Keep client's actual timestamp
               })
-              .where(eq(jobs.id, jobId))
+              .where(and(eq(jobs.id, jobId), eq(jobs.tradieId, tradieId)))
 
             results.push({ action: 'UPDATE_STATUS', status: 'SUCCESS' })
             syncedCount++
@@ -113,12 +113,13 @@ export async function syncRoutes(fastify: FastifyInstance) {
             // 4. Totals calculations
             let subtotalCents = 0
             const calculatedItems = items.map((item: any, idx: number) => {
-              const lineTotalCents = Math.round(item.quantity * (item.unitPriceCents ?? item.unitPrice))
+              const unitPriceCents = item.unitPriceCents ?? item.unitPrice
+              const lineTotalCents = Math.round(item.quantity * unitPriceCents)
               subtotalCents += lineTotalCents
               return {
                 description: item.description,
                 qty: item.quantity.toString(),
-                unitPriceCents: item.unitPriceCents ?? item.unitPrice,
+                unitPriceCents,
                 lineTotalCents,
                 sortOrder: idx,
               }
@@ -193,7 +194,7 @@ export async function syncRoutes(fastify: FastifyInstance) {
                 paidAt: new Date(timestamp),
                 updatedAt: new Date(timestamp),
               })
-              .where(eq(invoices.id, invoiceId))
+              .where(and(eq(invoices.id, invoiceId), eq(invoices.tradieId, tradieId)))
 
             results.push({ action: 'PAY_INVOICE', status: 'SUCCESS' })
             syncedCount++

@@ -120,6 +120,26 @@ export async function buildApp() {
   // Notifications (cross-phase)
   await fastify.register(notificationRoutes, { prefix: '/notifications' })
 
+  // Versioned aliases for the implementation-plan API contract.
+  await fastify.register(authRoutes, { prefix: '/api/v1/auth' })
+  await fastify.register(tradieRoutes, { prefix: '/api/v1/tradies' })
+  await fastify.register(jobRoutes, { prefix: '/api/v1/jobs' })
+  await fastify.register(invoiceRoutes, { prefix: '/api/v1/invoices' })
+  await fastify.register(paymentRoutes, { prefix: '/api/v1/payments' })
+  await fastify.register(billingRoutes, { prefix: '/api/v1/billing' })
+  await fastify.register(mapRoutes, { prefix: '/api/v1/maps' })
+  await fastify.register(syncRoutes, { prefix: '/api/v1/sync' })
+  await fastify.register(deviceRoutes, { prefix: '/api/v1/devices' })
+  await fastify.register(documentRoutes, { prefix: '/api/v1/documents' })
+  await fastify.register(reviewRoutes, { prefix: '/api/v1/reviews' })
+  await fastify.register(earningsRoutes, { prefix: '/api/v1/earnings' })
+  await fastify.register(integrationRoutes, { prefix: '/api/v1/integrations' })
+  await fastify.register(adminRoutes, { prefix: '/api/v1/admin' })
+  await fastify.register(suppliesRoutes, { prefix: '/api/v1/supplies' })
+  await fastify.register(enterpriseRoutes, { prefix: '/api/v1/enterprise' })
+  await fastify.register(marketplaceRoutes, { prefix: '/api/v1/marketplace' })
+  await fastify.register(notificationRoutes, { prefix: '/api/v1/notifications' })
+
   // Webhooks (Raw body needed for Stripe signature)
   fastify.post('/webhooks/stripe', { 
     config: { rawBody: true } 
