@@ -31,8 +31,8 @@ export async function requestForegroundLocationPermission() {
     return result === PermissionsAndroid.RESULTS.GRANTED
   }
 
-  const status = await Geolocation.requestAuthorization('whenInUse')
-  return status === 'granted'
+  Geolocation.requestAuthorization()
+  return true
 }
 
 export async function getCurrentLocation(): Promise<LatLng & { accuracyMeters?: number }> {
