@@ -101,6 +101,19 @@ jest.mock('react-native-haptic-feedback', () => ({
   trigger: jest.fn(),
 }))
 
+jest.mock('@react-native-community/geolocation', () => ({
+  requestAuthorization: jest.fn(),
+  getCurrentPosition: jest.fn((success) => success({
+    coords: {
+      latitude: -27.4698,
+      longitude: 153.0251,
+      accuracy: 10,
+    },
+  })),
+  watchPosition: jest.fn(() => 1),
+  clearWatch: jest.fn(),
+}))
+
 jest.mock('react-native-url-polyfill/auto', () => ({}))
 
 jest.mock('@supabase/supabase-js', () => ({
