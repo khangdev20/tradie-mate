@@ -114,6 +114,8 @@ jest.mock('@react-native-community/geolocation', () => ({
   clearWatch: jest.fn(),
 }))
 
+jest.mock('react-native-signature-canvas', () => 'SignatureCanvas')
+
 jest.mock('react-native-url-polyfill/auto', () => ({}))
 
 jest.mock('@supabase/supabase-js', () => ({
