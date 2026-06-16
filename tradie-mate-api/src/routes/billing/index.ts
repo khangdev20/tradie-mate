@@ -93,7 +93,8 @@ export async function billingRoutes(fastify: FastifyInstance) {
         plan.stripePriceId,
         stripeCustomerId,
         successUrl,
-        cancelUrl
+        cancelUrl,
+        { tradieId: tradie.id, planCode }
       )
 
       return {
@@ -104,9 +105,9 @@ export async function billingRoutes(fastify: FastifyInstance) {
 
     // 3. Create Stripe Billing Portal redirection
     instance.post('/portal-session', async (request: FastifyRequest<{
-      Body: { returnUrl: string }
+      Body: { returnUrl?: string } | undefined
     }>) => {
-      const { returnUrl } = request.body
+      const { returnUrl } = request.body ?? {}
       const tradie = request.tradie
 
       // Get or create Stripe Customer
@@ -115,7 +116,10 @@ export async function billingRoutes(fastify: FastifyInstance) {
         `${tradie.firstName} ${tradie.lastName}`
       )
 
-      const portalUrl = await StripeService.createPortalSession(stripeCustomerId, returnUrl)
+      const portalUrl = await StripeService.createPortalSession(
+        stripeCustomerId,
+        returnUrl ?? 'tradiemate://billing'
+      )
 
       return {
         success: true,

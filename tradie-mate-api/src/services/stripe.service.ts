@@ -57,12 +57,15 @@ export class StripeService {
     stripePriceId: string,
     stripeCustomerId: string,
     successUrl: string,
-    cancelUrl: string
+    cancelUrl: string,
+    metadata: { tradieId: string; planCode: string }
   ) {
     try {
       const session = await stripe.checkout.sessions.create({
         customer: stripeCustomerId,
         mode: 'subscription',
+        metadata,
+        subscription_data: { metadata },
         payment_method_types: ['card'],
         line_items: [
           {

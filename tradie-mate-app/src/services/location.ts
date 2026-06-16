@@ -2,9 +2,12 @@
 // Using @react-native-community/geolocation for standard location access.
 // For production background tracking, integrate transistorsoft's
 // react-native-background-geolocation (requires commercial license).
-// import Geolocation from '@react-native-community/geolocation'
+import { PermissionsAndroid, Platform } from 'react-native'
+import Geolocation from '@react-native-community/geolocation'
+import api from './apiService'
 
 const BATCH_INTERVAL_MS = 5000 // 5s — never more frequent
+const MAX_BATCH_SIZE = 20
 let locationBuffer: Array<{
   lat: number
   lng: number
@@ -15,10 +18,72 @@ let locationBuffer: Array<{
 let intervalId: ReturnType<typeof setInterval> | null = null
 let watchId: number | null = null
 
-export function startTracking(jobId: string) {
+export type LatLng = {
+  latitude: number
+  longitude: number
+}
+
+export async function requestForegroundLocationPermission() {
+  if (Platform.OS === 'android') {
+    const result = await PermissionsAndroid.request(
+      PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION
+    )
+    return result === PermissionsAndroid.RESULTS.GRANTED
+  }
+
+  const status = await Geolocation.requestAuthorization('whenInUse')
+  return status === 'granted'
+}
+
+export async function getCurrentLocation(): Promise<LatLng & { accuracyMeters?: number }> {
+  const granted = await requestForegroundLocationPermission()
+  if (!granted) {
+    await api.post('/maps/location-event', {
+      eventType: 'PERMISSION_DENIED',
+      metadata: { scope: 'foreground' },
+    }).catch(() => undefined)
+    throw new Error('Location permission denied')
+  }
+
+  return new Promise((resolve, reject) => {
+    Geolocation.getCurrentPosition(
+      (position) => {
+        resolve({
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+          accuracyMeters: position.coords.accuracy,
+        })
+      },
+      async (error) => {
+        await api.post('/maps/location-event', {
+          eventType: 'STALE_LOCATION',
+          metadata: { message: error.message },
+        }).catch(() => undefined)
+        reject(error)
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 30000 }
+    )
+  })
+}
+
+export async function startTracking(jobId: string) {
   console.log('Starting GPS tracking for job:', jobId)
 
-  /*
+  const granted = await requestForegroundLocationPermission()
+  if (!granted) {
+    await api.post('/maps/location-event', {
+      jobId,
+      eventType: 'PERMISSION_DENIED',
+      metadata: { scope: 'foreground' },
+    }).catch(() => undefined)
+    return
+  }
+
+  await api.post('/maps/location-event', {
+    jobId,
+    eventType: 'ROUTE_STARTED',
+  }).catch(() => undefined)
+
   watchId = Geolocation.watchPosition(
     (position) => {
       locationBuffer.push({
@@ -29,18 +94,31 @@ export function startTracking(jobId: string) {
         job_id: jobId,
       })
     },
-    (error) => console.warn('Location error:', error),
+    (error) => {
+      console.warn('Location error:', error)
+      api.post('/maps/location-event', {
+        jobId,
+        eventType: 'STALE_LOCATION',
+        metadata: { message: error.message },
+      }).catch(() => undefined)
+    },
     { enableHighAccuracy: true, distanceFilter: 10 }
   )
-  */
 
   // Batch flush every 5 seconds — never stream to server
   intervalId = setInterval(async () => {
     if (locationBuffer.length === 0) return
-    const batch = locationBuffer.splice(0, 20) // max 20 per flush
+    const batch = locationBuffer.splice(0, MAX_BATCH_SIZE)
     try {
       console.log('Flushing GPS batch:', batch.length, 'updates')
-      // await api.post('/location/batch', { updates: batch })
+      await api.post('/maps/location-event', {
+        jobId,
+        eventType: 'LOCATION_BATCH_RECORDED',
+        metadata: {
+          count: batch.length,
+          latest: batch[batch.length - 1],
+        },
+      })
     } catch {
       // Offline: push back to buffer, retry next interval
       locationBuffer.unshift(...batch)
@@ -55,7 +133,7 @@ export function stopTracking() {
     intervalId = null
   }
   if (watchId !== null) {
-    // Geolocation.clearWatch(watchId)
+    Geolocation.clearWatch(watchId)
     watchId = null
   }
   locationBuffer = []

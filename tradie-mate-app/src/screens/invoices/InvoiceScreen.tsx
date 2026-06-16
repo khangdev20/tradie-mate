@@ -36,6 +36,13 @@ const QUICK_CHIPS = [
   { label: 'Call-out Fee', price: 6500 },
 ]
 
+const createLocalUuid = () =>
+  'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (char) => {
+    const random = Math.floor(Math.random() * 16)
+    const value = char === 'x' ? random : (random & 0x3) | 0x8
+    return value.toString(16)
+  })
+
 export function InvoiceScreen({ route, navigation }: any) {
   const { jobId } = route.params || {}
   const { isConnected } = useNetworkState()
@@ -109,13 +116,13 @@ export function InvoiceScreen({ route, navigation }: any) {
       items: items.map(item => ({
         description: item.description,
         quantity: item.qty,
-        unitPrice: item.priceCents
+        unitPriceCents: item.priceCents
       }))
     }
 
     // Offline Save
     if (!isConnected) {
-      const mockInvoiceId = 'offline_' + Math.random().toString(36).substring(2, 15)
+      const mockInvoiceId = createLocalUuid()
       addToQueue('CREATE_INVOICE', { ...invoicePayload, invoiceId: mockInvoiceId })
       
       Alert.alert(
@@ -341,8 +348,8 @@ const styles = StyleSheet.create({
     marginRight: Spacing.md,
   },
   qtyBtn: {
-    width: 32,
-    height: 32,
+    width: 52,
+    height: 52,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: Colors.surface,

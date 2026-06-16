@@ -67,7 +67,16 @@ export const useOfflineQueueStore = create<OfflineQueueState>()(
         }
 
         try {
-          const response = await api.post('/sync', { queue }) as any
+          const syncPayload = queue.map((item) => ({
+            action: item.action,
+            payload: {
+              ...item.payload,
+              timestamp: item.payload?.timestamp ?? item.timestamp,
+              localOperationId: item.id,
+            },
+          }))
+
+          const response = await api.post('/sync', { queue: syncPayload }) as any
           if (response && response.success) {
             clearQueue()
             return { success: true, syncedCount: response.data?.syncedCount ?? queue.length }

@@ -21,7 +21,7 @@ import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityI
 import api from '../../services/apiService'
 import { useOfflineQueue } from '../../hooks/useOfflineQueue'
 import { useNetworkState } from '../../hooks/useNetworkState'
-import { startTracking, stopTracking } from '../../services/location'
+import { getCurrentLocation, startTracking, stopTracking } from '../../services/location'
 import { useHaptics } from '../../hooks/useHaptics'
 
 export function JobDetailScreen({ route, navigation }: any) {
@@ -61,8 +61,12 @@ export function JobDetailScreen({ route, navigation }: any) {
         const destLat = parseFloat(res.data.lat) || -33.8915
         const destLng = parseFloat(res.data.lng) || 151.2503
         
-        // Set mock initial tradie coords a bit away
-        setTradieCoords({ latitude: destLat + 0.015, longitude: destLng - 0.015 })
+        try {
+          const currentLocation = await getCurrentLocation()
+          setTradieCoords(currentLocation)
+        } catch {
+          setTradieCoords({ latitude: destLat + 0.015, longitude: destLng - 0.015 })
+        }
       }
     } catch (error) {
       console.warn('Failed to load job details:', error)
@@ -132,7 +136,9 @@ export function JobDetailScreen({ route, navigation }: any) {
         
         // Start background locations if Commuting
         if (newStatus === 'COMMUTING') {
-          startTracking(jobId)
+          startTracking(jobId).catch((error) => {
+            console.warn('Unable to start commute tracking:', error)
+          })
         } else {
           stopTracking()
         }

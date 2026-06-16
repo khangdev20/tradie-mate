@@ -1,9 +1,13 @@
-import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
+import { FastifyRequest, FastifyReply } from 'fastify'
 import Stripe from 'stripe'
+import { eq } from 'drizzle-orm'
 import { env } from '../../config/env'
-import { supabaseAdmin } from '../../config/supabase'
+import { stripe } from '../../config/stripe'
+import { db } from '../../config/db'
+import { invoices } from '../../db/schema/invoices'
+import { subscriptionPlans, tradieSubscriptions } from '../../db/schema/subscriptions'
 
-const stripe = new Stripe(env.STRIPE_SECRET_KEY)
+type SubscriptionStatus = 'TRIALING' | 'ACTIVE' | 'PAST_DUE' | 'CANCELED' | 'INCOMPLETE'
 
 export async function stripeWebhookHandler(request: FastifyRequest, reply: FastifyReply) {
   const sig = request.headers['stripe-signature'] as string
@@ -11,7 +15,7 @@ export async function stripeWebhookHandler(request: FastifyRequest, reply: Fasti
 
   try {
     event = stripe.webhooks.constructEvent(
-      request.body as string | Buffer,
+      ((request as any).rawBody ?? request.body) as string | Buffer,
       sig,
       env.STRIPE_WEBHOOK_SECRET
     )
@@ -19,38 +23,171 @@ export async function stripeWebhookHandler(request: FastifyRequest, reply: Fasti
     return reply.status(400).send(`Webhook Error: ${err.message}`)
   }
 
-  // Return 200 immediately (within 10s)
-  reply.status(200).send({ received: true })
-
-  // Process asynchronously
   switch (event.type) {
-    case 'payment_intent.succeeded':
+    case 'payment_intent.succeeded': {
       const paymentIntent = event.data.object as Stripe.PaymentIntent
       await handlePaymentSuccess(paymentIntent)
       break
+    }
     case 'payment_intent.payment_failed':
       // Log failure + notify tradie via FCM
       break
+    case 'checkout.session.completed': {
+      const session = event.data.object as Stripe.Checkout.Session
+      await handleCheckoutCompleted(session)
+      break
+    }
+    case 'customer.subscription.created':
+    case 'customer.subscription.updated':
+    case 'customer.subscription.deleted': {
+      const subscription = event.data.object as Stripe.Subscription
+      await upsertSubscription(subscription)
+      break
+    }
+    case 'invoice.payment_succeeded':
+    case 'invoice.payment_failed': {
+      const invoice = event.data.object as Stripe.Invoice
+      await handleBillingInvoice(invoice, event.type)
+      break
+    }
   }
+
+  return reply.status(200).send({
+    success: true,
+    data: { received: true },
+  })
 }
 
 async function handlePaymentSuccess(paymentIntent: Stripe.PaymentIntent) {
-  const invoiceId = paymentIntent.metadata.invoice_id
+  const invoiceId = paymentIntent.metadata.invoiceId ?? paymentIntent.metadata.invoice_id
   if (!invoiceId) return
 
-  // 1. Mark invoice PAID
-  await supabaseAdmin
-    .from('invoices')
-    .update({
+  await db
+    .update(invoices)
+    .set({
       status: 'PAID',
-      paid_at: new Date().toISOString(),
-      stripe_payment_intent_id: paymentIntent.id
+      paidAt: new Date(),
+      stripePaymentIntentId: paymentIntent.id,
+      updatedAt: new Date(),
     })
-    .eq('id', invoiceId)
+    .where(eq(invoices.id, invoiceId))
 
-  // 2. Queue Xero sync (BullMQ) - placeholder
+  // Queue Xero sync (BullMQ) - placeholder
   // xeroQueue.add('sync-invoice', { invoiceId })
 
-  // 3. Send FCM push
+  // Send FCM push
   // notificationService.sendPaymentReceived(invoiceId)
+}
+
+async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
+  if (!session.subscription || typeof session.subscription !== 'string') return
+
+  const subscription = await stripe.subscriptions.retrieve(session.subscription)
+  await upsertSubscription(subscription, {
+    tradieId: session.metadata?.tradieId,
+    planCode: session.metadata?.planCode,
+  })
+}
+
+async function handleBillingInvoice(invoice: Stripe.Invoice, eventType: string) {
+  const subscriptionId = typeof invoice.subscription === 'string' ? invoice.subscription : null
+  if (!subscriptionId) return
+
+  const status: SubscriptionStatus =
+    eventType === 'invoice.payment_failed' ? 'PAST_DUE' : 'ACTIVE'
+
+  await db
+    .update(tradieSubscriptions)
+    .set({
+      status,
+      updatedAt: new Date(),
+    })
+    .where(eq(tradieSubscriptions.stripeSubscriptionId, subscriptionId))
+}
+
+async function upsertSubscription(
+  subscription: Stripe.Subscription,
+  fallback?: { tradieId?: string | null; planCode?: string | null }
+) {
+  const subscriptionAny = subscription as any
+  const stripeSubscriptionId = subscription.id
+  const stripeCustomerId =
+    typeof subscription.customer === 'string' ? subscription.customer : subscription.customer.id
+  const priceId = subscription.items.data[0]?.price.id
+  const metadata = subscription.metadata ?? {}
+
+  const planCode = metadata.planCode ?? fallback?.planCode ?? (await getPlanCodeForPrice(priceId))
+  const tradieId = metadata.tradieId ?? fallback?.tradieId ?? (await getTradieIdForCustomer(stripeCustomerId))
+  if (!planCode || !tradieId) return
+
+  const values = {
+    tradieId,
+    planCode,
+    status: mapStripeSubscriptionStatus(subscription.status),
+    stripeCustomerId,
+    stripeSubscriptionId,
+    trialEndsAt: subscription.trial_end ? new Date(subscription.trial_end * 1000) : null,
+    currentPeriodStart: subscriptionAny.current_period_start
+      ? new Date(subscriptionAny.current_period_start * 1000)
+      : null,
+    currentPeriodEnd: subscriptionAny.current_period_end
+      ? new Date(subscriptionAny.current_period_end * 1000)
+      : null,
+    cancelAtPeriodEnd: subscription.cancel_at_period_end,
+    updatedAt: new Date(),
+  }
+
+  const [existing] = await db
+    .select()
+    .from(tradieSubscriptions)
+    .where(eq(tradieSubscriptions.stripeSubscriptionId, stripeSubscriptionId))
+    .limit(1)
+
+  if (existing) {
+    await db
+      .update(tradieSubscriptions)
+      .set(values)
+      .where(eq(tradieSubscriptions.id, existing.id))
+    return
+  }
+
+  await db.insert(tradieSubscriptions).values(values)
+}
+
+async function getPlanCodeForPrice(priceId?: string) {
+  if (!priceId) return null
+
+  const [plan] = await db
+    .select()
+    .from(subscriptionPlans)
+    .where(eq(subscriptionPlans.stripePriceId, priceId))
+    .limit(1)
+
+  return plan?.code ?? null
+}
+
+async function getTradieIdForCustomer(stripeCustomerId: string) {
+  const [subscription] = await db
+    .select()
+    .from(tradieSubscriptions)
+    .where(eq(tradieSubscriptions.stripeCustomerId, stripeCustomerId))
+    .limit(1)
+
+  return subscription?.tradieId ?? null
+}
+
+function mapStripeSubscriptionStatus(status: Stripe.Subscription.Status): SubscriptionStatus {
+  switch (status) {
+    case 'trialing':
+      return 'TRIALING'
+    case 'active':
+      return 'ACTIVE'
+    case 'past_due':
+    case 'unpaid':
+      return 'PAST_DUE'
+    case 'canceled':
+      return 'CANCELED'
+    default:
+      return 'INCOMPLETE'
+  }
 }

@@ -17,11 +17,13 @@ import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityI
 import api from '../../services/apiService'
 import { useHaptics } from '../../hooks/useHaptics'
 import { useNetworkState } from '../../hooks/useNetworkState'
+import { useEntitlements } from '../../hooks/useEntitlements'
 
 export function PaymentScreen({ route, navigation }: any) {
   const { invoiceId, amountCents = 15840 } = route.params || {}
   const { triggerMedium, triggerSuccess } = useHaptics()
   const { isConnected } = useNetworkState()
+  const { hasEntitlement } = useEntitlements()
 
   const [loading, setLoading] = useState(false)
   const [statusText, setStatusText] = useState('Initialize Terminal...')
@@ -45,6 +47,15 @@ export function PaymentScreen({ route, navigation }: any) {
 
   const handleTapToPay = async () => {
     triggerMedium()
+
+    if (!hasEntitlement('tapToPayEnabled')) {
+      Alert.alert(
+        'Tap to Pay is locked',
+        'Upgrade to a plan with Tap to Pay to collect card payments on site.',
+        [{ text: 'OK' }]
+      )
+      return
+    }
     
     // Offline mode warning
     if (!isConnected) {
@@ -128,6 +139,9 @@ export function PaymentScreen({ route, navigation }: any) {
             <MaterialCommunityIcons name="cellphone-nfc" size={80} color={Colors.textSubtle} />
             <Text style={styles.instructions}>
               Tap to Pay turns your mobile phone into an on-site card terminal.
+            </Text>
+            <Text style={styles.feeDisclosure}>
+              Card processing fees apply and are shown in your Stripe dashboard before payout.
             </Text>
           </View>
         )}
@@ -240,6 +254,13 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 20,
     marginTop: Spacing.md,
+  },
+  feeDisclosure: {
+    fontSize: Typography.sizes.micro,
+    color: Colors.textMuted,
+    textAlign: 'center',
+    lineHeight: 18,
+    marginTop: Spacing.sm,
   },
   loaderContainer: {
     alignItems: 'center',

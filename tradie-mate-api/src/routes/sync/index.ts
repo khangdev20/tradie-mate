@@ -2,9 +2,9 @@ import { FastifyInstance, FastifyRequest } from 'fastify'
 import { requireAuth } from '../../middleware/auth.middleware'
 import { db } from '../../config/db'
 import { jobs } from '../../db/schema/jobs'
+import { customers } from '../../db/schema/customers'
 import { invoices, invoiceItems, invoiceSequence } from '../../db/schema/invoices'
 import { eq, and } from 'drizzle-orm'
-import { JobService } from '../../services/job.service'
 import { GSTService } from '../../services/gst.service'
 import { AppError } from '../../utils/errors'
 
@@ -40,7 +40,7 @@ export async function syncRoutes(fastify: FastifyInstance) {
             const [job] = await tx
               .select({ updatedAt: jobs.updatedAt })
               .from(jobs)
-              .where(eq(jobs.id, jobId))
+              .where(and(eq(jobs.id, jobId), eq(jobs.tradieId, tradieId)))
               .limit(1)
 
             if (!job) {
@@ -64,9 +64,54 @@ export async function syncRoutes(fastify: FastifyInstance) {
                 status,
                 updatedAt: new Date(timestamp), // Keep client's actual timestamp
               })
-              .where(eq(jobs.id, jobId))
+              .where(and(eq(jobs.id, jobId), eq(jobs.tradieId, tradieId)))
 
             results.push({ action: 'UPDATE_STATUS', status: 'SUCCESS' })
+            syncedCount++
+
+          } else if (item.action === 'CREATE_JOB') {
+            const {
+              title,
+              customerName,
+              customerPhone,
+              address,
+              scheduledAt,
+              estimatedDurationMin,
+              source,
+              timestamp,
+            } = item.payload
+
+            if (!title || !customerName || !customerPhone || !address) {
+              results.push({ action: 'CREATE_JOB', status: 'FAILED', error: 'Missing required job fields' })
+              continue
+            }
+
+            const [customer] = await tx.insert(customers).values({
+              tradieId,
+              name: customerName,
+              phone: customerPhone,
+              address,
+              source: source ?? 'MANUAL',
+              createdAt: new Date(timestamp),
+              updatedAt: new Date(timestamp),
+            }).returning()
+
+            await tx.insert(jobs).values({
+              tradieId,
+              customerId: customer.id,
+              title,
+              status: 'UPCOMING',
+              source: source ?? 'MANUAL',
+              scheduledAt: scheduledAt ? new Date(scheduledAt) : new Date(timestamp),
+              estimatedDurationMin: estimatedDurationMin ?? 60,
+              address,
+              lat: '0',
+              lng: '0',
+              createdAt: new Date(timestamp),
+              updatedAt: new Date(timestamp),
+            })
+
+            results.push({ action: 'CREATE_JOB', status: 'SUCCESS' })
             syncedCount++
 
           } else if (item.action === 'CREATE_INVOICE') {
@@ -111,12 +156,13 @@ export async function syncRoutes(fastify: FastifyInstance) {
             // 4. Totals calculations
             let subtotalCents = 0
             const calculatedItems = items.map((item: any, idx: number) => {
-              const lineTotalCents = Math.round(item.quantity * item.unitPrice)
+              const unitPriceCents = item.unitPriceCents ?? item.unitPrice
+              const lineTotalCents = Math.round(item.quantity * unitPriceCents)
               subtotalCents += lineTotalCents
               return {
                 description: item.description,
                 qty: item.quantity.toString(),
-                unitPriceCents: item.unitPrice,
+                unitPriceCents,
                 lineTotalCents,
                 sortOrder: idx,
               }
@@ -163,7 +209,7 @@ export async function syncRoutes(fastify: FastifyInstance) {
                 paidAt: new Date(timestamp),
                 updatedAt: new Date(timestamp),
               })
-              .where(eq(invoices.id, invoiceId))
+              .where(and(eq(invoices.id, invoiceId), eq(invoices.tradieId, tradieId)))
 
             results.push({ action: 'PAY_INVOICE', status: 'SUCCESS' })
             syncedCount++

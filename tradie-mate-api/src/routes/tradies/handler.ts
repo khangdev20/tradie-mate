@@ -5,6 +5,7 @@ import { jobs, invoices, tradies } from '../../db/schema'
 import { eq, and, inArray, count, gte, lt, sql } from 'drizzle-orm'
 import { startOfDay, endOfDay } from 'date-fns'
 import { toZonedTime } from 'date-fns-tz'
+import { ABNService } from '../../services/abn.service'
 
 const AEST = 'Australia/Sydney'
 
@@ -68,6 +69,11 @@ export const registerTradieHandler = async (
 ) => {
   const { first_name, last_name, trade_type, abn } = request.body as any
   const user = request.user as any
+  const cleanAbn = abn ? String(abn).replace(/\s/g, '') : null
+
+  if (!cleanAbn) {
+    return reply.status(400).send({ error: 'ABN is required', code: 'ABN_REQUIRED' })
+  }
 
   // Check no existing tradie for this auth_user_id
   const [existingTradie] = await db
@@ -80,6 +86,16 @@ export const registerTradieHandler = async (
     return reply.status(409).send({ error: 'Tradie profile already exists' })
   }
 
+  let abnDetails: Awaited<ReturnType<typeof ABNService.lookup>> = null
+  if (!ABNService.validateLuhn(cleanAbn)) {
+    return reply.status(400).send({ error: 'Invalid ABN format', code: 'ABN_INVALID_FORMAT' })
+  }
+
+  abnDetails = await ABNService.lookup(cleanAbn)
+  if (!abnDetails || !abnDetails.active) {
+    return reply.status(400).send({ error: 'ABN could not be verified as active', code: 'ABN_NOT_ACTIVE' })
+  }
+
   // Insert tradie record
   const [newTradie] = await db.insert(tradies).values({
     authUserId: user.id,
@@ -87,12 +103,19 @@ export const registerTradieHandler = async (
     lastName: last_name,
     phone: user.phone ?? '', // from Supabase auth
     tradeType: trade_type,
-    abn: abn,
+    abn: cleanAbn,
+    abnVerifiedAt: abnDetails ? new Date() : null,
+    abnEntityName: abnDetails?.entityName ?? null,
+    abnGstRegistered: abnDetails?.gstRegistered ?? false,
     isActive: true,
     isOnboarded: false,
   }).returning()
 
-  return { tradie_id: newTradie.id, is_new_user: false }
+  return {
+    tradie_id: newTradie.id,
+    is_new_user: false,
+    abnVerified: Boolean(newTradie.abnVerifiedAt),
+  }
 }
 
 export const getDashboardStatsHandler = async (

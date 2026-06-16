@@ -2,7 +2,8 @@ import { FastifyInstance, FastifyRequest } from 'fastify'
 import { requireAuth } from '../../middleware/auth.middleware'
 import { db } from '../../config/db'
 import { jobs } from '../../db/schema/jobs'
-import { eq, and, asc } from 'drizzle-orm'
+import { customers } from '../../db/schema/customers'
+import { eq, and, asc, count } from 'drizzle-orm'
 import { JobService, JobStatus } from '../../services/job.service'
 import { EntitlementService } from '../../services/entitlement.service'
 import { MapboxService } from '../../services/mapbox.service'
@@ -21,20 +22,37 @@ export async function jobRoutes(fastify: FastifyInstance) {
       conditions.push(eq(jobs.status, status as any))
     }
 
-    const jobList = await db
-      .select()
+    const whereClause = and(...conditions)
+    const [totalRow] = await db
+      .select({ total: count() })
       .from(jobs)
-      .where(and(...conditions))
+      .where(whereClause)
+
+    const rows = await db
+      .select({
+        job: jobs,
+        customerName: customers.name,
+        customerPhone: customers.phone,
+      })
+      .from(jobs)
+      .leftJoin(customers, eq(jobs.customerId, customers.id))
+      .where(whereClause)
+      .orderBy(asc(jobs.scheduledAt))
       .limit(limit)
       .offset(offset)
-      .orderBy(asc(jobs.scheduledAt))
+
+    const jobList = rows.map((row) => ({
+      ...row.job,
+      customerName: row.customerName,
+      customerPhone: row.customerPhone,
+    }))
 
     return {
       success: true,
       data: {
         jobs: jobList,
         meta: {
-          total: jobList.length,
+          total: Number(totalRow?.total ?? 0),
           limit,
           offset,
         },
@@ -55,6 +73,8 @@ export async function jobRoutes(fastify: FastifyInstance) {
   fastify.post<{
     Body: {
       customerId?: string
+      customerName?: string
+      customerPhone?: string
       title: string
       description?: string
       jobType?: string
@@ -82,12 +102,29 @@ export async function jobRoutes(fastify: FastifyInstance) {
       console.warn('Geocoding failed for job address:', err)
     }
 
+    let customerId = body.customerId ?? null
+    if (!customerId && body.customerName && body.customerPhone) {
+      const [customer] = await db
+        .insert(customers)
+        .values({
+          tradieId,
+          name: body.customerName,
+          phone: body.customerPhone,
+          address: body.address,
+          source: body.source ?? 'MANUAL',
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        })
+        .returning()
+      customerId = customer.id
+    }
+
     // C. Insert job
     const [newJob] = await db
       .insert(jobs)
       .values({
         tradieId,
-        customerId: body.customerId ?? null,
+        customerId,
         title: body.title,
         description: body.description ?? null,
         jobType: body.jobType ?? 'Repair',
@@ -109,7 +146,11 @@ export async function jobRoutes(fastify: FastifyInstance) {
 
     return reply.status(201).send({
       success: true,
-      data: newJob,
+      data: {
+        ...newJob,
+        customerName: body.customerName ?? null,
+        customerPhone: body.customerPhone ?? null,
+      },
     })
   })
 

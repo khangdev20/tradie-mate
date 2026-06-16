@@ -17,6 +17,7 @@ import { paymentRoutes } from './routes/payments'
 import { billingRoutes } from './routes/billing'
 import { mapRoutes } from './routes/maps'
 import { syncRoutes } from './routes/sync'
+import { deviceRoutes } from './routes/devices'
 import { stripeWebhookHandler } from './routes/webhooks/stripe'
 
 export async function buildApp() {
@@ -89,6 +90,18 @@ export async function buildApp() {
   await fastify.register(billingRoutes, { prefix: '/billing' })
   await fastify.register(mapRoutes, { prefix: '/maps' })
   await fastify.register(syncRoutes, { prefix: '/sync' })
+  await fastify.register(deviceRoutes, { prefix: '/devices' })
+
+  // Versioned aliases for the implementation-plan API contract.
+  await fastify.register(authRoutes, { prefix: '/api/v1/auth' })
+  await fastify.register(tradieRoutes, { prefix: '/api/v1/tradies' })
+  await fastify.register(jobRoutes, { prefix: '/api/v1/jobs' })
+  await fastify.register(invoiceRoutes, { prefix: '/api/v1/invoices' })
+  await fastify.register(paymentRoutes, { prefix: '/api/v1/payments' })
+  await fastify.register(billingRoutes, { prefix: '/api/v1/billing' })
+  await fastify.register(mapRoutes, { prefix: '/api/v1/maps' })
+  await fastify.register(syncRoutes, { prefix: '/api/v1/sync' })
+  await fastify.register(deviceRoutes, { prefix: '/api/v1/devices' })
 
   // Webhooks (Raw body needed for Stripe signature)
   fastify.post('/webhooks/stripe', { 

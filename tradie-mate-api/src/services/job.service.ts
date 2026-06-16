@@ -1,5 +1,6 @@
 import { db } from '../config/db'
 import { jobs } from '../db/schema/jobs'
+import { customers } from '../db/schema/customers'
 import { eq, and } from 'drizzle-orm'
 import { AppError } from '../utils/errors'
 
@@ -26,17 +27,26 @@ export class JobService {
   }
 
   static async getJobWithOwnerCheck(jobId: string, tradieId: string) {
-    const [job] = await db
-      .select()
+    const [row] = await db
+      .select({
+        job: jobs,
+        customerName: customers.name,
+        customerPhone: customers.phone,
+      })
       .from(jobs)
+      .leftJoin(customers, eq(jobs.customerId, customers.id))
       .where(and(eq(jobs.id, jobId), eq(jobs.tradieId, tradieId)))
       .limit(1)
 
-    if (!job) {
+    if (!row) {
       throw new AppError('Job not found or access denied', 404)
     }
 
-    return job
+    return {
+      ...row.job,
+      customerName: row.customerName,
+      customerPhone: row.customerPhone,
+    }
   }
 
   static async transitionStatus(jobId: string, tradieId: string, targetStatus: JobStatus) {

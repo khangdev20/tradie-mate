@@ -1,4 +1,5 @@
 import { env } from '../config/env'
+import { redis } from '../utils/redis'
 
 export interface ABNDetails {
   abn: string
@@ -34,23 +35,33 @@ export class ABNService {
     if (!this.validateLuhn(abn)) return null
 
     const cleanAbn = abn.replace(/\s/g, '')
+    const cacheKey = `abr_check:${cleanAbn}`
+    const cached = await redis.get(cacheKey)
+    if (cached) {
+      return JSON.parse(cached) as ABNDetails
+    }
+
     const url = `https://abr.business.gov.au/json/AbnDetails.aspx?abn=${cleanAbn}&guid=${env.ATO_ABN_API_GUID}`
 
     try {
       const response = await fetch(url)
-      const data = await response.json()
+      const body = await response.text()
+      const jsonText = body.trim().replace(/^callback\(/, '').replace(/\);?$/, '')
+      const data = JSON.parse(jsonText)
 
       // The ATO API returns JSONP-like callback usually, 
       // but if we handle it as plain JSON (some wrappers do this):
       if (data.Message) return null // Error message from ATO
 
-      return {
+      const details = {
         abn: data.Abn,
         entityName: data.EntityName,
         entityType: data.EntityTypeCode,
         gstRegistered: data.Gst?.length > 0,
         active: data.EntityStatusCode === 'ACT',
       }
+      await redis.set(cacheKey, JSON.stringify(details), 'EX', 24 * 60 * 60)
+      return details
     } catch (err) {
       console.error('ATO API Lookup failed', err)
       return null
