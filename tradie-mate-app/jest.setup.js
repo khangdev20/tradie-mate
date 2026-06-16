@@ -5,8 +5,21 @@ jest.mock('react-native-gesture-handler', () => ({
 }))
 
 const createNavigatorMock = () => ({
-  Navigator: ({ children }) => children,
-  Screen: ({ component: Component }) => (Component ? React.createElement(Component) : null),
+  Navigator: ({ children }) => {
+    const firstScreen = React.Children.toArray(children)[0]
+    const Component = firstScreen?.props?.component
+    return Component
+      ? React.createElement(Component, {
+          route: { params: {} },
+          navigation: {
+            navigate: jest.fn(),
+            goBack: jest.fn(),
+            popToTop: jest.fn(),
+          },
+        })
+      : null
+  },
+  Screen: () => null,
 })
 
 jest.mock('@react-navigation/native', () => ({
