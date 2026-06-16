@@ -63,6 +63,40 @@ jest.mock('@react-native-community/netinfo', () => ({
   addEventListener: jest.fn(() => jest.fn()),
 }))
 
+jest.mock('@react-native-google-signin/google-signin', () => ({
+  GoogleSignin: {
+    configure: jest.fn(),
+    hasPlayServices: jest.fn(() => Promise.resolve(true)),
+    signIn: jest.fn(() => Promise.resolve({
+      data: {
+        idToken: 'test-google-id-token',
+        user: { name: 'Test Tradie', email: 'test@example.com', photo: null },
+      },
+    })),
+    signOut: jest.fn(() => Promise.resolve()),
+  },
+}))
+
+jest.mock('@invertase/react-native-apple-authentication', () => ({
+  __esModule: true,
+  default: {
+    performRequest: jest.fn(() => Promise.resolve({
+      identityToken: 'test-apple-token',
+      fullName: { givenName: 'Test', familyName: 'Tradie' },
+      email: 'test@example.com',
+    })),
+    Operation: { LOGIN: 'LOGIN' },
+    Scope: { FULL_NAME: 'FULL_NAME', EMAIL: 'EMAIL' },
+  },
+}))
+
+jest.mock('react-native-biometrics', () => {
+  return jest.fn().mockImplementation(() => ({
+    isSensorAvailable: jest.fn(() => Promise.resolve({ available: false })),
+    simplePrompt: jest.fn(() => Promise.resolve({ success: false })),
+  }))
+})
+
 jest.mock('react-native-url-polyfill/auto', () => ({}))
 
 jest.mock('@supabase/supabase-js', () => ({
