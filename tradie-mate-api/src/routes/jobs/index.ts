@@ -28,7 +28,8 @@ export async function jobRoutes(fastify: FastifyInstance) {
 
     const conditions = [eq(jobs.tradieId, tradieId)]
     if (status) {
-      conditions.push(eq(jobs.status, status as any))
+      const normalizedStatus = JobService.normalizeStatus(status)
+      conditions.push(eq(jobs.status, normalizedStatus as any))
     }
 
     const whereClause = and(...conditions)

@@ -17,6 +17,9 @@ import { StatusBadge } from '../../components/ui/StatusBadge'
 import { AppButton } from '../../components/ui/AppButton'
 import { useEntitlements } from '../../hooks/useEntitlements'
 import { useAuthStore } from '../../store/auth.store'
+import { useOfflineQueue } from '../../hooks/useOfflineQueue'
+import { useNetworkState } from '../../hooks/useNetworkState'
+import { SyncIndicator } from '../../components/shared/SyncIndicator'
 import api from '../../services/apiService'
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons'
 import { format } from 'date-fns'
@@ -30,9 +33,11 @@ interface BillingPlan {
   features: string[]
 }
 
-export function ProfileScreen() {
+export function ProfileScreen({ navigation }: any) {
   const { subscription, loading, refresh, getEntitlement } = useEntitlements()
   const { logout } = useAuthStore()
+  const { queue } = useOfflineQueue()
+  const { isConnected } = useNetworkState()
 
   const [plans, setPlans] = useState<BillingPlan[]>([])
   const [plansLoading, setPlansLoading] = useState(false)
@@ -194,6 +199,17 @@ export function ProfileScreen() {
           )}
         </View>
 
+        <TouchableOpacity
+          style={styles.syncRow}
+          onPress={() => navigation.navigate('SyncHealth')}
+        >
+          <SyncIndicator
+            status={isConnected ? (queue.length > 0 ? 'syncing' : 'online') : 'offline'}
+            queuedCount={queue.length}
+          />
+          <MaterialCommunityIcons name="chevron-right" size={20} color={Colors.textMuted} />
+        </TouchableOpacity>
+
         {/* Plan usage progress limits */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Usage Limits</Text>
@@ -339,6 +355,18 @@ const styles = StyleSheet.create({
   },
   section: {
     marginBottom: Spacing.xl,
+  },
+  syncRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: Colors.white,
+    borderWidth: 0.5,
+    borderColor: Colors.border,
+    borderRadius: Radius.card,
+    padding: Spacing.md,
+    marginBottom: Spacing.lg,
+    minHeight: 44,
   },
   sectionTitle: {
     fontSize: 12,

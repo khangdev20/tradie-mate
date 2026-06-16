@@ -19,6 +19,7 @@ import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityI
 import { format } from 'date-fns'
 import api from '../../services/apiService'
 import { useNetworkState } from '../../hooks/useNetworkState'
+import { useOfflineQueue } from '../../hooks/useOfflineQueue'
 
 interface DashboardStats {
   jobs_today: number
@@ -38,6 +39,7 @@ interface DashboardStats {
 export function DashboardScreen({ navigation }: any) {
   const today = new Date()
   const { status: networkStatus } = useNetworkState()
+  const { queue } = useOfflineQueue()
   const [loading, setLoading] = useState(false)
   const [refreshing, setRefreshing] = useState(false)
   const [stats, setStats] = useState<DashboardStats>({
@@ -125,7 +127,11 @@ export function DashboardScreen({ navigation }: any) {
             <Text style={styles.greeting}>Good morning</Text>
             <Text style={styles.date}>{format(today, 'EEEE, d MMMM')}</Text>
           </View>
-          <SyncIndicator status={networkStatus} />
+          <SyncIndicator
+            status={networkStatus}
+            queuedCount={queue.length}
+            onPress={() => navigation.navigate('Profile', { screen: 'SyncHealth' })}
+          />
         </View>
 
         {loading && !refreshing ? (

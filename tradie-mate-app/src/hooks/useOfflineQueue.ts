@@ -25,9 +25,10 @@ const zustandStorage = {
 export interface QueueItem {
   id: string
   idempotencyKey: string
-  action: 'UPDATE_STATUS' | 'CREATE_INVOICE' | 'CREATE_JOB' | 'PAY_INVOICE'
+  action: 'UPDATE_STATUS' | 'CREATE_INVOICE' | 'CREATE_JOB' | 'PAY_INVOICE' | 'RECORD_CASH_PAYMENT'
   payload: any
   timestamp: string
+  retryCount?: number
 }
 
 interface OfflineQueueState {

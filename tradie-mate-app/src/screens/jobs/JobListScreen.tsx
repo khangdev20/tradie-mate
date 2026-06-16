@@ -20,7 +20,7 @@ import { format, isToday, isTomorrow } from 'date-fns'
 import api from '../../services/apiService'
 import { useOfflineQueue } from '../../hooks/useOfflineQueue'
 
-const STATUS_FILTERS = ['ALL', 'PENDING', 'COMMUTING', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED']
+const STATUS_FILTERS = ['ALL', 'UPCOMING', 'COMMUTING', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED']
 
 export function JobListScreen({ navigation }: any) {
   const [jobs, setJobs] = useState<any[]>([])
@@ -64,6 +64,7 @@ export function JobListScreen({ navigation }: any) {
       case 'COMPLETED': return 'success'
       case 'COMMUTING': return 'info'
       case 'IN_PROGRESS': return 'cta'
+      case 'UPCOMING':
       case 'PENDING': return 'warning'
       case 'CANCELLED': return 'danger'
       default: return 'stone'
@@ -71,7 +72,10 @@ export function JobListScreen({ navigation }: any) {
   }
 
   const filteredJobs = jobs.filter((job) => {
-    const matchesFilter = filter === 'ALL' || job.status === filter
+    const matchesFilter =
+      filter === 'ALL' ||
+      job.status === filter ||
+      (filter === 'UPCOMING' && job.status === 'PENDING')
     const matchesSearch = 
       job.title.toLowerCase().includes(search.toLowerCase()) ||
       job.customerName?.toLowerCase().includes(search.toLowerCase()) ||
