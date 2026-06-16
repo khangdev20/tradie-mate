@@ -8,9 +8,13 @@ import { AppError } from '../../utils/errors'
 export async function deviceRoutes(fastify: FastifyInstance) {
   fastify.addHook('preHandler', requireAuth)
 
+  /**
+   * POST /api/v1/devices/fcm-token
+   * Save or update the FCM push notification token for this tradie's device.
+   */
   fastify.post('/fcm-token', async (request: FastifyRequest<{
     Body: { token: string; platform?: 'ios' | 'android' }
-  }>) => {
+  }>, reply) => {
     const { token } = request.body
     const tradieId = request.tradie.id
 
@@ -27,9 +31,11 @@ export async function deviceRoutes(fastify: FastifyInstance) {
       })
       .where(eq(tradies.id, tradieId))
 
-    return {
+    return reply.status(200).send({
       success: true,
-      data: { registered: true },
-    }
+      data: {
+        message: 'FCM token saved successfully.',
+      },
+    })
   })
 }
