@@ -1,10 +1,8 @@
 // src/services/location.ts
-// Using @react-native-community/geolocation for standard location access.
-// For production background tracking, integrate transistorsoft's
-// react-native-background-geolocation (requires commercial license).
-// import Geolocation from '@react-native-community/geolocation'
+import Geolocation from '@react-native-community/geolocation'
+import api from './apiService'
 
-const BATCH_INTERVAL_MS = 5000 // 5s — never more frequent
+const BATCH_INTERVAL_MS = 5000
 let locationBuffer: Array<{
   lat: number
   lng: number
@@ -14,11 +12,28 @@ let locationBuffer: Array<{
 }> = []
 let intervalId: ReturnType<typeof setInterval> | null = null
 let watchId: number | null = null
+let activeJobId: string | null = null
+
+export function getCurrentPosition(): Promise<{ latitude: number; longitude: number; accuracy: number }> {
+  return new Promise((resolve, reject) => {
+    Geolocation.getCurrentPosition(
+      (position) => {
+        resolve({
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+          accuracy: position.coords.accuracy,
+        })
+      },
+      (error) => reject(error),
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
+    )
+  })
+}
 
 export function startTracking(jobId: string) {
+  activeJobId = jobId
   console.log('Starting GPS tracking for job:', jobId)
 
-  /*
   watchId = Geolocation.watchPosition(
     (position) => {
       locationBuffer.push({
@@ -29,20 +44,29 @@ export function startTracking(jobId: string) {
         job_id: jobId,
       })
     },
-    (error) => console.warn('Location error:', error),
+    (error) => {
+      console.warn('Location error:', error)
+      api
+        .post('/maps/location-event', {
+          jobId,
+          eventType: 'PERMISSION_DENIED',
+          metadata: { code: error.code, message: error.message },
+        })
+        .catch(() => {})
+    },
     { enableHighAccuracy: true, distanceFilter: 10 }
   )
-  */
 
-  // Batch flush every 5 seconds — never stream to server
   intervalId = setInterval(async () => {
     if (locationBuffer.length === 0) return
-    const batch = locationBuffer.splice(0, 20) // max 20 per flush
+    const batch = locationBuffer.splice(0, 20)
     try {
-      console.log('Flushing GPS batch:', batch.length, 'updates')
-      // await api.post('/location/batch', { updates: batch })
+      await api.post('/maps/location-event', {
+        jobId: activeJobId,
+        eventType: 'GPS_BATCH',
+        metadata: { updates: batch },
+      })
     } catch {
-      // Offline: push back to buffer, retry next interval
       locationBuffer.unshift(...batch)
     }
   }, BATCH_INTERVAL_MS)
@@ -50,12 +74,13 @@ export function startTracking(jobId: string) {
 
 export function stopTracking() {
   console.log('Stopping GPS tracking')
+  activeJobId = null
   if (intervalId) {
     clearInterval(intervalId)
     intervalId = null
   }
   if (watchId !== null) {
-    // Geolocation.clearWatch(watchId)
+    Geolocation.clearWatch(watchId)
     watchId = null
   }
   locationBuffer = []

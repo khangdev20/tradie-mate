@@ -15,20 +15,20 @@ export class AppError extends Error {
 export function setupErrorHandler(fastify: FastifyInstance) {
   fastify.setErrorHandler((error: FastifyError, request: FastifyRequest, reply: FastifyReply) => {
     const isProduction = process.env.NODE_ENV === 'production'
+    const appError = error instanceof AppError ? error : null
     
     // Log to Sentry if 5xx
-    if (error.statusCode && error.statusCode >= 500) {
+    if ((appError?.statusCode ?? error.statusCode) && (appError?.statusCode ?? error.statusCode ?? 500) >= 500) {
       Sentry.captureException(error)
       fastify.log.error(error)
     }
 
-    // Format response
-    const statusCode = error.statusCode || 500
+    const statusCode = appError?.statusCode ?? error.statusCode ?? 500
     const response = {
       success: false,
       error: {
         statusCode,
-        code: (error as any).code || 'INTERNAL_SERVER_ERROR',
+        code: appError?.code ?? (error as any).code ?? 'INTERNAL_SERVER_ERROR',
         message: error.message || 'Internal Server Error',
         ...(isProduction ? {} : { stack: error.stack }),
       }

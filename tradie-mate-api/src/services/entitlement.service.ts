@@ -33,7 +33,29 @@ const DEFAULT_ENTITLEMENTS: EntitlementsPayload = {
   aiVoiceEnabled: false,
 }
 
+const GRACE_PERIOD_DAYS = 7
+
 export class EntitlementService {
+  static isSubscriptionActive(status: string, currentPeriodEnd: Date): boolean {
+    if (status === 'ACTIVE' || status === 'TRIALING') return true
+    if (status === 'PAST_DUE') {
+      const graceEnd = new Date(currentPeriodEnd)
+      graceEnd.setDate(graceEnd.getDate() + GRACE_PERIOD_DAYS)
+      return new Date() <= graceEnd
+    }
+    return false
+  }
+
+  static async requireActiveSubscription(tradieId: string) {
+    const { status, currentPeriodEnd } = await this.getEffectiveEntitlements(tradieId)
+    if (!this.isSubscriptionActive(status, currentPeriodEnd)) {
+      throw new AppError(
+        'An active subscription is required for this action. Please update your billing.',
+        403,
+        'SUBSCRIPTION_REQUIRED'
+      )
+    }
+  }
   static async getEffectiveEntitlements(tradieId: string): Promise<{
     planCode: string
     status: string
@@ -41,14 +63,14 @@ export class EntitlementService {
     currentPeriodEnd: Date
     entitlements: EntitlementsPayload
   }> {
-    // 1. Get active subscription
+    // 1. Get active subscription (including past-due grace)
     const [sub] = await db
       .select()
       .from(tradieSubscriptions)
       .where(
         and(
           eq(tradieSubscriptions.tradieId, tradieId),
-          sql`${tradieSubscriptions.status} IN ('ACTIVE', 'TRIALING')`
+          sql`${tradieSubscriptions.status} IN ('ACTIVE', 'TRIALING', 'PAST_DUE')`
         )
       )
       .limit(1)
@@ -104,6 +126,7 @@ export class EntitlementService {
   }
 
   static async requireEntitlement(tradieId: string, entitlementKey: keyof EntitlementsPayload) {
+    await this.requireActiveSubscription(tradieId)
     const { entitlements } = await this.getEffectiveEntitlements(tradieId)
     const value = entitlements[entitlementKey]
 

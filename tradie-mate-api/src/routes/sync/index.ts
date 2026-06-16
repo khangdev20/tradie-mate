@@ -5,12 +5,14 @@ import { jobs } from '../../db/schema/jobs'
 import { invoices, invoiceItems, invoiceSequence } from '../../db/schema/invoices'
 import { eq, and } from 'drizzle-orm'
 import { JobService } from '../../services/job.service'
+import { EntitlementService } from '../../services/entitlement.service'
 import { GSTService } from '../../services/gst.service'
 import { AppError } from '../../utils/errors'
 
 interface SyncAction {
   action: 'UPDATE_STATUS' | 'CREATE_INVOICE' | 'CREATE_JOB' | 'PAY_INVOICE'
   payload: any
+  idempotencyKey?: string
 }
 
 export async function syncRoutes(fastify: FastifyInstance) {
@@ -111,12 +113,12 @@ export async function syncRoutes(fastify: FastifyInstance) {
             // 4. Totals calculations
             let subtotalCents = 0
             const calculatedItems = items.map((item: any, idx: number) => {
-              const lineTotalCents = Math.round(item.quantity * item.unitPrice)
+              const lineTotalCents = Math.round(item.quantity * (item.unitPriceCents ?? item.unitPrice))
               subtotalCents += lineTotalCents
               return {
                 description: item.description,
                 qty: item.quantity.toString(),
-                unitPriceCents: item.unitPrice,
+                unitPriceCents: item.unitPriceCents ?? item.unitPrice,
                 lineTotalCents,
                 sortOrder: idx,
               }
@@ -151,6 +153,34 @@ export async function syncRoutes(fastify: FastifyInstance) {
             )
 
             results.push({ action: 'CREATE_INVOICE', status: 'SUCCESS' })
+            syncedCount++
+          } else if (item.action === 'CREATE_JOB') {
+            const {
+              title,
+              customerName,
+              customerPhone,
+              address,
+              scheduledAt,
+              estimatedDurationMin,
+              source,
+              notes,
+            } = item.payload
+
+            await EntitlementService.requireUsageLimit(tradieId, 'jobsCreated', 'maxJobsPerMonth')
+
+            await JobService.createJob(tradieId, {
+              title,
+              customerName,
+              customerPhone,
+              address,
+              scheduledAt,
+              estimatedDurationMin,
+              source: source ?? 'MANUAL',
+              notes,
+            })
+
+            await EntitlementService.incrementUsage(tradieId, 'jobsCreated')
+            results.push({ action: 'CREATE_JOB', status: 'SUCCESS' })
             syncedCount++
           } else if (item.action === 'PAY_INVOICE') {
             const { invoiceId, signatureData, timestamp } = item.payload

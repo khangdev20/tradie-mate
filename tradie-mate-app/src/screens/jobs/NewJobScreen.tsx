@@ -18,6 +18,7 @@ import { AppButton } from '../../components/ui/AppButton'
 import { useEntitlements } from '../../hooks/useEntitlements'
 import { useOfflineQueue } from '../../hooks/useOfflineQueue'
 import { useNetworkState } from '../../hooks/useNetworkState'
+import { trackEvent } from '../../services/analytics'
 import api from '../../services/apiService'
 
 export function NewJobScreen({ navigation }: any) {
@@ -112,6 +113,7 @@ export function NewJobScreen({ navigation }: any) {
   const submitJob = async (jobPayload: any) => {
     const res = await api.post('/jobs', jobPayload) as any
     if (res && res.success) {
+      trackEvent('job_created', { source: 'manual' })
       Alert.alert('Success', 'Job scheduled successfully.', [
         { text: 'OK', onPress: () => navigation.goBack() }
       ])
