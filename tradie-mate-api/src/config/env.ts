@@ -1,6 +1,27 @@
 import { z } from 'zod'
 import 'dotenv/config'
 
+if (process.env.NODE_ENV === 'test') {
+  process.env.DATABASE_URL ??= 'postgres://test:test@localhost:5432/tradiemate_test'
+  process.env.DIRECT_DATABASE_URL ??= 'postgres://test:test@localhost:5432/tradiemate_test'
+  process.env.SUPABASE_URL ??= 'https://test.supabase.co'
+  process.env.SUPABASE_SERVICE_ROLE_KEY ??= 'test-service-role-key'
+  process.env.SUPABASE_ANON_KEY ??= 'test-anon-key'
+  process.env.JWT_SECRET ??= 'test-jwt-secret-at-least-32-characters'
+  process.env.FIREBASE_PROJECT_ID ??= 'tradiemate-test'
+  process.env.FIREBASE_CLIENT_EMAIL ??= 'firebase-admin@tradiemate-test.iam.gserviceaccount.com'
+  process.env.FIREBASE_PRIVATE_KEY ??= '-----BEGIN PRIVATE KEY-----\\ntest\\n-----END PRIVATE KEY-----'
+  process.env.STRIPE_SECRET_KEY ??= 'sk_test_tradiemate'
+  process.env.STRIPE_WEBHOOK_SECRET ??= 'whsec_tradiemate'
+  process.env.REDIS_URL ??= 'redis://localhost:6379'
+  process.env.TWILIO_ACCOUNT_SID ??= 'AC00000000000000000000000000000000'
+  process.env.TWILIO_AUTH_TOKEN ??= 'test-auth-token'
+  process.env.TWILIO_FROM_NUMBER ??= '+61400000000'
+  process.env.XERO_CLIENT_ID ??= 'test-xero-client-id'
+  process.env.XERO_CLIENT_SECRET ??= 'test-xero-client-secret'
+  process.env.ATO_ABN_API_GUID ??= 'test-ato-guid'
+}
+
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   PORT: z.string().default('3000'),
