@@ -97,6 +97,10 @@ jest.mock('react-native-biometrics', () => {
   }))
 })
 
+jest.mock('react-native-haptic-feedback', () => ({
+  trigger: jest.fn(),
+}))
+
 jest.mock('react-native-url-polyfill/auto', () => ({}))
 
 jest.mock('@supabase/supabase-js', () => ({
