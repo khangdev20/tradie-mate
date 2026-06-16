@@ -1,4 +1,3 @@
-// src/services/location.ts
 // Using @react-native-community/geolocation for standard location access.
 // For production background tracking, integrate transistorsoft's
 // react-native-background-geolocation (requires commercial license).
@@ -17,6 +16,7 @@ let locationBuffer: Array<{
 }> = []
 let intervalId: ReturnType<typeof setInterval> | null = null
 let watchId: number | null = null
+let activeJobId: string | null = null
 
 export type LatLng = {
   latitude: number
@@ -35,7 +35,7 @@ export async function requestForegroundLocationPermission() {
   return true
 }
 
-export async function getCurrentLocation(): Promise<LatLng & { accuracyMeters?: number }> {
+export async function getCurrentPosition(): Promise<LatLng & { accuracy: number }> {
   const granted = await requestForegroundLocationPermission()
   if (!granted) {
     await api.post('/maps/location-event', {
@@ -51,7 +51,7 @@ export async function getCurrentLocation(): Promise<LatLng & { accuracyMeters?: 
         resolve({
           latitude: position.coords.latitude,
           longitude: position.coords.longitude,
-          accuracyMeters: position.coords.accuracy,
+          accuracy: position.coords.accuracy,
         })
       },
       async (error) => {
@@ -61,12 +61,22 @@ export async function getCurrentLocation(): Promise<LatLng & { accuracyMeters?: 
         }).catch(() => undefined)
         reject(error)
       },
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 30000 }
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
     )
   })
 }
 
+export async function getCurrentLocation(): Promise<LatLng & { accuracyMeters?: number }> {
+  const position = await getCurrentPosition()
+  return {
+    latitude: position.latitude,
+    longitude: position.longitude,
+    accuracyMeters: position.accuracy,
+  }
+}
+
 export async function startTracking(jobId: string) {
+  activeJobId = jobId
   console.log('Starting GPS tracking for job:', jobId)
 
   const granted = await requestForegroundLocationPermission()
@@ -99,20 +109,19 @@ export async function startTracking(jobId: string) {
       api.post('/maps/location-event', {
         jobId,
         eventType: 'STALE_LOCATION',
-        metadata: { message: error.message },
+        metadata: { code: error.code, message: error.message },
       }).catch(() => undefined)
     },
     { enableHighAccuracy: true, distanceFilter: 10 }
   )
 
-  // Batch flush every 5 seconds — never stream to server
   intervalId = setInterval(async () => {
     if (locationBuffer.length === 0) return
     const batch = locationBuffer.splice(0, MAX_BATCH_SIZE)
     try {
       console.log('Flushing GPS batch:', batch.length, 'updates')
       await api.post('/maps/location-event', {
-        jobId,
+        jobId: activeJobId ?? jobId,
         eventType: 'LOCATION_BATCH_RECORDED',
         metadata: {
           count: batch.length,
@@ -120,7 +129,6 @@ export async function startTracking(jobId: string) {
         },
       })
     } catch {
-      // Offline: push back to buffer, retry next interval
       locationBuffer.unshift(...batch)
     }
   }, BATCH_INTERVAL_MS)
@@ -128,6 +136,7 @@ export async function startTracking(jobId: string) {
 
 export function stopTracking() {
   console.log('Stopping GPS tracking')
+  activeJobId = null
   if (intervalId) {
     clearInterval(intervalId)
     intervalId = null

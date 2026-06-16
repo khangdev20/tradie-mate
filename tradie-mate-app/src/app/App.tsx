@@ -11,9 +11,8 @@ import {
   setupFCMHandlers,
   setupNotificationChannels,
 } from '../services/notifications'
-import { useOfflineQueueStore } from '../hooks/useOfflineQueue'
-import { useNetworkState } from '../hooks/useNetworkState'
 import { useAuthStore } from '../store/auth.store'
+import { useAutoSync } from '../hooks/useAutoSync'
 
 const queryClient = new QueryClient()
 
@@ -22,11 +21,9 @@ import { AppConfig } from '../constants/config'
 
 Mapbox.setAccessToken(AppConfig.mapboxAccessToken)
 
-export default function App() {
-  const { isConnected, setStatus } = useNetworkState()
+function AppContent() {
+  useAutoSync()
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
-  const queueLength = useOfflineQueueStore((state) => state.queue.length)
-  const syncQueue = useOfflineQueueStore((state) => state.syncQueue)
 
   React.useEffect(() => {
     const cleanup = setupSessionRefresh()
@@ -56,32 +53,20 @@ export default function App() {
     })
   }, [isAuthenticated])
 
-  React.useEffect(() => {
-    if (!isConnected || queueLength === 0) return
+  return (
+    <>
+      <StatusBar barStyle="dark-content" />
+      <RootNavigator />
+    </>
+  )
+}
 
-    let cancelled = false
-    setStatus('syncing')
-    syncQueue()
-      .catch((error) => {
-        console.warn('Offline sync failed:', error)
-      })
-      .finally(() => {
-        if (!cancelled) {
-          setStatus('online')
-        }
-      })
-
-    return () => {
-      cancelled = true
-    }
-  }, [isConnected, queueLength, setStatus, syncQueue])
-
+export default function App() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <QueryClientProvider client={queryClient}>
-          <StatusBar barStyle="dark-content" />
-          <RootNavigator />
+          <AppContent />
         </QueryClientProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>

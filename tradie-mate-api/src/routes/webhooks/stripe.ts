@@ -6,8 +6,22 @@ import { stripe } from '../../config/stripe'
 import { db } from '../../config/db'
 import { invoices } from '../../db/schema/invoices'
 import { subscriptionPlans, tradieSubscriptions } from '../../db/schema/subscriptions'
+import { redis } from '../../utils/redis'
 
 type SubscriptionStatus = 'TRIALING' | 'ACTIVE' | 'PAST_DUE' | 'CANCELED' | 'INCOMPLETE'
+
+const IDEMPOTENCY_TTL_SECONDS = 60 * 60 * 72 // 72 hours
+
+async function isEventProcessed(eventId: string): Promise<boolean> {
+  const key = `stripe:event:${eventId}`
+  const exists = await redis.get(key)
+  return exists === '1'
+}
+
+async function markEventProcessed(eventId: string): Promise<void> {
+  const key = `stripe:event:${eventId}`
+  await redis.set(key, '1', 'EX', IDEMPOTENCY_TTL_SECONDS)
+}
 
 export async function stripeWebhookHandler(request: FastifyRequest, reply: FastifyReply) {
   const sig = request.headers['stripe-signature'] as string
@@ -23,33 +37,51 @@ export async function stripeWebhookHandler(request: FastifyRequest, reply: Fasti
     return reply.status(400).send(`Webhook Error: ${err.message}`)
   }
 
-  switch (event.type) {
-    case 'payment_intent.succeeded': {
-      const paymentIntent = event.data.object as Stripe.PaymentIntent
-      await handlePaymentSuccess(paymentIntent)
-      break
+  try {
+    if (await isEventProcessed(event.id)) {
+      return reply.status(200).send({
+        success: true,
+        data: { received: true, duplicate: true },
+      })
     }
-    case 'payment_intent.payment_failed':
-      // Log failure + notify tradie via FCM
-      break
-    case 'checkout.session.completed': {
-      const session = event.data.object as Stripe.Checkout.Session
-      await handleCheckoutCompleted(session)
-      break
+
+    switch (event.type) {
+      case 'payment_intent.succeeded': {
+        await handlePaymentSuccess(event.data.object as Stripe.PaymentIntent)
+        break
+      }
+      case 'payment_intent.payment_failed':
+        console.warn('Payment failed:', (event.data.object as Stripe.PaymentIntent).id)
+        break
+      case 'checkout.session.completed': {
+        await handleCheckoutCompleted(event.data.object as Stripe.Checkout.Session)
+        break
+      }
+      case 'customer.subscription.created':
+      case 'customer.subscription.updated':
+      case 'customer.subscription.deleted': {
+        await upsertSubscription(event.data.object as Stripe.Subscription)
+        break
+      }
+      case 'invoice.payment_succeeded':
+      case 'invoice.payment_failed':
+        await handleBillingInvoice(event.data.object as Stripe.Invoice, event.type)
+        break
+      default:
+        break
     }
-    case 'customer.subscription.created':
-    case 'customer.subscription.updated':
-    case 'customer.subscription.deleted': {
-      const subscription = event.data.object as Stripe.Subscription
-      await upsertSubscription(subscription)
-      break
-    }
-    case 'invoice.payment_succeeded':
-    case 'invoice.payment_failed': {
-      const invoice = event.data.object as Stripe.Invoice
-      await handleBillingInvoice(invoice, event.type)
-      break
-    }
+
+    await markEventProcessed(event.id)
+  } catch (err) {
+    console.error('Stripe webhook processing error:', err)
+    return reply.status(500).send({
+      success: false,
+      error: {
+        statusCode: 500,
+        code: 'STRIPE_WEBHOOK_PROCESSING_FAILED',
+        message: 'Stripe webhook processing failed.',
+      },
+    })
   }
 
   return reply.status(200).send({

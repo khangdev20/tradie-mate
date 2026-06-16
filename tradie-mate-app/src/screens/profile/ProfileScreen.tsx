@@ -107,7 +107,9 @@ export function ProfileScreen() {
   const handleManageBilling = async () => {
     try {
       setActionLoading(true)
-      const res = await api.post('/billing/portal-session') as any
+      const res = await api.post('/billing/portal-session', {
+        returnUrl: 'tradiemate://billing/portal',
+      }) as any
       if (res && res.success && res.data.portalUrl) {
         Linking.openURL(res.data.portalUrl)
       } else {

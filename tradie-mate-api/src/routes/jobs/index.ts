@@ -4,9 +4,8 @@ import { db } from '../../config/db'
 import { jobs } from '../../db/schema/jobs'
 import { customers } from '../../db/schema/customers'
 import { eq, and, asc, count } from 'drizzle-orm'
-import { JobService, JobStatus } from '../../services/job.service'
+import { JobService, JobStatus, CreateJobInput } from '../../services/job.service'
 import { EntitlementService } from '../../services/entitlement.service'
-import { MapboxService } from '../../services/mapbox.service'
 import { AppError } from '../../utils/errors'
 
 export async function jobRoutes(fastify: FastifyInstance) {
@@ -23,17 +22,13 @@ export async function jobRoutes(fastify: FastifyInstance) {
     }
 
     const whereClause = and(...conditions)
-    const [totalRow] = await db
+    const [totalResult] = await db
       .select({ total: count() })
       .from(jobs)
       .where(whereClause)
 
-    const rows = await db
-      .select({
-        job: jobs,
-        customerName: customers.name,
-        customerPhone: customers.phone,
-      })
+    const jobRows = await db
+      .select({ job: jobs, customer: customers })
       .from(jobs)
       .leftJoin(customers, eq(jobs.customerId, customers.id))
       .where(whereClause)
@@ -41,18 +36,14 @@ export async function jobRoutes(fastify: FastifyInstance) {
       .limit(limit)
       .offset(offset)
 
-    const jobList = rows.map((row) => ({
-      ...row.job,
-      customerName: row.customerName,
-      customerPhone: row.customerPhone,
-    }))
+    const jobList = jobRows.map((row) => JobService.formatJobResponse(row.job, row.customer))
 
     return {
       success: true,
       data: {
         jobs: jobList,
         meta: {
-          total: Number(totalRow?.total ?? 0),
+          total: Number(totalResult?.total ?? 0),
           limit,
           offset,
         },
@@ -70,98 +61,56 @@ export async function jobRoutes(fastify: FastifyInstance) {
   })
 
   // 3. Create job
-  fastify.post<{
-    Body: {
-      customerId?: string
-      customerName?: string
-      customerPhone?: string
-      title: string
-      description?: string
-      jobType?: string
-      address: string
-      scheduledAt?: string
-      estimatedDurationMin?: number
-      urgency?: 'EMERGENCY' | 'TODAY' | 'THIS_WEEK' | 'FLEXIBLE'
-      source?: 'MANUAL' | 'PHONE_CALL' | 'CUSTOMER_BOOKING' | 'REFERRAL'
-    }
-  }>('/', async (request, reply) => {
+  fastify.post<{ Body: CreateJobInput }>('/', async (request, reply) => {
     const tradieId = request.tradie.id
     const body = request.body
 
-    // A. Check subscription limits
+    if (!body.title?.trim() || !body.address?.trim()) {
+      throw new AppError('Job title and address are required.', 400, 'VALIDATION_ERROR')
+    }
+
     await EntitlementService.requireUsageLimit(tradieId, 'jobsCreated', 'maxJobsPerMonth')
 
-    // B. Geocode address via MapboxService
-    let lat = '0'
-    let lng = '0'
-    try {
-      const geocode = await MapboxService.geocodeAddress(body.address)
-      lat = geocode.latitude.toString()
-      lng = geocode.longitude.toString()
-    } catch (err) {
-      console.warn('Geocoding failed for job address:', err)
-    }
+    const newJob = await JobService.createJob(tradieId, {
+      ...body,
+      title: body.title.trim(),
+      address: body.address.trim(),
+    })
 
-    let customerId = body.customerId ?? null
-    if (!customerId && body.customerName && body.customerPhone) {
-      const [customer] = await db
-        .insert(customers)
-        .values({
-          tradieId,
-          name: body.customerName,
-          phone: body.customerPhone,
-          address: body.address,
-          source: body.source ?? 'MANUAL',
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        })
-        .returning()
-      customerId = customer.id
-    }
-
-    // C. Insert job
-    const [newJob] = await db
-      .insert(jobs)
-      .values({
-        tradieId,
-        customerId,
-        title: body.title,
-        description: body.description ?? null,
-        jobType: body.jobType ?? 'Repair',
-        status: 'UPCOMING',
-        urgency: body.urgency ?? 'FLEXIBLE',
-        source: body.source ?? 'MANUAL',
-        scheduledAt: body.scheduledAt ? new Date(body.scheduledAt) : new Date(),
-        estimatedDurationMin: body.estimatedDurationMin ?? 60,
-        address: body.address,
-        lat,
-        lng,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      })
-      .returning()
-
-    // D. Increment subscription usage counter
     await EntitlementService.incrementUsage(tradieId, 'jobsCreated')
 
     return reply.status(201).send({
       success: true,
-      data: {
-        ...newJob,
-        customerName: body.customerName ?? null,
-        customerPhone: body.customerPhone ?? null,
-      },
+      data: newJob,
     })
   })
 
-  // 4. Update status
+  // 4. Update job notes
+  fastify.patch<{ Params: { id: string }; Body: { notes: string } }>('/:id', async (request) => {
+    const { notes } = request.body
+    if (notes === undefined) {
+      throw new AppError('Notes field is required.', 400, 'VALIDATION_ERROR')
+    }
+
+    const updated = await JobService.updateNotes(request.params.id, request.tradie.id, notes)
+    return {
+      success: true,
+      data: updated,
+    }
+  })
+
+  // 5. Update status
   fastify.patch<{
     Params: { id: string }
     Body: { status: JobStatus }
   }>('/:id/status', async (request) => {
     const { status } = request.body
     if (!status) {
-      throw new AppError('Status is required', 400)
+      throw new AppError('Status is required', 400, 'VALIDATION_ERROR')
+    }
+
+    if (status === 'COMMUTING') {
+      await EntitlementService.requireEntitlement(request.tradie.id, 'customerTrackingEnabled')
     }
 
     const updatedJob = await JobService.transitionStatus(
@@ -175,6 +124,4 @@ export async function jobRoutes(fastify: FastifyInstance) {
       data: updatedJob,
     }
   })
-
 }
-

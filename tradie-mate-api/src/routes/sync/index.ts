@@ -2,15 +2,17 @@ import { FastifyInstance, FastifyRequest } from 'fastify'
 import { requireAuth } from '../../middleware/auth.middleware'
 import { db } from '../../config/db'
 import { jobs } from '../../db/schema/jobs'
-import { customers } from '../../db/schema/customers'
 import { invoices, invoiceItems, invoiceSequence } from '../../db/schema/invoices'
 import { eq, and } from 'drizzle-orm'
+import { JobService } from '../../services/job.service'
+import { EntitlementService } from '../../services/entitlement.service'
 import { GSTService } from '../../services/gst.service'
 import { AppError } from '../../utils/errors'
 
 interface SyncAction {
   action: 'UPDATE_STATUS' | 'CREATE_INVOICE' | 'CREATE_JOB' | 'PAY_INVOICE'
   payload: any
+  idempotencyKey?: string
 }
 
 export async function syncRoutes(fastify: FastifyInstance) {
@@ -67,51 +69,6 @@ export async function syncRoutes(fastify: FastifyInstance) {
               .where(and(eq(jobs.id, jobId), eq(jobs.tradieId, tradieId)))
 
             results.push({ action: 'UPDATE_STATUS', status: 'SUCCESS' })
-            syncedCount++
-
-          } else if (item.action === 'CREATE_JOB') {
-            const {
-              title,
-              customerName,
-              customerPhone,
-              address,
-              scheduledAt,
-              estimatedDurationMin,
-              source,
-              timestamp,
-            } = item.payload
-
-            if (!title || !customerName || !customerPhone || !address) {
-              results.push({ action: 'CREATE_JOB', status: 'FAILED', error: 'Missing required job fields' })
-              continue
-            }
-
-            const [customer] = await tx.insert(customers).values({
-              tradieId,
-              name: customerName,
-              phone: customerPhone,
-              address,
-              source: source ?? 'MANUAL',
-              createdAt: new Date(timestamp),
-              updatedAt: new Date(timestamp),
-            }).returning()
-
-            await tx.insert(jobs).values({
-              tradieId,
-              customerId: customer.id,
-              title,
-              status: 'UPCOMING',
-              source: source ?? 'MANUAL',
-              scheduledAt: scheduledAt ? new Date(scheduledAt) : new Date(timestamp),
-              estimatedDurationMin: estimatedDurationMin ?? 60,
-              address,
-              lat: '0',
-              lng: '0',
-              createdAt: new Date(timestamp),
-              updatedAt: new Date(timestamp),
-            })
-
-            results.push({ action: 'CREATE_JOB', status: 'SUCCESS' })
             syncedCount++
 
           } else if (item.action === 'CREATE_INVOICE') {
@@ -197,6 +154,34 @@ export async function syncRoutes(fastify: FastifyInstance) {
             )
 
             results.push({ action: 'CREATE_INVOICE', status: 'SUCCESS' })
+            syncedCount++
+          } else if (item.action === 'CREATE_JOB') {
+            const {
+              title,
+              customerName,
+              customerPhone,
+              address,
+              scheduledAt,
+              estimatedDurationMin,
+              source,
+              notes,
+            } = item.payload
+
+            await EntitlementService.requireUsageLimit(tradieId, 'jobsCreated', 'maxJobsPerMonth')
+
+            await JobService.createJob(tradieId, {
+              title,
+              customerName,
+              customerPhone,
+              address,
+              scheduledAt,
+              estimatedDurationMin,
+              source: source ?? 'MANUAL',
+              notes,
+            })
+
+            await EntitlementService.incrementUsage(tradieId, 'jobsCreated')
+            results.push({ action: 'CREATE_JOB', status: 'SUCCESS' })
             syncedCount++
           } else if (item.action === 'PAY_INVOICE') {
             const { invoiceId, signatureData, timestamp } = item.payload
