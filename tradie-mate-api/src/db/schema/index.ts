@@ -13,4 +13,8 @@ export * from './financials'
 export * from './xero'
 export * from './parts'
 export * from './subscriptions'
+export * from './teams'
+export * from './marketplace'
+export * from './enterprise'
+export * from './licenceAutomation'
 

@@ -18,7 +18,18 @@ import { billingRoutes } from './routes/billing'
 import { mapRoutes } from './routes/maps'
 import { syncRoutes } from './routes/sync'
 import { deviceRoutes } from './routes/devices'
+import { documentRoutes } from './routes/documents'
+import { reviewRoutes } from './routes/reviews'
+import { earningsRoutes } from './routes/earnings'
+import { integrationRoutes } from './routes/integrations'
+import { adminRoutes } from './routes/admin'
+import { suppliesRoutes } from './routes/supplies'
+import { enterpriseRoutes } from './routes/enterprise'
+import { marketplaceRoutes } from './routes/marketplace'
+import { notificationRoutes } from './routes/notifications'
 import { stripeWebhookHandler } from './routes/webhooks/stripe'
+import { stripeBillingWebhookHandler } from './routes/webhooks/stripe-billing'
+import { twilioCallWebhookHandler } from './routes/webhooks/twilio-call'
 
 export async function buildApp() {
   const fastify = Fastify({
@@ -81,7 +92,7 @@ export async function buildApp() {
     }
   })
 
-  // Routes registration
+  // Phase 1 Routes
   await fastify.register(authRoutes, { prefix: '/auth' })
   await fastify.register(tradieRoutes, { prefix: '/tradies' })
   await fastify.register(jobRoutes, { prefix: '/jobs' })
@@ -91,6 +102,23 @@ export async function buildApp() {
   await fastify.register(mapRoutes, { prefix: '/maps' })
   await fastify.register(syncRoutes, { prefix: '/sync' })
   await fastify.register(deviceRoutes, { prefix: '/devices' })
+
+  // Phase 2 Routes
+  await fastify.register(documentRoutes, { prefix: '/documents' })
+  await fastify.register(reviewRoutes, { prefix: '/reviews' })
+
+  // Phase 3 Routes
+  await fastify.register(earningsRoutes, { prefix: '/earnings' })
+  await fastify.register(integrationRoutes, { prefix: '/integrations' })
+  await fastify.register(adminRoutes, { prefix: '/admin' })
+  await fastify.register(suppliesRoutes, { prefix: '/supplies' })
+
+  // Phase 4 Routes
+  await fastify.register(enterpriseRoutes, { prefix: '/enterprise' })
+  await fastify.register(marketplaceRoutes, { prefix: '/marketplace' })
+
+  // Notifications (cross-phase)
+  await fastify.register(notificationRoutes, { prefix: '/notifications' })
 
   // Versioned aliases for the implementation-plan API contract.
   await fastify.register(authRoutes, { prefix: '/api/v1/auth' })
@@ -102,11 +130,26 @@ export async function buildApp() {
   await fastify.register(mapRoutes, { prefix: '/api/v1/maps' })
   await fastify.register(syncRoutes, { prefix: '/api/v1/sync' })
   await fastify.register(deviceRoutes, { prefix: '/api/v1/devices' })
+  await fastify.register(documentRoutes, { prefix: '/api/v1/documents' })
+  await fastify.register(reviewRoutes, { prefix: '/api/v1/reviews' })
+  await fastify.register(earningsRoutes, { prefix: '/api/v1/earnings' })
+  await fastify.register(integrationRoutes, { prefix: '/api/v1/integrations' })
+  await fastify.register(adminRoutes, { prefix: '/api/v1/admin' })
+  await fastify.register(suppliesRoutes, { prefix: '/api/v1/supplies' })
+  await fastify.register(enterpriseRoutes, { prefix: '/api/v1/enterprise' })
+  await fastify.register(marketplaceRoutes, { prefix: '/api/v1/marketplace' })
+  await fastify.register(notificationRoutes, { prefix: '/api/v1/notifications' })
 
   // Webhooks (Raw body needed for Stripe signature)
   fastify.post('/webhooks/stripe', { 
     config: { rawBody: true } 
   }, stripeWebhookHandler)
+
+  fastify.post('/webhooks/stripe-billing', {
+    config: { rawBody: true }
+  }, stripeBillingWebhookHandler)
+
+  fastify.post('/webhooks/twilio-call', twilioCallWebhookHandler)
 
   return fastify
 }
