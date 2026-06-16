@@ -10,7 +10,8 @@ import {
   oauthCallbackHandler,
   linkProviderHandler,
   unlinkProviderHandler,
-  getAuthMethodsHandler
+  getAuthMethodsHandler,
+  ssoHandler,
 } from './handler'
 import { 
   sendOtpSchema, 
@@ -35,6 +36,7 @@ export async function authRoutes(fastify: FastifyInstance) {
   fastify.post('/email/login', { schema: emailLoginSchema }, emailLoginHandler)
   fastify.post('/email/forgot-password', { schema: forgotPasswordSchema }, forgotPasswordHandler)
   fastify.post('/oauth/callback', { schema: oauthCallbackSchema }, oauthCallbackHandler)
+  fastify.post('/sso', ssoHandler)
   fastify.post('/refresh', { schema: refreshSchema }, refreshHandler)
 
   // Protected
