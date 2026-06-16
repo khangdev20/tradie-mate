@@ -6,6 +6,7 @@ import { Typography } from '../../constants/typography'
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons'
 import Mapbox from '@rnmapbox/maps'
 import { AppConfig } from '../../constants/config'
+import { polylineToGeoJSON } from '../../utils/polyline'
 
 // Initialize Mapbox with access token
 if (AppConfig.mapboxAccessToken) {
@@ -31,7 +32,10 @@ export function TradieMapView({
   // Convert Mapbox encoded polyline or simple coordinates to GeoJSON route line
   const getRouteGeoJSON = (): any => {
     if (!polyline) return null
-    // Simple line string fallback
+
+    const decoded = polylineToGeoJSON(polyline)
+    if (decoded) return decoded
+
     if (tradieCoords && destinationCoords) {
       return {
         type: 'Feature',

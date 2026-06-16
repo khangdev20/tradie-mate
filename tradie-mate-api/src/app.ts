@@ -17,6 +17,7 @@ import { paymentRoutes } from './routes/payments'
 import { billingRoutes } from './routes/billing'
 import { mapRoutes } from './routes/maps'
 import { syncRoutes } from './routes/sync'
+import { deviceRoutes } from './routes/devices'
 import { stripeWebhookHandler } from './routes/webhooks/stripe'
 
 export async function buildApp() {
@@ -89,6 +90,7 @@ export async function buildApp() {
   await fastify.register(billingRoutes, { prefix: '/billing' })
   await fastify.register(mapRoutes, { prefix: '/maps' })
   await fastify.register(syncRoutes, { prefix: '/sync' })
+  await fastify.register(deviceRoutes, { prefix: '/devices' })
 
   // Webhooks (Raw body needed for Stripe signature)
   fastify.post('/webhooks/stripe', { 

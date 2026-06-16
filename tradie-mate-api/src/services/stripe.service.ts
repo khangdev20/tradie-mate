@@ -23,6 +23,8 @@ export class StripeService {
         payment_method_types: ['card_present'],
         capture_method: 'automatic',
         metadata: { invoiceId },
+      }, {
+        idempotencyKey: invoiceId,
       })
 
       return {

@@ -24,6 +24,7 @@ const zustandStorage = {
 
 export interface QueueItem {
   id: string
+  idempotencyKey: string
   action: 'UPDATE_STATUS' | 'CREATE_INVOICE' | 'CREATE_JOB' | 'PAY_INVOICE'
   payload: any
   timestamp: string
@@ -45,6 +46,7 @@ export const useOfflineQueueStore = create<OfflineQueueState>()(
       addToQueue: (action, payload) => {
         const newItem: QueueItem = {
           id: Math.random().toString(36).substring(2, 15),
+          idempotencyKey: `${action}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
           action,
           payload,
           timestamp: new Date().toISOString(),
@@ -61,16 +63,33 @@ export const useOfflineQueueStore = create<OfflineQueueState>()(
       },
 
       syncQueue: async () => {
-        const { queue, clearQueue } = get()
+        const { queue, removeFromQueue } = get()
         if (queue.length === 0) {
           return { success: true, syncedCount: 0 }
         }
 
         try {
-          const response = await api.post('/sync', { queue }) as any
-          if (response && response.success) {
-            clearQueue()
-            return { success: true, syncedCount: response.data?.syncedCount ?? queue.length }
+          const response = (await api.post('/sync', {
+            queue: queue.map((item) => ({
+              action: item.action,
+              payload: item.payload,
+              idempotencyKey: item.idempotencyKey,
+            })),
+          })) as any
+
+          if (response?.success) {
+            const results = response.data?.results ?? []
+            let syncedCount = 0
+
+            queue.forEach((item, index) => {
+              const result = results[index]
+              if (result?.status === 'SUCCESS' || result?.status === 'SKIPPED') {
+                removeFromQueue(item.id)
+                syncedCount++
+              }
+            })
+
+            return { success: true, syncedCount }
           }
           return { success: false, syncedCount: 0 }
         } catch (error) {

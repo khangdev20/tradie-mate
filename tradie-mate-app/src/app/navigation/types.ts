@@ -28,6 +28,7 @@ export type JobsStackParamList = {
   JobList: undefined
   JobDetail: { jobId: string }
   NewJob: undefined
+  QuickJob: undefined
   Invoice: { jobId: string }
   Signature: { invoiceId: string }
   Payment: { invoiceId: string; amountCents: number }
