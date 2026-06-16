@@ -1,5 +1,24 @@
+const React = require('react')
+
 jest.mock('react-native-gesture-handler', () => ({
   GestureHandlerRootView: ({ children }) => children,
+}))
+
+const createNavigatorMock = () => ({
+  Navigator: ({ children }) => children,
+  Screen: ({ component: Component }) => (Component ? React.createElement(Component) : null),
+})
+
+jest.mock('@react-navigation/native', () => ({
+  NavigationContainer: ({ children }) => children,
+}))
+
+jest.mock('@react-navigation/native-stack', () => ({
+  createNativeStackNavigator: jest.fn(createNavigatorMock),
+}))
+
+jest.mock('@react-navigation/bottom-tabs', () => ({
+  createBottomTabNavigator: jest.fn(createNavigatorMock),
 }))
 
 jest.mock('react-native-safe-area-context', () => ({
