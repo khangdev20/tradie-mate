@@ -126,50 +126,53 @@ export function JobDetailScreen({ route, navigation }: any) {
   }, [job, tradieCoords, isConnected])
 
   const handleStatusTransition = async (newStatus: string) => {
-    // Standard workflows checks
     if (!job) return
 
     triggerLight()
 
-    // Offline Queue
     if (!isConnected) {
-      addToQueue('UPDATE_STATUS', { jobId, status: newStatus })
+      addToQueue('UPDATE_STATUS', { jobId, status: newStatus, timestamp: new Date().toISOString() })
       setJob({ ...job, status: newStatus })
       Alert.alert('Offline status updated', `Transition queued to: ${newStatus}`)
       return
     }
 
     try {
+      if (newStatus === 'COMMUTING') {
+        const res = await api.post(`/jobs/${jobId}/start-commute`) as any
+        if (res?.success) {
+          triggerSuccess()
+          trackEvent('job_status_changed', { jobId, status: 'COMMUTING' })
+          setJob({ ...job, status: 'COMMUTING' })
+          await startTracking(jobId)
+        }
+        return
+      }
+
+      if (job.status === 'COMMUTING') {
+        await stopTracking()
+        await api.post(`/jobs/${jobId}/end-commute`).catch(() => undefined)
+      }
+
       const res = await api.patch(`/jobs/${jobId}/status`, { status: newStatus }) as any
-      if (res && res.success) {
+      if (res?.success) {
         triggerSuccess()
         trackEvent('job_status_changed', { jobId, status: newStatus })
         setJob({ ...job, ...res.data })
-        
-        // Start background locations if Commuting
-        if (newStatus === 'COMMUTING') {
-          startTracking(jobId).catch((error) => {
-            console.warn('Unable to start commute tracking:', error)
-          })
-        } else {
-          stopTracking()
-        }
 
-        // Auto prompt to create invoice on completion
         if (newStatus === 'COMPLETED') {
           Alert.alert(
             'Job Completed',
             'Would you like to generate the invoice for this job now?',
             [
               { text: 'Create Invoice', onPress: () => navigation.navigate('Invoice', { jobId: job.id }) },
-              { text: 'Later', style: 'cancel' }
+              { text: 'Later', style: 'cancel' },
             ]
           )
         }
       }
     } catch (err: any) {
       Alert.alert('Transition Error', err.message || 'Status transition blocked.')
-      // Reload job details to reset state
       loadJob()
     }
   }

@@ -5,7 +5,19 @@ import { invoices, invoiceItems, invoiceSequence } from '../../db/schema/invoice
 import { eq, and } from 'drizzle-orm'
 import { EntitlementService } from '../../services/entitlement.service'
 import { GSTService } from '../../services/gst.service'
+import { PaymentService } from '../../services/payment.service'
 import { AppError } from '../../utils/errors'
+
+function validateSignatureData(signatureData: string) {
+  const stripped = signatureData.replace(/^data:image\/\w+;base64,/, '')
+  if (stripped.length < 200) {
+    throw new AppError(
+      'Signature is too short. Please ask the customer to sign again.',
+      400,
+      'INVALID_SIGNATURE'
+    )
+  }
+}
 
 export async function invoiceRoutes(fastify: FastifyInstance) {
   fastify.addHook('preHandler', requireAuth)
@@ -25,14 +37,11 @@ export async function invoiceRoutes(fastify: FastifyInstance) {
       throw new AppError('Job ID and invoice items are required.', 400)
     }
 
-    // A. Check subscription limits
     await EntitlementService.requireUsageLimit(tradieId, 'invoicesCreated', 'maxInvoicesPerMonth')
 
     let newInvoice: any
 
-    // B. Run atomic transaction
     await db.transaction(async (tx) => {
-      // 1. Lock sequence counter per tradie
       let [seq] = await tx
         .select()
         .from(invoiceSequence)
@@ -53,17 +62,15 @@ export async function invoiceRoutes(fastify: FastifyInstance) {
           .where(eq(invoiceSequence.tradieId, tradieId))
       }
 
-      // 2. Format invoice number (left padded to 4 digits: e.g. INV-0001)
       const invoiceNumber = `INV-${String(nextCounter).padStart(4, '0')}`
 
-      // 3. Calculate financial totals in integer cents
       let subtotalCents = 0
       const calculatedItems = items.map((item, idx) => {
         const lineTotalCents = Math.round(item.quantity * item.unitPriceCents)
         subtotalCents += lineTotalCents
         return {
           description: item.description,
-          qty: item.quantity.toString(), // decimals stored as string/decimal in Drizzle
+          qty: item.quantity.toString(),
           unitPriceCents: item.unitPriceCents,
           lineTotalCents,
           unit: item.unit ?? 'item',
@@ -73,7 +80,6 @@ export async function invoiceRoutes(fastify: FastifyInstance) {
 
       const gstCalc = GSTService.calculateFromSubtotal(subtotalCents)
 
-      // 4. Create invoice
       const [invoice] = await tx
         .insert(invoices)
         .values({
@@ -87,7 +93,7 @@ export async function invoiceRoutes(fastify: FastifyInstance) {
           subtotalCents,
           gstCents: gstCalc.gst,
           totalCents: gstCalc.total,
-          dueAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // Default 7 days
+          dueAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
           createdAt: new Date(),
           updatedAt: new Date(),
         })
@@ -95,7 +101,6 @@ export async function invoiceRoutes(fastify: FastifyInstance) {
 
       newInvoice = invoice
 
-      // 5. Create invoice items
       await tx.insert(invoiceItems).values(
         calculatedItems.map((item) => ({
           ...item,
@@ -105,7 +110,6 @@ export async function invoiceRoutes(fastify: FastifyInstance) {
       )
     })
 
-    // C. Increment subscription usage counter
     await EntitlementService.incrementUsage(tradieId, 'invoicesCreated')
 
     return reply.status(201).send({
@@ -117,39 +121,26 @@ export async function invoiceRoutes(fastify: FastifyInstance) {
   // 2. Mark Invoice as Paid (with digital signature capture)
   fastify.patch('/:id/paid', async (request: FastifyRequest<{
     Params: { id: string }
-    Body: { signatureData: string }
+    Body: { signatureData: string; paymentMethod?: 'CASH' | 'STRIPE_TAP_TO_PAY' }
   }>) => {
     const { id } = request.params
-    const { signatureData } = request.body
+    const { signatureData, paymentMethod = 'STRIPE_TAP_TO_PAY' } = request.body
     const tradieId = request.tradie.id
 
     if (!signatureData) {
-      throw new AppError('Signature data is required.', 400)
+      throw new AppError('Signature data is required.', 400, 'VALIDATION_ERROR')
     }
 
-    // A. Check ownership
-    const [invoice] = await db
-      .select()
-      .from(invoices)
-      .where(and(eq(invoices.id, id), eq(invoices.tradieId, tradieId)))
-      .limit(1)
+    validateSignatureData(signatureData)
 
-    if (!invoice) {
-      throw new AppError('Invoice not found or access denied', 404)
-    }
-
-    // B. Save base64 signature and update status to PAID
-    const [updated] = await db
-      .update(invoices)
-      .set({
-        status: 'PAID',
-        signatureData,
-        signedAt: new Date(),
-        paidAt: new Date(),
-        updatedAt: new Date(),
-      })
-      .where(eq(invoices.id, id))
-      .returning()
+    const updated = await PaymentService.markInvoicePaid({
+      invoiceId: id,
+      tradieId,
+      paymentMethod,
+      signatureData,
+      source: 'client',
+      eventType: paymentMethod === 'CASH' ? 'offline_cash_recorded' : 'client_confirmed',
+    })
 
     return {
       success: true,
@@ -157,6 +148,7 @@ export async function invoiceRoutes(fastify: FastifyInstance) {
         invoiceId: updated.id,
         status: updated.status,
         signedAt: updated.signedAt,
+        signatureUrl: updated.signatureUrl,
       },
     }
   })

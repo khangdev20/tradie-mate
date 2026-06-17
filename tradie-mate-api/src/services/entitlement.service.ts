@@ -180,7 +180,8 @@ export class EntitlementService {
     if (currentUsage >= limit) {
       throw new AppError(
         `Subscription limit reached: You have used ${currentUsage} of ${limit} allowed for ${usageKey}.`,
-        403
+        403,
+        'SUBSCRIPTION_LIMIT_REACHED'
       )
     }
   }

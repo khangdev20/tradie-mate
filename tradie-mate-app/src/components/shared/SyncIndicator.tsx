@@ -1,36 +1,50 @@
 import React from 'react'
-import { View, Text, StyleSheet } from 'react-native'
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native'
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons'
 import { Colors } from '../../constants/colors'
 import { Typography } from '../../constants/typography'
 import { Spacing, Radius } from '../../constants/spacing'
 
 interface SyncIndicatorProps {
   status: 'online' | 'syncing' | 'offline'
+  queuedCount?: number
+  onPress?: () => void
 }
 
-export function SyncIndicator({ status }: SyncIndicatorProps) {
-  const getStatusColor = () => {
-    switch (status) {
-      case 'online': return Colors.success
-      case 'syncing': return Colors.warning
-      case 'offline': return Colors.warning
-    }
-  }
+export function SyncIndicator({ status, queuedCount = 0, onPress }: SyncIndicatorProps) {
+  const iconName =
+    status === 'online' ? 'wifi' : status === 'syncing' ? 'sync' : 'wifi-off'
 
-  const getStatusText = () => {
-    switch (status) {
-      case 'online': return 'Online'
-      case 'syncing': return 'Syncing...'
-      case 'offline': return 'Offline'
-    }
-  }
+  const iconColor =
+    status === 'online' ? Colors.success : Colors.warning
 
-  return (
+  const label =
+    status === 'online'
+      ? queuedCount > 0
+        ? `${queuedCount} queued`
+        : 'Online'
+      : status === 'syncing'
+        ? 'Syncing...'
+        : queuedCount > 0
+          ? `Offline · ${queuedCount} queued`
+          : 'Offline'
+
+  const content = (
     <View style={styles.container}>
-      <View style={[styles.dot, { backgroundColor: getStatusColor() }]} />
-      <Text style={styles.text}>{getStatusText()}</Text>
+      <MaterialCommunityIcons name={iconName} size={16} color={iconColor} />
+      <Text style={styles.text}>{label}</Text>
     </View>
   )
+
+  if (onPress) {
+    return (
+      <TouchableOpacity onPress={onPress} activeOpacity={0.7} accessibilityRole="button">
+        {content}
+      </TouchableOpacity>
+    )
+  }
+
+  return content
 }
 
 const styles = StyleSheet.create({
@@ -41,12 +55,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.sm,
     paddingVertical: Spacing.xs,
     borderRadius: Radius.pill,
-  },
-  dot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    marginRight: Spacing.xs,
+    gap: Spacing.xs,
   },
   text: {
     fontSize: Typography.sizes.micro,

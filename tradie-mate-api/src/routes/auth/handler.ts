@@ -14,7 +14,14 @@ export const sendOtpHandler = async (request: FastifyRequest<any>, reply: Fastif
   const count = await redis.get(rateLimitKey)
 
   if (count && parseInt(count) >= 3) {
-    return reply.status(429).send({ error: 'Too many OTP requests. Please try again in 10 minutes.' })
+    return reply.status(429).send({
+      success: false,
+      error: {
+        statusCode: 429,
+        code: 'OTP_RATE_LIMIT',
+        message: 'Too many OTP requests. Please try again in 10 minutes.',
+      },
+    })
   }
 
   if (env.NODE_ENV === 'development' && phone === '+61412345678') {

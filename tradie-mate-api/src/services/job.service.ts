@@ -42,6 +42,12 @@ export interface CreateJobInput {
 }
 
 export class JobService {
+  /** Maps legacy/client status aliases to canonical API statuses. */
+  static normalizeStatus(status: string): JobStatus {
+    if (status === 'PENDING') return 'UPCOMING'
+    return status as JobStatus
+  }
+
   static validateTransition(currentStatus: JobStatus, targetStatus: JobStatus): boolean {
     if (currentStatus === targetStatus) return true
     const allowed = VALID_TRANSITIONS[currentStatus] || []
@@ -194,29 +200,30 @@ export class JobService {
   }
 
   static async transitionStatus(jobId: string, tradieId: string, targetStatus: JobStatus) {
+    const normalizedTarget = this.normalizeStatus(targetStatus)
     const job = await this.getJobWithOwnerCheck(jobId, tradieId)
-    const currentStatus = job.status as JobStatus
+    const currentStatus = this.normalizeStatus(job.status as string)
 
-    if (!this.validateTransition(currentStatus, targetStatus)) {
+    if (!this.validateTransition(currentStatus, normalizedTarget)) {
       throw new AppError(
-        `Cannot transition status directly from ${currentStatus} to ${targetStatus}.`,
+        `Cannot transition status directly from ${currentStatus} to ${normalizedTarget}.`,
         400,
         'INVALID_JOB_TRANSITION'
       )
     }
 
     const updateFields: Record<string, unknown> = {
-      status: targetStatus,
+      status: normalizedTarget,
       updatedAt: new Date(),
     }
 
-    if (targetStatus === 'COMMUTING') {
+    if (normalizedTarget === 'COMMUTING') {
       updateFields.commutingStartedAt = new Date()
-    } else if (targetStatus === 'ARRIVED') {
+    } else if (normalizedTarget === 'ARRIVED') {
       updateFields.arrivedAt = new Date()
-    } else if (targetStatus === 'IN_PROGRESS') {
+    } else if (normalizedTarget === 'IN_PROGRESS') {
       updateFields.startedAt = new Date()
-    } else if (targetStatus === 'COMPLETED') {
+    } else if (normalizedTarget === 'COMPLETED') {
       updateFields.completedAt = new Date()
     }
 

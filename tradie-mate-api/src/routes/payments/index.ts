@@ -5,14 +5,13 @@ import { invoices } from '../../db/schema/invoices'
 import { eq, and } from 'drizzle-orm'
 import { StripeService } from '../../services/stripe.service'
 import { EntitlementService } from '../../services/entitlement.service'
+import { PaymentService } from '../../services/payment.service'
 import { AppError } from '../../utils/errors'
 
 export async function paymentRoutes(fastify: FastifyInstance) {
   fastify.addHook('preHandler', requireAuth)
 
-  // 1. Get Connection Token for Stripe Terminal SDK
-  fastify.post('/connection-token', async (request, reply) => {
-    // Check if the user is allowed to use Tap to Pay
+  fastify.post('/connection-token', async (request) => {
     await EntitlementService.requireEntitlement(request.tradie.id, 'tapToPayEnabled')
 
     const secret = await StripeService.createConnectionToken()
@@ -22,21 +21,18 @@ export async function paymentRoutes(fastify: FastifyInstance) {
     }
   })
 
-  // 2. Generate PaymentIntent for Tap to Pay
   fastify.post('/tap-to-pay', async (request: FastifyRequest<{
     Body: { invoiceId: string }
-  }>, reply) => {
+  }>) => {
     const { invoiceId } = request.body
     const tradieId = request.tradie.id
 
     if (!invoiceId) {
-      throw new AppError('Invoice ID is required.', 400)
+      throw new AppError('Invoice ID is required.', 400, 'VALIDATION_ERROR')
     }
 
-    // A. Check entitlement
     await EntitlementService.requireEntitlement(tradieId, 'tapToPayEnabled')
 
-    // B. Check ownership and retrieve invoice
     const [invoice] = await db
       .select()
       .from(invoices)
@@ -44,17 +40,15 @@ export async function paymentRoutes(fastify: FastifyInstance) {
       .limit(1)
 
     if (!invoice) {
-      throw new AppError('Invoice not found or access denied', 404)
+      throw new AppError('Invoice not found or access denied', 404, 'INVOICE_NOT_FOUND')
     }
 
     if (invoice.status === 'PAID') {
-      throw new AppError('Invoice is already paid.', 400)
+      throw new AppError('Invoice is already paid.', 400, 'INVOICE_ALREADY_PAID')
     }
 
-    // C. Create PaymentIntent
     const pi = await StripeService.createPaymentIntent(invoice.totalCents, invoice.id)
 
-    // D. Cache stripe payment intent on invoice
     await db
       .update(invoices)
       .set({
@@ -63,9 +57,70 @@ export async function paymentRoutes(fastify: FastifyInstance) {
       })
       .where(eq(invoices.id, invoiceId))
 
+    await PaymentService.recordEvent({
+      invoiceId,
+      tradieId,
+      eventType: 'payment_intent_created',
+      source: 'client',
+      stripePaymentIntentId: pi.paymentIntentId,
+    })
+
     return {
       success: true,
       data: pi,
+    }
+  })
+
+  /** Client reconciliation after Stripe Terminal SDK completes a charge. */
+  fastify.post('/confirm', async (request: FastifyRequest<{
+    Body: { invoiceId: string; paymentIntentId: string }
+  }>) => {
+    const { invoiceId, paymentIntentId } = request.body
+    const tradieId = request.tradie.id
+
+    if (!invoiceId || !paymentIntentId) {
+      throw new AppError('invoiceId and paymentIntentId are required.', 400, 'VALIDATION_ERROR')
+    }
+
+    await EntitlementService.requireEntitlement(tradieId, 'tapToPayEnabled')
+
+    const result = await PaymentService.confirmStripePayment(tradieId, invoiceId, paymentIntentId)
+
+    return {
+      success: true,
+      data: {
+        invoiceId: result.invoice.id,
+        status: result.invoice.status,
+        alreadyPaid: result.alreadyPaid,
+      },
+    }
+  })
+
+  /** Record offline cash/check payment without Stripe. */
+  fastify.post('/record-cash', async (request: FastifyRequest<{
+    Body: { invoiceId: string }
+  }>) => {
+    const { invoiceId } = request.body
+    const tradieId = request.tradie.id
+
+    if (!invoiceId) {
+      throw new AppError('Invoice ID is required.', 400, 'VALIDATION_ERROR')
+    }
+
+    const updated = await PaymentService.markInvoicePaid({
+      invoiceId,
+      tradieId,
+      paymentMethod: 'CASH',
+      source: 'offline_sync',
+      eventType: 'offline_cash_recorded',
+    })
+
+    return {
+      success: true,
+      data: {
+        invoiceId: updated.id,
+        status: updated.status,
+      },
     }
   })
 }

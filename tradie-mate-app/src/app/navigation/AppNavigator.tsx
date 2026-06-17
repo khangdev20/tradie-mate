@@ -5,7 +5,7 @@ import { DashboardScreen } from '../../screens/dashboard/DashboardScreen'
 import { JobsNavigator } from '../../screens/jobs/JobsNavigator'
 import { InvoiceScreen } from '../../screens/invoices/InvoiceScreen'
 import { NotificationsScreen } from '../../screens/notifications/NotificationsScreen'
-import { ProfileScreen } from '../../screens/profile/ProfileScreen'
+import { ProfileNavigator } from '../../screens/profile/ProfileNavigator'
 import { Colors } from '../../constants/colors'
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons'
 
@@ -41,7 +41,7 @@ export function AppNavigator() {
       <Tab.Screen name="Jobs" component={JobsNavigator} />
       <Tab.Screen name="Invoices" component={InvoiceScreen} />
       <Tab.Screen name="Notifications" component={NotificationsScreen} />
-      <Tab.Screen name="Profile" component={ProfileScreen} />
+      <Tab.Screen name="Profile" component={ProfileNavigator} />
     </Tab.Navigator>
   )
 }

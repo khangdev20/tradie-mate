@@ -41,7 +41,8 @@ export const invoices = pgTable('invoices', {
   stripeChargeId:        text('stripe_charge_id'),
 
   // Documents
-  signatureData:    text('signature_data'),     // base64
+  signatureData:    text('signature_data'),     // base64 fallback
+  signatureUrl:     text('signature_url'),       // S3 URL (ap-southeast-2)
   signedAt:         timestamp('signed_at', { withTimezone: true }),
   pdfUrl:           text('pdf_url'),
   pdfGeneratedAt:   timestamp('pdf_generated_at', { withTimezone: true }),
