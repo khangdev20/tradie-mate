@@ -41,5 +41,12 @@ Route auth (`src/middleware/auth.middleware.ts`) verifies the bearer token via `
 ### Known bug (not an environment issue)
 `src/services/entitlement.service.ts` builds a raw `sql\`... > ${now}\`` fragment with a JS `Date`. drizzle-orm passes the `Date` to postgres-js untyped, which throws `The "string" argument must be of type string ... Received an instance of Date`. This 500s any flow that calls `getEffectiveEntitlements` — notably **creating jobs (`POST /jobs`) and invoices**. It reproduces on Node 20 and 22 and on postgres-js 3.4.5/3.4.9, so it is a code bug, not a version/setup problem. Read/update endpoints that skip entitlement checks (e.g. `GET /jobs`, `PATCH /jobs/:id`, `/jobs/:id/reschedule`, `/billing/plans`) work fine.
 
+### Mobile app (`tradie-mate-app`) known states
+These are pre-existing repo states, not environment problems — the toolchain is installed and runs:
+
+- `npm run type-check` passes cleanly.
+- `npm run lint` currently reports pre-existing violations (~38 errors / ~41 warnings: unused vars, bitwise/`no-void` warnings). Lint itself works.
+- `npm test` (jest) currently fails to run the single suite `__tests__/App.test.tsx` with `SyntaxError: Cannot use import statement outside a module` from `@react-native-firebase/firestore`. The repo's jest config does not include `@react-native-firebase` in `transformIgnorePatterns`, so the ESM module isn't transformed. Fixing requires a jest config change (out of scope for setup).
+
 ### Migration metadata
 `drizzle/meta/_journal.json` was malformed (missing `},` between entries) which silently broke `npm run db:migrate`; this has been fixed in the repo.
