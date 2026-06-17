@@ -7,6 +7,8 @@ import { EntitlementService } from '../../services/entitlement.service'
 import { GSTService } from '../../services/gst.service'
 import { PaymentService } from '../../services/payment.service'
 import { AppError } from '../../utils/errors'
+import { generateInvoicePdf } from '../../services/pdf.service'
+import { tradies } from '../../db/schema/tradies'
 
 function validateSignatureData(signatureData: string) {
   const stripped = signatureData.replace(/^data:image\/\w+;base64,/, '')
@@ -112,10 +114,70 @@ export async function invoiceRoutes(fastify: FastifyInstance) {
 
     await EntitlementService.incrementUsage(tradieId, 'invoicesCreated')
 
+    // Generate PDF (best-effort)
+    try {
+      const [tradie] = await db
+        .select({ firstName: tradies.firstName, lastName: tradies.lastName, abn: tradies.abn })
+        .from(tradies)
+        .where(eq(tradies.id, tradieId))
+        .limit(1)
+
+      const items = await db
+        .select()
+        .from(invoiceItems)
+        .where(eq(invoiceItems.invoiceId, newInvoice.id))
+
+      const { pdfUrl } = await generateInvoicePdf({
+        invoiceId: newInvoice.id,
+        tradieId,
+        invoiceNumber: newInvoice.invoiceNumber,
+        tradieName: `${tradie?.firstName ?? ''} ${tradie?.lastName ?? ''}`.trim(),
+        abn: tradie?.abn,
+        items: items.map((i) => ({
+          description: i.description,
+          quantity: i.qty,
+          unitPriceCents: i.unitPriceCents,
+          lineTotalCents: i.lineTotalCents,
+        })),
+        subtotalCents: newInvoice.subtotalCents,
+        gstCents: newInvoice.gstCents,
+        totalCents: newInvoice.totalCents,
+        dueAt: newInvoice.dueAt,
+      })
+
+      await db
+        .update(invoices)
+        .set({ pdfUrl, pdfGeneratedAt: new Date(), updatedAt: new Date() })
+        .where(eq(invoices.id, newInvoice.id))
+
+      newInvoice.pdfUrl = pdfUrl
+    } catch (pdfErr) {
+      fastify.log.warn({ pdfErr, invoiceId: newInvoice.id }, 'Invoice PDF generation failed')
+    }
+
     return reply.status(201).send({
       success: true,
       data: newInvoice,
     })
+  })
+
+  /** GET /invoices/:id/pdf — regenerate or return PDF URL */
+  fastify.get('/:id/pdf', async (request: FastifyRequest<{ Params: { id: string } }>) => {
+    const tradieId = request.tradie.id
+    const { id } = request.params
+
+    const [invoice] = await db
+      .select()
+      .from(invoices)
+      .where(and(eq(invoices.id, id), eq(invoices.tradieId, tradieId)))
+      .limit(1)
+
+    if (!invoice) throw new AppError('Invoice not found.', 404, 'INVOICE_NOT_FOUND')
+    if (invoice.pdfUrl) {
+      return { success: true, data: { pdfUrl: invoice.pdfUrl } }
+    }
+
+    throw new AppError('PDF not yet generated.', 404, 'PDF_NOT_FOUND')
   })
 
   // 2. Mark Invoice as Paid (with digital signature capture)

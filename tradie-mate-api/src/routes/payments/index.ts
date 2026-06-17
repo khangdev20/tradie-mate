@@ -2,7 +2,7 @@ import { FastifyInstance, FastifyRequest } from 'fastify'
 import { requireAuth } from '../../middleware/auth.middleware'
 import { db } from '../../config/db'
 import { invoices } from '../../db/schema/invoices'
-import { eq, and } from 'drizzle-orm'
+import { eq, and, inArray, ne, isNotNull } from 'drizzle-orm'
 import { StripeService } from '../../services/stripe.service'
 import { EntitlementService } from '../../services/entitlement.service'
 import { PaymentService } from '../../services/payment.service'
@@ -122,5 +122,49 @@ export async function paymentRoutes(fastify: FastifyInstance) {
         status: updated.status,
       },
     }
+  })
+
+  /** Reconcile pending Stripe payments on app startup. */
+  fastify.post('/reconcile', async (request: FastifyRequest<{
+    Body: { invoiceIds?: string[] }
+  }>) => {
+    const tradieId = request.tradie.id
+    const { invoiceIds } = request.body ?? {}
+
+    const conditions = [eq(invoices.tradieId, tradieId)]
+    if (invoiceIds?.length) {
+      conditions.push(inArray(invoices.id, invoiceIds))
+    } else {
+      conditions.push(isNotNull(invoices.stripePaymentIntentId))
+      conditions.push(ne(invoices.status, 'PAID'))
+    }
+
+    const pending = await db
+      .select()
+      .from(invoices)
+      .where(and(...conditions))
+      .limit(50)
+
+    const results: { invoiceId: string; status: string; reconciled: boolean }[] = []
+
+    for (const inv of pending) {
+      if (!inv.stripePaymentIntentId) continue
+      try {
+        const result = await PaymentService.confirmStripePayment(
+          tradieId,
+          inv.id,
+          inv.stripePaymentIntentId,
+        )
+        results.push({
+          invoiceId: inv.id,
+          status: result.invoice.status,
+          reconciled: result.invoice.status === 'PAID',
+        })
+      } catch {
+        results.push({ invoiceId: inv.id, status: inv.status, reconciled: false })
+      }
+    }
+
+    return { success: true, data: { results } }
   })
 }

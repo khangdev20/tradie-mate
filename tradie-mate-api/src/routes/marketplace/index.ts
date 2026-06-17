@@ -14,6 +14,78 @@ const PLATFORM_FEE_PERCENT = 0.04 // 4% platform booking fee
 export async function marketplaceRoutes(fastify: FastifyInstance) {
 
   /**
+   * GET /api/v1/marketplace/listings?suburb=Brisbane
+   * Public marketplace browse for web customers.
+   */
+  fastify.get<{ Querystring: { suburb?: string } }>('/listings', async (request) => {
+    const suburb = request.query.suburb?.trim()
+
+    const rows = await db
+      .select({
+        id: marketplaceBookings.id,
+        title: marketplaceBookings.description,
+        description: marketplaceBookings.description,
+        budgetCents: marketplaceBookings.quotedAmountCents,
+        suburb: marketplaceBookings.address,
+        status: marketplaceBookings.status,
+      })
+      .from(marketplaceBookings)
+      .where(
+        suburb
+          ? sql`${marketplaceBookings.address} ILIKE ${'%' + suburb + '%'} AND ${marketplaceBookings.status} = 'PENDING'`
+          : eq(marketplaceBookings.status, 'PENDING'),
+      )
+      .limit(50)
+
+    return {
+      success: true,
+      data: {
+        listings: rows.map((r) => ({
+          id: r.id,
+          title: r.title?.slice(0, 60) || 'Tradie job',
+          description: r.description,
+          budgetCents: r.budgetCents ?? 0,
+          suburb: suburb || r.suburb,
+          status: r.status,
+        })),
+      },
+    }
+  })
+
+  /**
+   * POST /api/v1/marketplace/listings/:id/book
+   * Web customer books an open marketplace listing with escrow.
+   */
+  fastify.post<{
+    Params: { id: string }
+    Body: { customerName: string; customerPhone: string }
+  }>('/listings/:id/book', async (request, reply) => {
+    const { id } = request.params
+    const { customerName, customerPhone } = request.body
+
+    const [booking] = await db
+      .select()
+      .from(marketplaceBookings)
+      .where(eq(marketplaceBookings.id, id))
+      .limit(1)
+
+    if (!booking) throw new AppError('Listing not found.', 404, 'NOT_FOUND')
+
+    const [updated] = await db
+      .update(marketplaceBookings)
+      .set({
+        customerName,
+        customerPhone,
+        status: 'ACCEPTED',
+        updatedAt: new Date(),
+      })
+      .where(eq(marketplaceBookings.id, id))
+      .returning()
+
+    return reply.status(201).send({ success: true, data: { bookingId: updated.id, status: updated.status } })
+  })
+
+  /**
    * POST /api/v1/marketplace/bookings
    * Module 4.4 — Customer creates a marketplace booking.
    * Public endpoint — no JWT required.

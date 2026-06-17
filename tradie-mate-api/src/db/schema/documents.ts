@@ -26,6 +26,7 @@ export const tradeDocuments = pgTable('trade_documents', {
   verifiedAt:        timestamp('verified_at', { withTimezone: true }),
   verifiedBy:        uuid('verified_by'),
   rejectionReason:   text('rejection_reason'),
+  ocrPayload:      text('ocr_payload'),
 
   // Expiry reminder tracking — prevent duplicate sends
   expiry60DaySentAt: timestamp('expiry_60_day_sent_at', { withTimezone: true }),

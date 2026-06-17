@@ -127,7 +127,12 @@ export async function earningsRoutes(fastify: FastifyInstance) {
 
     // Look up tradie's Stripe Connect account ID
     const [tradie] = await db
-      .select({ id: tradies.id, firstName: tradies.firstName, lastName: tradies.lastName })
+      .select({
+        id: tradies.id,
+        firstName: tradies.firstName,
+        lastName: tradies.lastName,
+        stripeConnectAccountId: tradies.stripeConnectAccountId,
+      })
       .from(tradies)
       .where(eq(tradies.id, tradieId))
       .limit(1)
@@ -136,9 +141,7 @@ export async function earningsRoutes(fastify: FastifyInstance) {
       throw new AppError('Tradie not found.', 404, 'NOT_FOUND')
     }
 
-    // We look up stripeConnectedAccountId from environment or tradie record
-    // For now, use the platform-level account if STRIPE_AU_ACCOUNT_ID is set
-    const stripeAccountId = process.env.STRIPE_AU_ACCOUNT_ID
+    const stripeAccountId = tradie.stripeConnectAccountId || process.env.STRIPE_AU_ACCOUNT_ID
     if (!stripeAccountId) {
       throw new AppError(
         'Stripe Connect account not configured for this tradie.',
@@ -229,5 +232,45 @@ export async function earningsRoutes(fastify: FastifyInstance) {
       success: true,
       data: { payouts: payoutHistory },
     }
+  })
+
+  /**
+   * POST /api/v1/earnings/connect-onboarding
+   * Create Stripe Connect Express account for per-tradie payouts.
+   */
+  fastify.post('/connect-onboarding', async (request) => {
+    const tradieId = request.tradie.id
+
+    const [tradie] = await db
+      .select({ email: tradies.email, stripeConnectAccountId: tradies.stripeConnectAccountId })
+      .from(tradies)
+      .where(eq(tradies.id, tradieId))
+      .limit(1)
+
+    if (tradie?.stripeConnectAccountId) {
+      const loginLink = await stripe.accounts.createLoginLink(tradie.stripeConnectAccountId)
+      return { success: true, data: { url: loginLink.url, accountId: tradie.stripeConnectAccountId } }
+    }
+
+    const account = await stripe.accounts.create({
+      type: 'express',
+      country: 'AU',
+      email: tradie?.email ?? undefined,
+      capabilities: { card_payments: { requested: true }, transfers: { requested: true } },
+    })
+
+    await db
+      .update(tradies)
+      .set({ stripeConnectAccountId: account.id, updatedAt: new Date() })
+      .where(eq(tradies.id, tradieId))
+
+    const accountLink = await stripe.accountLinks.create({
+      account: account.id,
+      refresh_url: `${process.env.WEB_APP_URL || 'https://tradiemate.com.au'}/enterprise`,
+      return_url: `tradiemate://earnings/connect?success=true`,
+      type: 'account_onboarding',
+    })
+
+    return { success: true, data: { url: accountLink.url, accountId: account.id } }
   })
 }

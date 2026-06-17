@@ -27,6 +27,9 @@ import { suppliesRoutes } from './routes/supplies'
 import { enterpriseRoutes } from './routes/enterprise'
 import { marketplaceRoutes } from './routes/marketplace'
 import { notificationRoutes } from './routes/notifications'
+import { publicRoutes } from './routes/public'
+import { analyticsRoutes } from './routes/analytics'
+import { voiceAgentRoutes } from './routes/voice-agent'
 import { stripeWebhookHandler } from './routes/webhooks/stripe'
 import { stripeBillingWebhookHandler } from './routes/webhooks/stripe-billing'
 import { twilioCallWebhookHandler } from './routes/webhooks/twilio-call'
@@ -120,6 +123,11 @@ export async function buildApp() {
   // Notifications (cross-phase)
   await fastify.register(notificationRoutes, { prefix: '/notifications' })
 
+  // Public web surfaces (no auth)
+  await fastify.register(publicRoutes, { prefix: '/public' })
+  await fastify.register(analyticsRoutes, { prefix: '/analytics' })
+  await fastify.register(voiceAgentRoutes, { prefix: '/voice-agent' })
+
   // Versioned aliases for the implementation-plan API contract.
   await fastify.register(authRoutes, { prefix: '/api/v1/auth' })
   await fastify.register(tradieRoutes, { prefix: '/api/v1/tradies' })
@@ -139,6 +147,9 @@ export async function buildApp() {
   await fastify.register(enterpriseRoutes, { prefix: '/api/v1/enterprise' })
   await fastify.register(marketplaceRoutes, { prefix: '/api/v1/marketplace' })
   await fastify.register(notificationRoutes, { prefix: '/api/v1/notifications' })
+  await fastify.register(publicRoutes, { prefix: '/api/v1/public' })
+  await fastify.register(analyticsRoutes, { prefix: '/api/v1/analytics' })
+  await fastify.register(voiceAgentRoutes, { prefix: '/api/v1/voice-agent' })
 
   // Webhooks (Raw body needed for Stripe signature)
   fastify.post('/webhooks/stripe', { 

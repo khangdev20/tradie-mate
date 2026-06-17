@@ -68,6 +68,25 @@ const envSchema = z.object({
 
   // ATO ABN lookup
   ATO_ABN_API_GUID: z.string(),
+
+  // AWS (S3 + Textract)
+  AWS_REGION: z.string().default('ap-southeast-2'),
+  AWS_S3_BUCKET: z.string().default('tradiemate-docs'),
+  AWS_ACCESS_KEY_ID: z.string().optional(),
+  AWS_SECRET_ACCESS_KEY: z.string().optional(),
+
+  // Web + integrations
+  WEB_APP_URL: z.string().url().optional(),
+  XERO_REDIRECT_URI: z.string().url().optional(),
+  VAPI_WEBHOOK_SECRET: z.string().optional(),
+  VAPI_DEFAULT_ASSISTANT_ID: z.string().optional(),
+  GOOGLE_PLACES_API_KEY: z.string().optional(),
+  MAPBOX_SECRET_TOKEN: z.string().optional(),
+
+  // Licence registry APIs (optional per state)
+  NSW_LICENCE_API_URL: z.string().url().optional(),
+  QLD_LICENCE_API_URL: z.string().url().optional(),
+  VIC_LICENCE_API_URL: z.string().url().optional(),
 })
 
 // Use safeParse to provide better error messages if validation fails

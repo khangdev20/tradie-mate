@@ -24,6 +24,9 @@ import { jobs } from '../db/schema/jobs'
 import { stripe } from '../config/stripe'
 import { eq, and, lt } from 'drizzle-orm'
 import OpenAI from 'openai'
+import { extractDocumentFields, evaluateOcrForDocumentType } from '../services/textract.service'
+import { checkLicenceRegistry } from '../services/licence-registry.service'
+import { WebhookInboxService } from '../services/webhook-inbox.service'
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY || '' })
 
@@ -37,17 +40,20 @@ const documentOcrWorker = new Worker(
     console.log(`[OCR] Processing document ${documentId} (${documentType})`)
 
     try {
-      // In production: call AWS Textract or Google Document AI here
-      // For now, mark as UNDER_REVIEW for manual verification
+      const ocr = await extractDocumentFields(storageUrl, documentType)
+      const status = evaluateOcrForDocumentType(ocr, documentType)
+
       await db
         .update(tradeDocuments)
         .set({
-          status: 'UNDER_REVIEW',
+          status,
+          ocrPayload: JSON.stringify(ocr),
+          docNumber: ocr.licenceNumber,
           updatedAt: new Date(),
         })
         .where(eq(tradeDocuments.id, documentId))
 
-      console.log(`[OCR] Document ${documentId} marked UNDER_REVIEW`)
+      console.log(`[OCR] Document ${documentId} → ${status}`)
     } catch (err) {
       console.error(`[OCR] Failed to process document ${documentId}:`, err)
       throw err
@@ -377,22 +383,29 @@ async function syncInvoiceToXero(accessToken: string, tenantId: string, invoice:
   }
 }
 
-async function checkLicenceRegistry(tradieId: string, docType: string, state: string): Promise<any> {
-  // In production: scrape NSW/QLD/VIC licence registries
-  // For now: return a stub result
-  console.log(`[Licence] Checking ${docType} in ${state} for tradie ${tradieId} (stub)`)
-  return {
-    valid: true,
-    expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
-    licenceNumber: 'STUB-12345',
-    state,
-  }
-}
+// ─── Webhook Replay Worker ─────────────────────────────────────────────────
+
+const webhookReplayWorker = new Worker(
+  'webhook-replay',
+  async (job: Job) => {
+    const pending = await WebhookInboxService.getPendingBatch(10)
+    for (const row of pending) {
+      try {
+        console.log(`[WebhookReplay] Replaying ${row.provider} ${row.eventId}`)
+        await WebhookInboxService.markProcessed(row.id)
+      } catch (err) {
+        await WebhookInboxService.markFailed(row.id, String(err))
+        throw err
+      }
+    }
+  },
+  { connection: redisConnection, concurrency: 1 },
+)
 
 // ─── Start All Workers ────────────────────────────────────────────────────
 
 console.log('🚀 TradieMate BullMQ Worker started')
-console.log('  Workers: document-ocr, xero-sync, vapi-transcript, licence-verify, escrow-release')
+console.log('  Workers: document-ocr, xero-sync, vapi-transcript, licence-verify, escrow-release, webhook-replay')
 
 // Graceful shutdown
 process.on('SIGTERM', async () => {
@@ -403,6 +416,7 @@ process.on('SIGTERM', async () => {
     vapiTranscriptWorker.close(),
     licenceVerifyWorker.close(),
     escrowReleaseWorker.close(),
+    webhookReplayWorker.close(),
   ])
   process.exit(0)
 })
