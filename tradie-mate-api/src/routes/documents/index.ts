@@ -3,6 +3,8 @@ import { requireAuth } from '../../middleware/auth.middleware'
 import { db } from '../../config/db'
 import { tradeDocuments } from '../../db/schema/documents'
 import { redisConnection } from '../../config/redis'
+import { env } from '../../config/env'
+import { supabaseAdmin } from '../../config/supabase'
 import { AppError } from '../../utils/errors'
 import path from 'path'
 import crypto from 'crypto'
@@ -29,7 +31,7 @@ export async function documentRoutes(fastify: FastifyInstance) {
   /**
    * POST /api/v1/documents/upload
    * Uploads a tradie's compliance document (licence, insurance, white card, etc.)
-   * to S3 and queues async OCR verification.
+   * to Supabase Storage and queues async OCR verification.
    *
    * Content-Type: multipart/form-data
    * Fields:
@@ -83,11 +85,11 @@ export async function documentRoutes(fastify: FastifyInstance) {
 
     let storageUrl = ''
 
-    // Upload to S3 (ap-southeast-2) if AWS credentials are available
+    // Upload to Supabase Storage using service-role credentials
     try {
-      storageUrl = await uploadToS3(storagePath, fileBuffer, data.mimetype)
-    } catch (s3Err) {
-      fastify.log.error({ s3Err, storagePath }, 'S3 upload failed')
+      storageUrl = await uploadToSupabaseStorage(storagePath, fileBuffer, data.mimetype)
+    } catch (storageErr) {
+      fastify.log.error({ storageErr, storagePath }, 'Supabase Storage upload failed')
       throw new AppError('File storage failed. Please try again.', 502, 'STORAGE_ERROR')
     }
 
@@ -161,16 +163,19 @@ function mimeToExt(mime: string): string {
   return map[mime] ?? ''
 }
 
-async function uploadToS3(key: string, body: Buffer, contentType: string): Promise<string> {
-  const bucket = process.env.AWS_S3_BUCKET || 'tradiemate-docs'
-  const region = process.env.AWS_REGION || 'ap-southeast-2'
+async function uploadToSupabaseStorage(key: string, body: Buffer, contentType: string): Promise<string> {
+  const bucket = env.SUPABASE_STORAGE_BUCKET
+  const bucketRef = supabaseAdmin.storage.from(bucket)
 
-  // When AWS SDK is not configured, return a stub URL for development
-  if (!process.env.AWS_ACCESS_KEY_ID) {
-    return `https://${bucket}.s3.${region}.amazonaws.com/${key}`
+  const { error: uploadError } = await bucketRef.upload(key, body, {
+    contentType,
+    upsert: false,
+  })
+
+  if (uploadError) {
+    throw uploadError
   }
 
-  // In production, replace with @aws-sdk/client-s3 once that dependency is installed
-  // For now return the expected S3 URL (upload would be done via AWS CLI in CI or SDK separately)
-  return `https://${bucket}.s3.${region}.amazonaws.com/${key}`
+  const { data } = bucketRef.getPublicUrl(key)
+  return data.publicUrl
 }
