@@ -1,5 +1,5 @@
 import { FastifyInstance, FastifyRequest } from 'fastify'
-import { requireAuth } from '../../middleware/auth.middleware'
+import { requireAuth, requireOnboarded } from '../../middleware/auth.middleware'
 import { db } from '../../config/db'
 import { invoices } from '../../db/schema/invoices'
 import { eq, and } from 'drizzle-orm'
@@ -9,6 +9,7 @@ import { AppError } from '../../utils/errors'
 
 export async function paymentRoutes(fastify: FastifyInstance) {
   fastify.addHook('preHandler', requireAuth)
+  fastify.addHook('preHandler', requireOnboarded)
 
   // 1. Get Connection Token for Stripe Terminal SDK
   fastify.post('/connection-token', async (request, reply) => {

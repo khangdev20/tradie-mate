@@ -1,5 +1,5 @@
 import { FastifyInstance, FastifyRequest } from 'fastify'
-import { requireAuth } from '../../middleware/auth.middleware'
+import { requireAuth, requireOnboarded } from '../../middleware/auth.middleware'
 import { db } from '../../config/db'
 import { invoices, invoiceItems, invoiceSequence } from '../../db/schema/invoices'
 import { eq, and } from 'drizzle-orm'
@@ -9,6 +9,7 @@ import { AppError } from '../../utils/errors'
 
 export async function invoiceRoutes(fastify: FastifyInstance) {
   fastify.addHook('preHandler', requireAuth)
+  fastify.addHook('preHandler', requireOnboarded)
 
   // 1. Create Invoice (Sequential + Transaction)
   fastify.post('/', async (request: FastifyRequest<{

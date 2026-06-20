@@ -5,6 +5,7 @@ import { jobs, invoices, tradies } from '../../db/schema'
 import { eq, and, inArray, count, gte, lt, sql } from 'drizzle-orm'
 import { startOfDay, endOfDay } from 'date-fns'
 import { toZonedTime } from 'date-fns-tz'
+import { validateLegalConsent } from '../../domain/legal'
 
 const AEST = 'Australia/Sydney'
 
@@ -66,8 +67,20 @@ export const registerTradieHandler = async (
   request: FastifyRequest<any>,
   reply: FastifyReply
 ) => {
-  const { first_name, last_name, trade_type, abn } = request.body as any
+  const { first_name, last_name, trade_type, abn, legal_consent } = request.body as any
   const user = request.user as any
+
+  const consentError = validateLegalConsent(legal_consent)
+  if (consentError) {
+    return reply.status(400).send({
+      error: 'Legal consent required or outdated',
+      code: consentError,
+    })
+  }
+
+  const consentAt = legal_consent.accepted_at
+    ? new Date(legal_consent.accepted_at)
+    : new Date()
 
   // Check no existing tradie for this auth_user_id
   const [existingTradie] = await db
@@ -90,6 +103,12 @@ export const registerTradieHandler = async (
     abn: abn,
     isActive: true,
     isOnboarded: false,
+    termsAcceptedAt: consentAt,
+    termsVersion: legal_consent.terms_version,
+    privacyAcceptedAt: consentAt,
+    privacyVersion: legal_consent.privacy_version,
+    disclaimerAcceptedAt: consentAt,
+    disclaimerVersion: legal_consent.disclaimer_version,
   }).returning()
 
   return { tradie_id: newTradie.id, is_new_user: false }

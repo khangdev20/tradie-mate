@@ -60,8 +60,6 @@ export const verifyOtpHandler = async (request: FastifyRequest<any>, reply: Fast
     error = e
   }
 
-  console.error('DEBUG verifyOtp:', { env: env.NODE_ENV, phone, otp, isMatch: env.NODE_ENV === 'development' && phone === '+61412345678' && otp === '123456' })
-
   if (error || !data?.session) {
     if (env.NODE_ENV === 'development' && phone === '+61412345678' && otp === '123456') {
       const [tradie] = await db
@@ -71,14 +69,15 @@ export const verifyOtpHandler = async (request: FastifyRequest<any>, reply: Fast
         .limit(1)
       
       return {
-        access_token: 'mock-token-dave',
-        refresh_token: 'mock-refresh-token-dave',
+        access_token: 'mock-token-new',
+        refresh_token: 'mock-refresh-new',
         expires_in: 3600 * 24 * 365,
         tradie_id: tradie ? tradie.id : null,
-        is_new_user: false
+        is_new_user: !tradie,
+        onboarding_status: tradie ? tradie.onboardingStatus : 'PHONE_VERIFIED',
       }
     }
-    return reply.status(error?.status || 401).send({ error: error?.message || 'Invalid OTP' })
+    return reply.status(error?.status || 401).send({ error: error?.message || 'Invalid OTP', code: 'OTP_INVALID' })
   }
 
   const user = data.user!
@@ -106,7 +105,8 @@ export const verifyOtpHandler = async (request: FastifyRequest<any>, reply: Fast
     refresh_token: session.refresh_token,
     expires_in: session.expires_in,
     tradie_id: tradie ? tradie.id : null,
-    is_new_user: !tradie
+    is_new_user: !tradie,
+    onboarding_status: tradie ? tradie.onboardingStatus : 'PHONE_VERIFIED',
   }
 }
 

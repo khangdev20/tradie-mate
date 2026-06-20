@@ -1,5 +1,5 @@
 import { FastifyInstance, FastifyRequest } from 'fastify'
-import { requireAuth } from '../../middleware/auth.middleware'
+import { requireAuth, requireOnboarded } from '../../middleware/auth.middleware'
 import { db } from '../../config/db'
 import { subscriptionPlans } from '../../db/schema/subscriptions'
 import { eq } from 'drizzle-orm'
@@ -25,6 +25,7 @@ export async function billingRoutes(fastify: FastifyInstance) {
   // Protected routes
   const protectedGroup = fastify.register(async (instance) => {
     instance.addHook('preHandler', requireAuth)
+    instance.addHook('preHandler', requireOnboarded)
 
     // 1. Get current subscription, entitlements, and usage limits
     instance.get('/subscription', async (request) => {

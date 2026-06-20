@@ -1,5 +1,5 @@
 import { FastifyInstance, FastifyRequest } from 'fastify'
-import { requireAuth } from '../../middleware/auth.middleware'
+import { requireAuth, requireOnboarded } from '../../middleware/auth.middleware'
 import { MapboxService } from '../../services/mapbox.service'
 import { db } from '../../config/db'
 import { locationEvents } from '../../db/schema/location'
@@ -7,6 +7,7 @@ import { AppError } from '../../utils/errors'
 
 export async function mapRoutes(fastify: FastifyInstance) {
   fastify.addHook('preHandler', requireAuth)
+  fastify.addHook('preHandler', requireOnboarded)
 
   // 1. Geocode Address with local cache check
   fastify.post('/geocode', async (request: FastifyRequest<{

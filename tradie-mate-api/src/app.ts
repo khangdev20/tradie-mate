@@ -18,6 +18,7 @@ import { billingRoutes } from './routes/billing'
 import { mapRoutes } from './routes/maps'
 import { syncRoutes } from './routes/sync'
 import { stripeWebhookHandler } from './routes/webhooks/stripe'
+import { onboardingRoutes, documentRoutes } from './routes/onboarding'
 
 export async function buildApp() {
   const fastify = Fastify({
@@ -31,6 +32,11 @@ export async function buildApp() {
   // Plugins
   await fastify.register(cors, {
     origin: '*', // Adjust for production React Native + web
+  })
+
+  fastify.addHook('onSend', async (_request, reply, payload) => {
+    reply.header('Referrer-Policy', 'strict-origin-when-cross-origin')
+    return payload
   })
 
   await fastify.register(jwt, {
@@ -82,6 +88,8 @@ export async function buildApp() {
 
   // Routes registration
   await fastify.register(authRoutes, { prefix: '/auth' })
+  await fastify.register(onboardingRoutes, { prefix: '/onboarding' })
+  await fastify.register(documentRoutes, { prefix: '/documents' })
   await fastify.register(tradieRoutes, { prefix: '/tradies' })
   await fastify.register(jobRoutes, { prefix: '/jobs' })
   await fastify.register(invoiceRoutes, { prefix: '/invoices' })

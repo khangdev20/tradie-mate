@@ -1,5 +1,5 @@
 import { FastifyInstance, FastifyRequest } from 'fastify'
-import { requireAuth } from '../../middleware/auth.middleware'
+import { requireAuth, requireOnboarded } from '../../middleware/auth.middleware'
 import { db } from '../../config/db'
 import { jobs } from '../../db/schema/jobs'
 import { invoices, invoiceItems, invoiceSequence } from '../../db/schema/invoices'
@@ -15,6 +15,7 @@ interface SyncAction {
 
 export async function syncRoutes(fastify: FastifyInstance) {
   fastify.addHook('preHandler', requireAuth)
+  fastify.addHook('preHandler', requireOnboarded)
 
   fastify.post('/', async (request: FastifyRequest<{
     Body: { queue: SyncAction[] }
