@@ -69,6 +69,13 @@ export const tradies = pgTable('tradies', {
   totalReviews:       integer('total_reviews').default(0).notNull(),
   avgResponseTimeMin: integer('avg_response_time_min'),
 
+  // Public profile
+  publicProfileSlug:    varchar('public_profile_slug', { length: 80 }).unique(),
+  publicProfileEnabled: boolean('public_profile_enabled').default(false).notNull(),
+
+  // Stripe Connect (per-tradie payouts)
+  stripeConnectAccountId: text('stripe_connect_account_id'),
+
   // Verification
   licenceVerified:   boolean('licence_verified').default(false).notNull(),
   insuranceVerified: boolean('insurance_verified').default(false).notNull(),

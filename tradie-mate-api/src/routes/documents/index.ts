@@ -7,6 +7,7 @@ import { AppError } from '../../utils/errors'
 import path from 'path'
 import crypto from 'crypto'
 import { Queue } from 'bullmq'
+import { uploadToS3 } from '../../services/s3.service'
 
 // Allowed document types matching the enum
 const VALID_DOC_TYPES = [
@@ -159,18 +160,4 @@ function mimeToExt(mime: string): string {
     'application/pdf': '.pdf',
   }
   return map[mime] ?? ''
-}
-
-async function uploadToS3(key: string, body: Buffer, contentType: string): Promise<string> {
-  const bucket = process.env.AWS_S3_BUCKET || 'tradiemate-docs'
-  const region = process.env.AWS_REGION || 'ap-southeast-2'
-
-  // When AWS SDK is not configured, return a stub URL for development
-  if (!process.env.AWS_ACCESS_KEY_ID) {
-    return `https://${bucket}.s3.${region}.amazonaws.com/${key}`
-  }
-
-  // In production, replace with @aws-sdk/client-s3 once that dependency is installed
-  // For now return the expected S3 URL (upload would be done via AWS CLI in CI or SDK separately)
-  return `https://${bucket}.s3.${region}.amazonaws.com/${key}`
 }

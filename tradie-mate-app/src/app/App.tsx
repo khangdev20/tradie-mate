@@ -1,8 +1,9 @@
 import React from 'react'
-import { StatusBar } from 'react-native'
+import { StatusBar, Linking } from 'react-native'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import * as Sentry from '@sentry/react-native'
 import { RootNavigator } from './navigation/RootNavigator'
 import { setupSessionRefresh } from '../services/sessionRefresh'
 import { initializeStripe } from '../services/stripe'
@@ -13,13 +14,24 @@ import {
 } from '../services/notifications'
 import { useAuthStore } from '../store/auth.store'
 import { useAutoSync } from '../hooks/useAutoSync'
+import { trackEvent } from '../services/analytics'
+import api from '../services/apiService'
+import { AppConfig } from '../constants/config'
+import '../offline/database'
 
 const queryClient = new QueryClient()
 
 import Mapbox from '@rnmapbox/maps'
-import { AppConfig } from '../constants/config'
 
 Mapbox.setAccessToken(AppConfig.mapboxAccessToken)
+
+if (AppConfig.sentryDsn) {
+  Sentry.init({
+    dsn: AppConfig.sentryDsn,
+    environment: AppConfig.environment,
+    tracesSampleRate: 0.2,
+  })
+}
 
 function AppContent() {
   useAutoSync()
@@ -51,7 +63,22 @@ function AppContent() {
     registerDeviceForPushNotifications().catch((error) => {
       console.warn('Push notification registration failed:', error)
     })
+
+    trackEvent('app_opened')
+
+    api.post('/payments/reconcile', {}).catch(() => {
+      // Non-fatal — reconciliation runs on best effort
+    })
   }, [isAuthenticated])
+
+  React.useEffect(() => {
+    const sub = Linking.addEventListener('url', ({ url }) => {
+      if (url.includes('integrations/xero')) {
+        trackEvent('xero_connect_started', { deepLink: true })
+      }
+    })
+    return () => sub.remove()
+  }, [])
 
   return (
     <>
@@ -61,7 +88,7 @@ function AppContent() {
   )
 }
 
-export default function App() {
+function App() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
@@ -72,3 +99,5 @@ export default function App() {
     </GestureHandlerRootView>
   )
 }
+
+export default Sentry.wrap(App)

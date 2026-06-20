@@ -19,6 +19,7 @@ export type AuthStackParamList = {
 export type AppTabParamList = {
   Dashboard: undefined
   Jobs: undefined
+  Calendar: undefined
   Invoices: undefined
   Notifications: undefined
   Profile: undefined
@@ -32,4 +33,16 @@ export type JobsStackParamList = {
   Invoice: { jobId: string }
   Signature: { invoiceId: string }
   Payment: { invoiceId: string; amountCents: number }
+}
+
+export type ProfileStackParamList = {
+  ProfileMain: undefined
+  SyncHealth: undefined
+  Earnings: undefined
+  Team: undefined
+  Documents: undefined
+  Reviews: undefined
+  Supplies: undefined
+  Integrations: undefined
+  VoiceAgent: undefined
 }

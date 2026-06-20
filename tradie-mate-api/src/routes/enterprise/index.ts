@@ -150,4 +150,36 @@ export async function enterpriseRoutes(fastify: FastifyInstance) {
       data: { jobs: dispatched },
     }
   })
+
+  /**
+   * GET /api/v1/enterprise/organizations/:orgId/jobs
+   * Enterprise portal job queue (API key auth).
+   */
+  fastify.get<{ Params: { orgId: string } }>('/organizations/:orgId/jobs', async (request) => {
+    const apiKey = request.headers['x-enterprise-api-key'] as string | undefined
+    if (!apiKey) throw new AppError('X-Enterprise-Api-Key header is required.', 401, 'MISSING_API_KEY')
+
+    const [client] = await db
+      .select()
+      .from(enterpriseClients)
+      .where(and(eq(enterpriseClients.apiKey, apiKey), eq(enterpriseClients.id, request.params.orgId)))
+      .limit(1)
+
+    if (!client) throw new AppError('Invalid enterprise credentials.', 401, 'INVALID_API_KEY')
+
+    const rows = await db
+      .select({
+        id: enterpriseJobs.id,
+        title: enterpriseJobs.issueType,
+        status: enterpriseJobs.status,
+        propertyAddress: enterpriseJobs.propertyAddress,
+        scheduledAt: enterpriseJobs.dispatchedAt,
+      })
+      .from(enterpriseJobs)
+      .where(eq(enterpriseJobs.clientId, client.id))
+      .orderBy(sql`${enterpriseJobs.dispatchedAt} DESC`)
+      .limit(50)
+
+    return { success: true, data: { jobs: rows } }
+  })
 }

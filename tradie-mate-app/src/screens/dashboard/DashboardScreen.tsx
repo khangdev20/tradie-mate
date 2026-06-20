@@ -274,6 +274,23 @@ export function DashboardScreen({ navigation }: any) {
           <Text style={[styles.fabText, styles.fabTextSecondary]}>New Job</Text>
         </TouchableOpacity>
       </View>
+
+      <View style={styles.fabRowSecondary}>
+        <TouchableOpacity
+          style={styles.fabTertiary}
+          onPress={() => navigation.navigate('Profile', { screen: 'Documents' })}
+        >
+          <MaterialCommunityIcons name="camera-document" size={20} color={Colors.cta} />
+          <Text style={styles.fabTertiaryText}>Scan Invoice</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.fabTertiary}
+          onPress={() => navigation.navigate('Profile', { screen: 'SyncHealth' })}
+        >
+          <MaterialCommunityIcons name="cloud-sync" size={20} color={Colors.cta} />
+          <Text style={styles.fabTertiaryText}>Offline Mode</Text>
+        </TouchableOpacity>
+      </View>
     </SafeAreaView>
   )
 }
@@ -519,5 +536,30 @@ const styles = StyleSheet.create({
   },
   fabTextSecondary: {
     color: Colors.cta,
+  },
+  fabRowSecondary: {
+    position: 'absolute',
+    bottom: 88,
+    left: Spacing.lg,
+    right: Spacing.lg,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  fabTertiary: {
+    flex: 0.48,
+    height: 44,
+    backgroundColor: Colors.white,
+    borderRadius: Radius.pill,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 0.5,
+    borderColor: Colors.border,
+  },
+  fabTertiaryText: {
+    color: Colors.cta,
+    fontWeight: Typography.weights.medium,
+    marginLeft: Spacing.xs,
+    fontSize: 12,
   },
 })

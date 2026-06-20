@@ -17,4 +17,5 @@ export * from './teams'
 export * from './marketplace'
 export * from './enterprise'
 export * from './licenceAutomation'
+export * from './webhooks'
 

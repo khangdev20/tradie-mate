@@ -13,6 +13,10 @@ import {
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons'
 import { Colors } from '../../constants/colors'
 import api from '../../services/apiService'
+import { AppConfig } from '../../constants/config'
+import { trackEvent } from '../../services/analytics'
+import axios from 'axios'
+import { TokenStorage } from '../../services/tokenStorage'
 
 interface TradeDocument {
   id: string
@@ -66,8 +70,8 @@ export function DocumentsScreen() {
 
   const fetchDocuments = useCallback(async () => {
     try {
-      const res = await api.get('/documents')
-      setDocuments(res.data?.data?.documents ?? [])
+      const res = await api.get('/documents') as any
+      setDocuments(res?.data?.documents ?? [])
     } catch (err: any) {
       Alert.alert('Error', err?.response?.data?.error?.message || 'Failed to load documents.')
     } finally {
@@ -86,25 +90,53 @@ export function DocumentsScreen() {
   }, [fetchDocuments])
 
   const handleUpload = useCallback(async (docType: string) => {
-    // In production: use react-native-document-picker or react-native-vision-camera
-    // For now, show an informational alert
     Alert.alert(
       `Upload ${DOC_TYPE_LABELS[docType]}`,
-      'Take a photo or select a PDF of your document from your files.\n\nDocument scanning requires camera permission.',
+      'Choose a photo or PDF from your device.',
       [
         { text: 'Cancel', style: 'cancel' },
         {
           text: 'Choose File',
           onPress: async () => {
-            Alert.alert(
-              'Coming Soon',
-              'Document upload via camera or file picker will be available in the next release.',
-            )
+            try {
+              setUploading(docType)
+              const DocumentPicker = require('react-native-document-picker').default
+              const pick = await DocumentPicker.pick({
+                type: [DocumentPicker.types.images, DocumentPicker.types.pdf],
+                copyTo: 'cachesDirectory',
+              })
+              const file = Array.isArray(pick) ? pick[0] : pick
+
+              const form = new FormData()
+              form.append('documentType', docType)
+              form.append('file', {
+                uri: file.fileCopyUri || file.uri,
+                type: file.type || 'application/octet-stream',
+                name: file.name || `document-${Date.now()}.jpg`,
+              } as any)
+
+              const token = TokenStorage.getAccessToken()
+              await axios.post(`${AppConfig.apiUrl}/documents/upload`, form, {
+                headers: {
+                  Authorization: token ? `Bearer ${token}` : '',
+                  'Content-Type': 'multipart/form-data',
+                },
+              })
+
+              trackEvent('document_uploaded', { docType })
+              await fetchDocuments()
+              Alert.alert('Uploaded', 'Document submitted for verification.')
+            } catch (err: any) {
+              if (err?.code === 'DOCUMENT_PICKER_CANCELED') return
+              Alert.alert('Upload failed', err?.message || 'Could not upload document')
+            } finally {
+              setUploading(null)
+            }
           },
         },
-      ]
+      ],
     )
-  }, [])
+  }, [fetchDocuments])
 
   const getDocumentForType = (docType: string) =>
     documents.find((d) => d.docType === docType)

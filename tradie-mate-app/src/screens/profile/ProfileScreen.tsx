@@ -210,6 +210,29 @@ export function ProfileScreen({ navigation }: any) {
           <MaterialCommunityIcons name="chevron-right" size={20} color={Colors.textMuted} />
         </TouchableOpacity>
 
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Features</Text>
+          {[
+            { label: 'Earnings & Payouts', screen: 'Earnings', icon: 'cash-multiple' },
+            { label: 'Team Admin', screen: 'Team', icon: 'account-group' },
+            { label: 'Documents', screen: 'Documents', icon: 'file-certificate' },
+            { label: 'Reviews', screen: 'Reviews', icon: 'star' },
+            { label: 'Nearby Supplies', screen: 'Supplies', icon: 'store-marker' },
+            { label: 'Integrations', screen: 'Integrations', icon: 'connection' },
+            { label: 'AI Voice Agent', screen: 'VoiceAgent', icon: 'phone-in-talk' },
+          ].map((item) => (
+            <TouchableOpacity
+              key={item.screen}
+              style={styles.menuRow}
+              onPress={() => navigation.navigate(item.screen)}
+            >
+              <MaterialCommunityIcons name={item.icon} size={20} color={Colors.cta} />
+              <Text style={styles.menuLabel}>{item.label}</Text>
+              <MaterialCommunityIcons name="chevron-right" size={20} color={Colors.textMuted} />
+            </TouchableOpacity>
+          ))}
+        </View>
+
         {/* Plan usage progress limits */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Usage Limits</Text>
@@ -367,6 +390,20 @@ const styles = StyleSheet.create({
     padding: Spacing.md,
     marginBottom: Spacing.lg,
     minHeight: 44,
+  },
+  menuRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 14,
+    borderBottomWidth: 0.5,
+    borderBottomColor: Colors.border,
+    gap: 12,
+  },
+  menuLabel: {
+    flex: 1,
+    fontSize: 15,
+    color: Colors.textPrimary,
+    fontWeight: Typography.weights.medium,
   },
   sectionTitle: {
     fontSize: 12,
