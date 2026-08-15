@@ -1,10 +1,24 @@
 import {
   pgTable, uuid, text, boolean,
-  timestamp, json, index,
+  timestamp, json, index, unique,
+  varchar,
 } from 'drizzle-orm/pg-core'
 import { sql } from 'drizzle-orm'
 import { tradies } from './tradies'
 import { notificationTypeEnum } from './enums'
+
+export const fcmTokens = pgTable('fcm_tokens', {
+  id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+  tradieId: uuid('tradie_id').notNull().references(() => tradies.id, { onDelete: 'cascade' }),
+  token: text('token').notNull(),
+  platform: varchar('platform', { length: 20 }),
+  deviceId: varchar('device_id', { length: 120 }),
+  createdAt: timestamp('created_at', { withTimezone: true }).default(sql`now()`).notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).default(sql`now()`).notNull(),
+}, (table) => [
+  unique('fcm_tokens_tradie_token_unique').on(table.tradieId, table.token),
+  index('fcm_tokens_tradie_idx').on(table.tradieId),
+])
 
 export const notifications = pgTable('notifications', {
   id:       uuid('id').primaryKey().default(sql`gen_random_uuid()`),

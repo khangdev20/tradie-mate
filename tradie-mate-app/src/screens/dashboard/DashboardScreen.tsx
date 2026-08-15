@@ -19,6 +19,7 @@ import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityI
 import { format } from 'date-fns'
 import api from '../../services/apiService'
 import { useNetworkState } from '../../hooks/useNetworkState'
+import { useOfflineQueue } from '../../hooks/useOfflineQueue'
 
 interface DashboardStats {
   jobs_today: number
@@ -38,6 +39,7 @@ interface DashboardStats {
 export function DashboardScreen({ navigation }: any) {
   const today = new Date()
   const { status: networkStatus } = useNetworkState()
+  const { queue } = useOfflineQueue()
   const [loading, setLoading] = useState(false)
   const [refreshing, setRefreshing] = useState(false)
   const [stats, setStats] = useState<DashboardStats>({
@@ -125,7 +127,11 @@ export function DashboardScreen({ navigation }: any) {
             <Text style={styles.greeting}>Good morning</Text>
             <Text style={styles.date}>{format(today, 'EEEE, d MMMM')}</Text>
           </View>
-          <SyncIndicator status={networkStatus} />
+          <SyncIndicator
+            status={networkStatus}
+            queuedCount={queue.length}
+            onPress={() => navigation.navigate('Profile', { screen: 'SyncHealth' })}
+          />
         </View>
 
         {loading && !refreshing ? (
@@ -204,7 +210,13 @@ export function DashboardScreen({ navigation }: any) {
               </TouchableOpacity>
             ) : (
               <View style={styles.noJobCard}>
-                <Text style={styles.noJobText}>No upcoming jobs scheduled</Text>
+                <Text style={styles.noJobText}>Add today's first job</Text>
+                <TouchableOpacity
+                  style={styles.quickJobLink}
+                  onPress={() => navigation.navigate('Jobs', { screen: 'QuickJob' })}
+                >
+                  <Text style={styles.quickJobLinkText}>Quick Job →</Text>
+                </TouchableOpacity>
               </View>
             )}
 
@@ -248,18 +260,35 @@ export function DashboardScreen({ navigation }: any) {
       <View style={styles.fabRow}>
         <TouchableOpacity 
           style={styles.fab}
-          onPress={() => navigation.navigate('Jobs', { screen: 'NewJob' })}
+          onPress={() => navigation.navigate('Jobs', { screen: 'QuickJob' })}
         >
-          <MaterialCommunityIcons name="plus" size={24} color={Colors.white} />
-          <Text style={styles.fabText}>New Job</Text>
+          <MaterialCommunityIcons name="lightning-bolt" size={24} color={Colors.white} />
+          <Text style={styles.fabText}>Quick Job</Text>
         </TouchableOpacity>
         
         <TouchableOpacity 
           style={[styles.fab, styles.fabSecondary]}
-          onPress={() => navigation.navigate('Invoices')}
+          onPress={() => navigation.navigate('Jobs', { screen: 'NewJob' })}
         >
-          <MaterialCommunityIcons name="file-document-outline" size={24} color={Colors.cta} />
-          <Text style={[styles.fabText, styles.fabTextSecondary]}>Invoices</Text>
+          <MaterialCommunityIcons name="plus" size={24} color={Colors.cta} />
+          <Text style={[styles.fabText, styles.fabTextSecondary]}>New Job</Text>
+        </TouchableOpacity>
+      </View>
+
+      <View style={styles.fabRowSecondary}>
+        <TouchableOpacity
+          style={styles.fabTertiary}
+          onPress={() => navigation.navigate('Profile', { screen: 'Documents' })}
+        >
+          <MaterialCommunityIcons name="camera-document" size={20} color={Colors.cta} />
+          <Text style={styles.fabTertiaryText}>Scan Invoice</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.fabTertiary}
+          onPress={() => navigation.navigate('Profile', { screen: 'SyncHealth' })}
+        >
+          <MaterialCommunityIcons name="cloud-sync" size={20} color={Colors.cta} />
+          <Text style={styles.fabTertiaryText}>Offline Mode</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -434,6 +463,16 @@ const styles = StyleSheet.create({
     color: Colors.textMuted,
     fontFamily: Typography.fontFamily,
   },
+  quickJobLink: {
+    marginTop: Spacing.sm,
+    minHeight: 44,
+    justifyContent: 'center',
+  },
+  quickJobLinkText: {
+    fontSize: Typography.sizes.body,
+    color: Colors.cta,
+    fontWeight: Typography.weights.medium,
+  },
   laterJobItem: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -497,5 +536,30 @@ const styles = StyleSheet.create({
   },
   fabTextSecondary: {
     color: Colors.cta,
+  },
+  fabRowSecondary: {
+    position: 'absolute',
+    bottom: 88,
+    left: Spacing.lg,
+    right: Spacing.lg,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  fabTertiary: {
+    flex: 0.48,
+    height: 44,
+    backgroundColor: Colors.white,
+    borderRadius: Radius.pill,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 0.5,
+    borderColor: Colors.border,
+  },
+  fabTertiaryText: {
+    color: Colors.cta,
+    fontWeight: Typography.weights.medium,
+    marginLeft: Spacing.xs,
+    fontSize: 12,
   },
 })

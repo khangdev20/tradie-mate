@@ -15,6 +15,34 @@
       "when": 1780076580484,
       "tag": "0001_spicy_brood",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1781000000000,
+      "tag": "0002_phase1_completion",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1782000000000,
+      "tag": "0003_legal_consent",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1782100000000,
+      "tag": "0004_onboarding_state",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1782200000000,
+      "tag": "0005_implementation_completion",
+      "breakpoints": true
     }
   ]
 }

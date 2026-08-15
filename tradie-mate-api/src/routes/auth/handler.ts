@@ -14,7 +14,14 @@ export const sendOtpHandler = async (request: FastifyRequest<any>, reply: Fastif
   const count = await redis.get(rateLimitKey)
 
   if (count && parseInt(count) >= 3) {
-    return reply.status(429).send({ error: 'Too many OTP requests. Please try again in 10 minutes.' })
+    return reply.status(429).send({
+      success: false,
+      error: {
+        statusCode: 429,
+        code: 'OTP_RATE_LIMIT',
+        message: 'Too many OTP requests. Please try again in 10 minutes.',
+      },
+    })
   }
 
   if (env.NODE_ENV === 'development' && phone === '+61412345678') {
@@ -385,6 +392,125 @@ export const refreshHandler = async (request: FastifyRequest<any>, reply: Fastif
     access_token: data.session.access_token,
     expires_in: data.session.expires_in
   }
+}
+
+/**
+ * POST /auth/sso
+ * Module 2.3 — Google & Apple SSO Authentication
+ * Validates an ID token from Google or Apple, then finds or creates a tradie account.
+ */
+export const ssoHandler = async (request: FastifyRequest<any>, reply: FastifyReply) => {
+  const { provider, idToken } = request.body as { provider: 'GOOGLE' | 'APPLE'; idToken: string }
+
+  if (!provider || !idToken) {
+    return reply.status(400).send({ success: false, error: { message: 'provider and idToken are required.' } })
+  }
+
+  const supabaseProvider = provider === 'GOOGLE' ? 'google' : 'apple'
+
+  // Validate the ID token via Supabase auth (which wraps Google/Apple public key verification)
+  const { data, error } = await supabaseAdmin.auth.signInWithIdToken({
+    provider: supabaseProvider as any,
+    token: idToken,
+  })
+
+  if (error || !data.user || !data.session) {
+    return reply.status(401).send({ success: false, error: { message: error?.message || 'SSO validation failed.' } })
+  }
+
+  const supabaseUser = data.user
+  const email = supabaseUser.email
+  const displayName = supabaseUser.user_metadata?.full_name || supabaseUser.user_metadata?.name || ''
+  const providerUserId = supabaseUser.id
+
+  // Look for an existing tradie by auth user ID
+  let [tradie] = await db
+    .select()
+    .from(tradies)
+    .where(eq(tradies.authUserId, supabaseUser.id))
+    .limit(1)
+
+  if (!tradie && email) {
+    // Look for existing tradie by email (account linking)
+    const [byEmail] = await db
+      .select()
+      .from(tradies)
+      .where(eq(tradies.email, email))
+      .limit(1)
+    tradie = byEmail
+  }
+
+  if (!tradie) {
+    // Create new tradie record
+    const nameParts = displayName.split(' ')
+    const firstName = nameParts[0] || 'New'
+    const lastName = nameParts.slice(1).join(' ') || 'Tradie'
+
+    const [created] = await db
+      .insert(tradies)
+      .values({
+        authUserId: supabaseUser.id,
+        firstName,
+        lastName,
+        email: email || null,
+        tradeType: 'OTHER',
+        isOnboarded: false,
+        isActive: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .returning()
+
+    tradie = created
+
+    // Link auth method
+    await db
+      .insert(tradieAuthMethods)
+      .values({
+        tradieId: tradie.id,
+        provider: supabaseProvider,
+        providerId: providerUserId,
+        email: email || null,
+        isPrimary: true,
+        createdAt: new Date(),
+      })
+      .onConflictDoNothing()
+  } else {
+    // Link the new provider to the existing account if not already linked
+    await db
+      .insert(tradieAuthMethods)
+      .values({
+        tradieId: tradie.id,
+        provider: supabaseProvider,
+        providerId: providerUserId,
+        email: email || null,
+        isPrimary: false,
+        createdAt: new Date(),
+      })
+      .onConflictDoNothing()
+
+    // Update Google/Apple ID on tradie record
+    if (provider === 'GOOGLE') {
+      await db.update(tradies).set({ googleId: providerUserId, updatedAt: new Date() }).where(eq(tradies.id, tradie.id))
+    } else {
+      await db.update(tradies).set({ appleId: providerUserId, updatedAt: new Date() }).where(eq(tradies.id, tradie.id))
+    }
+  }
+
+  return reply.status(200).send({
+    success: true,
+    data: {
+      accessToken: data.session.access_token,
+      refreshToken: data.session.refresh_token,
+      user: {
+        id: tradie.id,
+        fullName: `${tradie.firstName} ${tradie.lastName}`.trim(),
+        phone: tradie.phone,
+        email: tradie.email,
+        isOnboarded: tradie.isOnboarded,
+      },
+    },
+  })
 }
 
 export const logoutHandler = async (request: FastifyRequest, reply: FastifyReply) => {

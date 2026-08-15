@@ -19,7 +19,8 @@
       }
     ],
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@tradiemate/ui": ["../packages/ui/src/index.ts"]
     }
   },
   "include": [
