@@ -1,11 +1,55 @@
 import { FastifyInstance, FastifyRequest } from 'fastify'
 import { requireAuth, requireOnboarded } from '../../middleware/auth.middleware'
 import { db } from '../../config/db'
-import { subscriptionPlans } from '../../db/schema/subscriptions'
+import { subscriptionPlans, planEntitlements, tradieSubscriptions } from '../../db/schema/subscriptions'
 import { eq } from 'drizzle-orm'
 import { EntitlementService } from '../../services/entitlement.service'
 import { StripeService } from '../../services/stripe.service'
 import { AppError } from '../../utils/errors'
+
+function entitlementsToFeatures(entitlements: Record<string, unknown>): string[] {
+  const features: string[] = []
+  if (typeof entitlements.maxJobsPerMonth === 'number') {
+    features.push(`${entitlements.maxJobsPerMonth} jobs/month`)
+  }
+  if (typeof entitlements.maxInvoicesPerMonth === 'number') {
+    features.push(`${entitlements.maxInvoicesPerMonth} invoices/month`)
+  }
+  if (entitlements.tapToPayEnabled) features.push('Tap to Pay')
+  if (entitlements.customerTrackingEnabled) features.push('Customer live tracking')
+  if (entitlements.reviewRequestsEnabled) features.push('Review requests')
+  if (entitlements.xeroSyncEnabled) features.push('Xero sync')
+  if (typeof entitlements.teamMembersLimit === 'number' && entitlements.teamMembersLimit > 1) {
+    features.push(`Up to ${entitlements.teamMembersLimit} team members`)
+  }
+  features.push('Offline sync')
+  return features
+}
+
+async function linkStripeCustomer(tradieId: string, stripeCustomerId: string) {
+  const [existing] = await db
+    .select()
+    .from(tradieSubscriptions)
+    .where(eq(tradieSubscriptions.tradieId, tradieId))
+    .limit(1)
+
+  if (existing) {
+    await db
+      .update(tradieSubscriptions)
+      .set({ stripeCustomerId, updatedAt: new Date() })
+      .where(eq(tradieSubscriptions.id, existing.id))
+    return
+  }
+
+  await db.insert(tradieSubscriptions).values({
+    tradieId,
+    planCode: 'FREE',
+    status: 'INCOMPLETE',
+    stripeCustomerId,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  })
+}
 
 export async function billingRoutes(fastify: FastifyInstance) {
   // Public route to fetch subscription plans
@@ -16,9 +60,19 @@ export async function billingRoutes(fastify: FastifyInstance) {
       .where(eq(subscriptionPlans.isPublic, true))
       .orderBy(subscriptionPlans.sortOrder)
 
+    const planEntRows = await db.select().from(planEntitlements)
+    const entByPlan = Object.fromEntries(
+      planEntRows.map((row) => [row.planCode, row.entitlements as Record<string, unknown>])
+    )
+
+    const plansWithFeatures = plans.map((plan) => ({
+      ...plan,
+      features: entitlementsToFeatures(entByPlan[plan.code] ?? {}),
+    }))
+
     return {
       success: true,
-      data: { plans },
+      data: { plans: plansWithFeatures },
     }
   })
 
@@ -89,12 +143,14 @@ export async function billingRoutes(fastify: FastifyInstance) {
         `${tradie.firstName} ${tradie.lastName}`
       )
 
-      // Create checkout session URL
+      await linkStripeCustomer(tradie.id, stripeCustomerId)
+
       const checkoutUrl = await StripeService.createCheckoutSession(
         plan.stripePriceId,
         stripeCustomerId,
         successUrl,
-        cancelUrl
+        cancelUrl,
+        { tradieId: tradie.id, planCode }
       )
 
       return {
@@ -105,9 +161,9 @@ export async function billingRoutes(fastify: FastifyInstance) {
 
     // 3. Create Stripe Billing Portal redirection
     instance.post('/portal-session', async (request: FastifyRequest<{
-      Body: { returnUrl: string }
+      Body: { returnUrl?: string } | undefined
     }>) => {
-      const { returnUrl } = request.body
+      const { returnUrl } = request.body ?? {}
       const tradie = request.tradie
 
       // Get or create Stripe Customer
@@ -116,7 +172,12 @@ export async function billingRoutes(fastify: FastifyInstance) {
         `${tradie.firstName} ${tradie.lastName}`
       )
 
-      const portalUrl = await StripeService.createPortalSession(stripeCustomerId, returnUrl)
+      await linkStripeCustomer(tradie.id, stripeCustomerId)
+
+      const portalUrl = await StripeService.createPortalSession(
+        stripeCustomerId,
+        returnUrl ?? 'tradiemate://billing'
+      )
 
       return {
         success: true,

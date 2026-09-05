@@ -1,9 +1,24 @@
 import {
   pgTable, uuid, text, integer, decimal,
-  timestamp, varchar, unique, index,
+  timestamp, varchar, unique, index, jsonb,
 } from 'drizzle-orm/pg-core'
 import { sql } from 'drizzle-orm'
 import { tradies } from './tradies'
+import { invoices } from './invoices'
+
+export const paymentEvents = pgTable('payment_events', {
+  id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+  invoiceId: uuid('invoice_id').notNull().references(() => invoices.id, { onDelete: 'cascade' }),
+  tradieId: uuid('tradie_id').notNull().references(() => tradies.id, { onDelete: 'cascade' }),
+  eventType: varchar('event_type', { length: 80 }).notNull(),
+  source: varchar('source', { length: 40 }).notNull(),
+  stripePaymentIntentId: text('stripe_payment_intent_id'),
+  metadata: jsonb('metadata'),
+  createdAt: timestamp('created_at', { withTimezone: true }).default(sql`now()`).notNull(),
+}, (table) => [
+  index('payment_events_invoice_idx').on(table.invoiceId),
+  index('payment_events_tradie_created_idx').on(table.tradieId, table.createdAt),
+])
 
 export const payouts = pgTable('payouts', {
   id:       uuid('id').primaryKey().default(sql`gen_random_uuid()`),

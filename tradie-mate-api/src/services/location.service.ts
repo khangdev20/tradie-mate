@@ -1,59 +1,62 @@
-// src/services/location.service.ts
-import { db } from '../config/db'
-import { locationPings, trackingSessions } from '../db/schema'
-import { eq, and } from 'drizzle-orm'
 import { firestore } from '../config/firebase'
+import { db } from '../config/db'
+import { locationEvents } from '../db/schema/location'
+import { AppError } from '../utils/errors'
 
-interface LocationUpdate {
-  lat: string; lng: string; accuracy?: number
-  speed?: number; heading?: number; altitude?: number
-  recorded_at: string; job_id?: string
+export interface GpsPoint {
+  lat: number
+  lng: number
+  accuracy?: number
+  heading?: number
+  speedMetersPerSecond?: number
+  recorded_at: string
 }
 
-export async function batchInsertLocations(
-  tradieId: string,
-  updates: LocationUpdate[]
-) {
-  // 1. Bulk INSERT — 1 SQL round-trip for all 20 rows
-  const inserted = await db
-    .insert(locationPings)
-    .values(updates.map(u => ({
-      tradieId,
-      jobId:      u.job_id ?? null,
-      lat:        u.lat,
-      lng:        u.lng,
-      accuracy:   u.accuracy ?? null,
-      speed:      u.speed ?? null,
-      heading:    u.heading ?? null,
-      altitude:   u.altitude ?? null,
-      recordedAt: new Date(u.recorded_at),
-    })))
-    .returning({ id: locationPings.id })
+export class LocationService {
+  static async writeTrackingBatch(params: {
+    tradieId: string
+    jobId: string
+    points: GpsPoint[]
+    etaSeconds?: number | null
+    distanceRemainingMeters?: number | null
+    routePolyline?: string | null
+  }) {
+    const latest = params.points[params.points.length - 1]
 
-  // 2. Write ONLY latest point to Firestore (no flood)
-  const latest = updates[updates.length - 1]
-  if (latest) {
-    const [session] = await db
-      .select()
-      .from(trackingSessions)
-      .where(and(
-        eq(trackingSessions.tradieId, tradieId),
-        eq(trackingSessions.isActive, true)
-      ))
-      .limit(1)
-
-    if (session) {
-      await firestore
-        .collection('tracking')
-        .doc(session.jobId)
-        .set({
-          lat:         parseFloat(latest.lat),
-          lng:         parseFloat(latest.lng),
-          updatedAt:   new Date(),
-          etaMinutes:  session.etaMinutes,
-        }, { merge: true })
+    try {
+      await firestore.collection('tracking').doc(params.jobId).set(
+        {
+          jobId: params.jobId,
+          tradieId: params.tradieId,
+          latitude: latest.lat,
+          longitude: latest.lng,
+          heading: latest.heading ?? 0,
+          speedMetersPerSecond: latest.speedMetersPerSecond ?? 0,
+          accuracy: latest.accuracy ?? null,
+          etaSeconds: params.etaSeconds ?? null,
+          distanceRemainingMeters: params.distanceRemainingMeters ?? null,
+          routePolyline: params.routePolyline ?? null,
+          status: 'COMMUTING',
+          updatedAt: new Date().toISOString(),
+          staleAfterSeconds: 20,
+          batchSize: params.points.length,
+        },
+        { merge: true }
+      )
+    } catch (err) {
+      console.warn('Firestore tracking write failed:', err)
+      throw new AppError('Failed to update live tracking.', 502, 'TRACKING_WRITE_FAILED')
     }
-  }
 
-  return { accepted: inserted.length }
+    await db.insert(locationEvents).values({
+      tradieId: params.tradieId,
+      jobId: params.jobId,
+      eventType: 'LOCATION_BATCH_RECORDED',
+      metadata: {
+        count: params.points.length,
+        latest,
+      },
+      createdAt: new Date(),
+    })
+  }
 }

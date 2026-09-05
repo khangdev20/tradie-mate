@@ -50,11 +50,7 @@ const processQueue = (error: any, token: string | null = null) => {
 
 api.interceptors.response.use(
   (response) => {
-    const res = response.data
-    if (res && typeof res === 'object' && res.success === true && 'data' in res) {
-      return res.data
-    }
-    return res
+    return response.data
   },
   async (error) => {
     const originalRequest = error.config
@@ -92,12 +88,12 @@ api.interceptors.response.use(
     }
 
     // Format error for UI
-    const errData = error.response?.data?.error
+    const apiError = error.response?.data?.error
     const message =
-      errData && typeof errData === 'object' && 'message' in errData
-        ? errData.message
-        : (typeof errData === 'string' ? errData : (error.message ?? 'Unknown error'))
-    
+      (typeof apiError === 'string' ? apiError : apiError?.message) ??
+      error.response?.data?.message ??
+      error.message ??
+      'Unknown error'
     return Promise.reject(new Error(message))
   }
 )

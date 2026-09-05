@@ -21,6 +21,7 @@ import api from '../../services/apiService'
 import { useNetworkState } from '../../hooks/useNetworkState'
 import { useOfflineQueue } from '../../hooks/useOfflineQueue'
 import { useHaptics } from '../../hooks/useHaptics'
+import { saveOfflineInvoice } from '../../offline/repositories/invoiceRepository'
 
 interface LineItem {
   id: string
@@ -109,22 +110,29 @@ export function InvoiceScreen({ route, navigation }: any) {
       items: items.map(item => ({
         description: item.description,
         quantity: item.qty,
-        unitPrice: item.priceCents
+        unitPriceCents: item.priceCents
       }))
     }
 
     // Offline Save
     if (!isConnected) {
-      const mockInvoiceId = 'offline_' + Math.random().toString(36).substring(2, 15)
-      addToQueue('CREATE_INVOICE', { ...invoicePayload, invoiceId: mockInvoiceId })
-      
+      const saved = await saveOfflineInvoice({
+        jobId,
+        items: items.map((item) => ({
+          description: item.description,
+          qty: item.qty,
+          unitPriceCents: item.priceCents,
+        })),
+      })
+      addToQueue('CREATE_INVOICE', { ...invoicePayload, invoiceId: saved.localId })
+
       Alert.alert(
         'Offline Mode',
         'Invoice creation has been queued offline. Proceeding to client signature.',
         [
-          { 
-            text: 'Capture Signature', 
-            onPress: () => navigation.navigate('Signature', { invoiceId: mockInvoiceId, amountCents: total }) 
+          {
+            text: 'Capture Signature',
+            onPress: () => navigation.navigate('Signature', { invoiceId: saved.localId, amountCents: saved.totalCents })
           }
         ]
       )
@@ -341,8 +349,8 @@ const styles = StyleSheet.create({
     marginRight: Spacing.md,
   },
   qtyBtn: {
-    width: 32,
-    height: 32,
+    width: 52,
+    height: 52,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: Colors.surface,

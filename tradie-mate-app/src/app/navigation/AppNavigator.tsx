@@ -3,19 +3,14 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'
 import { AppTabParamList } from './types'
 import { DashboardScreen } from '../../screens/dashboard/DashboardScreen'
 import { JobsNavigator } from '../../screens/jobs/JobsNavigator'
+import { CalendarScreen } from '../../screens/calendar/CalendarScreen'
 import { InvoicesNavigator } from '../../screens/invoices/InvoicesNavigator'
-import { ProfileScreen } from '../../screens/profile/ProfileScreen'
+import { NotificationsScreen } from '../../screens/notifications/NotificationsScreen'
+import { ProfileNavigator } from '../../screens/profile/ProfileNavigator'
 import { Colors } from '../../constants/colors'
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons'
-import { View, Text } from 'react-native'
 
 const Tab = createBottomTabNavigator<AppTabParamList>()
-
-const Placeholder = ({ name }: { name: string }) => (
-  <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: Colors.background }}>
-    <Text>{name} Screen</Text>
-  </View>
-)
 
 export function AppNavigator() {
   return (
@@ -35,6 +30,7 @@ export function AppNavigator() {
           let iconName = ''
           if (route.name === 'Dashboard') iconName = 'home'
           else if (route.name === 'Jobs') iconName = 'briefcase'
+          else if (route.name === 'Calendar') iconName = 'calendar-month'
           else if (route.name === 'Invoices') iconName = 'file-document-outline'
           else if (route.name === 'Notifications') iconName = 'bell'
           else if (route.name === 'Profile') iconName = 'account'
@@ -45,9 +41,10 @@ export function AppNavigator() {
     >
       <Tab.Screen name="Dashboard" component={DashboardScreen} />
       <Tab.Screen name="Jobs" component={JobsNavigator} />
+      <Tab.Screen name="Calendar" component={CalendarScreen} />
       <Tab.Screen name="Invoices" component={InvoicesNavigator} />
-      <Tab.Screen name="Notifications" component={() => <Placeholder name="Notifications" />} />
-      <Tab.Screen name="Profile" component={ProfileScreen} />
+      <Tab.Screen name="Notifications" component={NotificationsScreen} />
+      <Tab.Screen name="Profile" component={ProfileNavigator} />
     </Tab.Navigator>
   )
 }

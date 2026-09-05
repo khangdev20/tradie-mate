@@ -19,15 +19,29 @@
     {
       "idx": 2,
       "version": "7",
-      "when": 1782570000000,
-      "tag": "0002_legal_consent",
+      "when": 1781000000000,
+      "tag": "0002_phase1_completion",
       "breakpoints": true
     },
     {
       "idx": 3,
       "version": "7",
-      "when": 1782570000001,
-      "tag": "0003_onboarding_state",
+      "when": 1788615233682,
+      "tag": "0003_remarkable_lila_cheney",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1782000000000,
+      "tag": "0004_legal_consent",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1782100000000,
+      "tag": "0005_onboarding_state",
       "breakpoints": true
     }
   ]

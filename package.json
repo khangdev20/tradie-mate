@@ -1,0 +1,20 @@
+{
+  "name": "tradiemate-workspace",
+  "private": true,
+  "workspaces": [
+    "packages/*",
+    "tradie-mate-api",
+    "tradie-mate-web"
+  ],
+  "scripts": {
+    "dev:api": "npm run dev -w tradie-mate-api",
+    "dev:web": "npm run dev -w tradie-mate-web",
+    "dev:app": "npm run start -w tradie-mate-app",
+    "test:api": "npm run test -w tradie-mate-api",
+    "build:web": "npm run build -w tradie-mate-web",
+    "build:api": "npm run build -w tradie-mate-api"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

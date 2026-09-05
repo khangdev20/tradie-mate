@@ -21,8 +21,9 @@ import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityI
 import api from '../../services/apiService'
 import { useOfflineQueue } from '../../hooks/useOfflineQueue'
 import { useNetworkState } from '../../hooks/useNetworkState'
-import { startTracking, stopTracking } from '../../services/location'
+import { startTracking, stopTracking, getCurrentPosition } from '../../services/location'
 import { useHaptics } from '../../hooks/useHaptics'
+import { trackEvent } from '../../services/analytics'
 
 export function JobDetailScreen({ route, navigation }: any) {
   const { jobId } = route.params
@@ -59,12 +60,10 @@ export function JobDetailScreen({ route, navigation }: any) {
         setJob(res.data)
         setNotes(res.data.notes || '')
         
-        // Populate default coordinates for Map
-        const destLat = parseFloat(res.data.lat) || -33.8915
-        const destLng = parseFloat(res.data.lng) || 151.2503
-        
-        // Set mock initial tradie coords a bit away
-        setTradieCoords({ latitude: destLat + 0.015, longitude: destLng - 0.015 })
+        // Set fallback coordinates until GPS resolves
+        const destLat = parseFloat(res.data.lat) || -27.4698
+        const destLng = parseFloat(res.data.lng) || 153.0251
+        setTradieCoords((prev) => prev ?? { latitude: destLat + 0.015, longitude: destLng - 0.015 })
       }
     } catch (error) {
       console.warn('Failed to load job details:', error)
@@ -75,6 +74,7 @@ export function JobDetailScreen({ route, navigation }: any) {
 
   useEffect(() => {
     loadJob()
+    trackEvent('job_detail_opened', { jobId })
     return () => {
       stopTracking()
       // Clear any pending notes save timer on unmount
@@ -91,6 +91,7 @@ export function JobDetailScreen({ route, navigation }: any) {
       try {
         setNotesSaving(true)
         await api.patch(`/jobs/${jobId}/notes`, { notes: text })
+        setJob((current: any) => current ? { ...current, notes: text } : current)
       } catch (err) {
         console.warn('Notes auto-save failed:', err)
       } finally {
@@ -98,6 +99,20 @@ export function JobDetailScreen({ route, navigation }: any) {
       }
     }, 1500)
   }, [jobId, isConnected])
+  useEffect(() => {
+    getCurrentPosition()
+      .then((coords) => {
+        setTradieCoords({ latitude: coords.latitude, longitude: coords.longitude })
+        setEtaStatus('LIVE')
+      })
+      .catch(() => {
+        setEtaStatus('STALE')
+        api.post('/maps/location-event', {
+          jobId,
+          eventType: 'STALE_LOCATION',
+        }).catch(() => {})
+      })
+  }, [jobId])
 
   // Map directions lookup
   useEffect(() => {
@@ -132,47 +147,53 @@ export function JobDetailScreen({ route, navigation }: any) {
   }, [job, tradieCoords, isConnected])
 
   const handleStatusTransition = async (newStatus: string) => {
-    // Standard workflows checks
     if (!job) return
 
     triggerLight()
 
-    // Offline Queue
     if (!isConnected) {
-      addToQueue('UPDATE_STATUS', { jobId, status: newStatus })
+      addToQueue('UPDATE_STATUS', { jobId, status: newStatus, timestamp: new Date().toISOString() })
       setJob({ ...job, status: newStatus })
       Alert.alert('Offline status updated', `Transition queued to: ${newStatus}`)
       return
     }
 
     try {
-      const res = await api.patch(`/jobs/${jobId}/status`, { status: newStatus }) as any
-      if (res && res.success) {
-        triggerSuccess()
-        setJob(res.data)
-        
-        // Start background locations if Commuting
-        if (newStatus === 'COMMUTING') {
-          startTracking(jobId)
-        } else {
-          stopTracking()
+      if (newStatus === 'COMMUTING') {
+        const res = await api.post(`/jobs/${jobId}/start-commute`) as any
+        if (res?.success) {
+          triggerSuccess()
+          trackEvent('job_status_changed', { jobId, status: 'COMMUTING' })
+          setJob({ ...job, status: 'COMMUTING' })
+          await startTracking(jobId)
         }
+        return
+      }
 
-        // Auto prompt to create invoice on completion
+      if (job.status === 'COMMUTING') {
+        await stopTracking()
+        await api.post(`/jobs/${jobId}/end-commute`).catch(() => undefined)
+      }
+
+      const res = await api.patch(`/jobs/${jobId}/status`, { status: newStatus }) as any
+      if (res?.success) {
+        triggerSuccess()
+        trackEvent('job_status_changed', { jobId, status: newStatus })
+        setJob({ ...job, ...res.data })
+
         if (newStatus === 'COMPLETED') {
           Alert.alert(
             'Job Completed',
             'Would you like to generate the invoice for this job now?',
             [
               { text: 'Create Invoice', onPress: () => navigation.navigate('Invoice', { jobId: job.id }) },
-              { text: 'Later', style: 'cancel' }
+              { text: 'Later', style: 'cancel' },
             ]
           )
         }
       }
     } catch (err: any) {
       Alert.alert('Transition Error', err.message || 'Status transition blocked.')
-      // Reload job details to reset state
       loadJob()
     }
   }
@@ -200,6 +221,19 @@ export function JobDetailScreen({ route, navigation }: any) {
         return { text: 'Slide to Complete Job', action: () => handleStatusTransition('COMPLETED') }
       default:
         return { text: '', action: () => {} }
+    }
+  }
+
+  const saveNotes = async () => {
+    if (notesSaveTimerRef.current) clearTimeout(notesSaveTimerRef.current)
+    if (!job || notes === (job.notes || '')) return
+    if (!isConnected) return
+
+    try {
+      await api.patch(`/jobs/${jobId}`, { notes })
+      setJob({ ...job, notes })
+    } catch (err) {
+      console.warn('Failed to save notes:', err)
     }
   }
 
@@ -295,6 +329,7 @@ export function JobDetailScreen({ route, navigation }: any) {
             placeholder="Add specific job issues, requirements, or list materials used..."
             value={notes}
             onChangeText={handleNotesChange}
+            onEndEditing={saveNotes}
             placeholderTextColor={Colors.textSubtle}
           />
         </View>

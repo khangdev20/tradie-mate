@@ -86,7 +86,8 @@ export function ABNScreen({ route, navigation }: any) {
       // Trigger backend ABN lookup verification
       setIsValidatingAbn(true)
       try {
-        const res = await api.post('/onboarding/abn/validate', { abn: numbersOnly }) as any
+        const response = await api.post('/onboarding/abn/validate', { abn: numbersOnly }) as any
+        const res = response.data ?? response
         if (res.valid && res.entity_name) {
           setBusinessName(res.entity_name)
           setAbnError(undefined)

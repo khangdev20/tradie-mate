@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import {
   View,
   Text,
@@ -17,17 +17,24 @@ import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityI
 import api from '../../services/apiService'
 import { useHaptics } from '../../hooks/useHaptics'
 import { useNetworkState } from '../../hooks/useNetworkState'
+import { useEntitlements } from '../../hooks/useEntitlements'
+import { useOfflineQueue } from '../../hooks/useOfflineQueue'
+import { processTapToPay, recordOfflineCashPayment } from '../../services/stripeTerminal'
 
 export function PaymentScreen({ route, navigation }: any) {
   const { invoiceId, amountCents = 15840 } = route.params || {}
   const { triggerMedium, triggerSuccess } = useHaptics()
   const { isConnected } = useNetworkState()
+  const { hasEntitlement } = useEntitlements()
+  const { addToQueue } = useOfflineQueue()
 
-  const [loading, setLoading] = useState(false)
   const [statusText, setStatusText] = useState('Initialize Terminal...')
   const [step, setStep] = useState<'IDLE' | 'CONNECTING' | 'TAP_PROMPT' | 'PROCESSING' | 'SUCCESS'>('IDLE')
-  
-  // Animation states
+
+  const connectionTokenRef = useRef<string | null>(null)
+  const clientSecretRef = useRef<string | null>(null)
+  const paymentIntentIdRef = useRef<string | null>(null)
+
   const pulseAnim = React.useRef(new Animated.Value(1)).current
 
   useEffect(() => {
@@ -41,26 +48,35 @@ export function PaymentScreen({ route, navigation }: any) {
     } else {
       pulseAnim.setValue(1)
     }
-  }, [step])
+  }, [step, pulseAnim])
 
   const handleTapToPay = async () => {
     triggerMedium()
-    
-    // Offline mode warning
+
+    if (!hasEntitlement('tapToPayEnabled')) {
+      Alert.alert(
+        'Tap to Pay is locked',
+        'Upgrade to a plan with Tap to Pay to collect card payments on site.',
+        [{ text: 'OK' }]
+      )
+      return
+    }
+
     if (!isConnected) {
       Alert.alert(
         'Offline Mode Warning',
         'Stripe Terminal Tap to Pay requires internet access. Would you like to record a cash/check payment offline?',
         [
-          { 
-            text: 'Yes, Record Offline', 
-            onPress: () => {
+          {
+            text: 'Yes, Record Offline',
+            onPress: async () => {
+              addToQueue('RECORD_CASH_PAYMENT', { invoiceId, timestamp: new Date().toISOString() })
               triggerSuccess()
               setStep('SUCCESS')
-              setStatusText('Payment recorded offline!')
-            } 
+              setStatusText('Cash payment queued for sync')
+            },
           },
-          { text: 'Cancel', style: 'cancel' }
+          { text: 'Cancel', style: 'cancel' },
         ]
       )
       return
@@ -69,43 +85,66 @@ export function PaymentScreen({ route, navigation }: any) {
     try {
       setStep('CONNECTING')
       setStatusText('Connecting to NFC Reader...')
-      
-      // 1. Fetch Terminal Connection Token
+
       const tokenRes = await api.post('/payments/connection-token') as any
-      if (!tokenRes || !tokenRes.success) {
+      if (!tokenRes?.success) {
         throw new Error('Failed to retrieve terminal connection token')
       }
+      connectionTokenRef.current = tokenRes.data.secret
 
-      // 2. Fetch card_present PaymentIntent clientSecret
       setStatusText('Creating PaymentIntent...')
       const intentRes = await api.post('/payments/tap-to-pay', { invoiceId }) as any
-      if (!intentRes || !intentRes.success) {
+      if (!intentRes?.success) {
         throw new Error('Failed to create PaymentIntent')
       }
 
-      // 3. Prompt user to tap card
+      clientSecretRef.current = intentRes.data.clientSecret
+      paymentIntentIdRef.current = intentRes.data.paymentIntentId
+
       setStep('TAP_PROMPT')
       setStatusText('Hold card or phone near the back of the device')
-      
     } catch (err: any) {
       Alert.alert('Terminal Connection Failed', err.message || 'Unable to start card reader.')
       setStep('IDLE')
     }
   }
 
-  // Simulate tapping credit card
-  const simulateCardTap = () => {
-    if (step !== 'TAP_PROMPT') return
-    
+  const handleCardTap = async () => {
+    if (step !== 'TAP_PROMPT' || !connectionTokenRef.current || !clientSecretRef.current || !paymentIntentIdRef.current) {
+      return
+    }
+
     triggerMedium()
     setStep('PROCESSING')
-    setStatusText('Authorizing charge with Stripe...')
-    
-    setTimeout(() => {
+
+    try {
+      await processTapToPay({
+        connectionToken: connectionTokenRef.current,
+        paymentIntentClientSecret: clientSecretRef.current,
+        paymentIntentId: paymentIntentIdRef.current,
+        invoiceId,
+        onStatusChange: setStatusText,
+      })
+
       triggerSuccess()
       setStep('SUCCESS')
       setStatusText('Payment collected successfully!')
-    }, 2000)
+    } catch (err: any) {
+      Alert.alert('Payment Failed', err.message || 'Unable to complete payment.')
+      setStep('TAP_PROMPT')
+      setStatusText('Hold card or phone near the back of the device')
+    }
+  }
+
+  const handleRecordCashOnline = async () => {
+    try {
+      await recordOfflineCashPayment(invoiceId)
+      triggerSuccess()
+      setStep('SUCCESS')
+      setStatusText('Cash payment recorded')
+    } catch (err: any) {
+      Alert.alert('Failed', err.message || 'Could not record cash payment')
+    }
   }
 
   return (
@@ -129,6 +168,9 @@ export function PaymentScreen({ route, navigation }: any) {
             <Text style={styles.instructions}>
               Tap to Pay turns your mobile phone into an on-site card terminal.
             </Text>
+            <Text style={styles.feeDisclosure}>
+              Card processing fees apply and are shown in your Stripe dashboard before payout.
+            </Text>
           </View>
         )}
 
@@ -140,16 +182,16 @@ export function PaymentScreen({ route, navigation }: any) {
         )}
 
         {step === 'TAP_PROMPT' && (
-          <TouchableOpacity 
-            style={styles.nfcTouchZone} 
+          <TouchableOpacity
+            style={styles.nfcTouchZone}
             activeOpacity={0.8}
-            onPress={simulateCardTap}
+            onPress={handleCardTap}
           >
             <Animated.View style={[styles.nfcPulse, { transform: [{ scale: pulseAnim }] }]}>
               <MaterialCommunityIcons name="nfc" size={64} color={Colors.cta} />
             </Animated.View>
             <Text style={styles.nfcInstructions}>{statusText}</Text>
-            <Text style={styles.simTip}>(Tap NFC icon above to simulate credit card scan)</Text>
+            <Text style={styles.simTip}>Tap when the customer presents their card</Text>
           </TouchableOpacity>
         )}
 
@@ -160,27 +202,31 @@ export function PaymentScreen({ route, navigation }: any) {
             </View>
             <Text style={styles.successTitle}>Transaction Approved</Text>
             <Text style={styles.successMessage}>
-              Invoice {invoiceId.startsWith('offline') ? 'queued' : 'updated'} as PAID. Invoice receipt sent.
+              Invoice marked as PAID. Receipt will be sent to the customer.
             </Text>
           </View>
         )}
 
         <View style={styles.acceptedRow}>
-           <MaterialCommunityIcons name="visa" size={32} color={Colors.textDisabled} />
-           <MaterialCommunityIcons name="credit-card" size={32} color={Colors.textDisabled} />
-           <MaterialCommunityIcons name="apple-pay" size={32} color={Colors.textDisabled} />
-           <MaterialCommunityIcons name="google-pay" size={32} color={Colors.textDisabled} />
+          <MaterialCommunityIcons name="credit-card-outline" size={32} color={Colors.textDisabled} />
+          <MaterialCommunityIcons name="contactless-payment" size={32} color={Colors.textDisabled} />
+          <MaterialCommunityIcons name="cash" size={32} color={Colors.textDisabled} />
         </View>
 
         {step === 'IDLE' && (
-          <TouchableOpacity style={styles.payButton} onPress={handleTapToPay}>
-            <Text style={styles.payButtonText}>Start Tap to Pay</Text>
-          </TouchableOpacity>
+          <>
+            <TouchableOpacity style={styles.payButton} onPress={handleTapToPay}>
+              <Text style={styles.payButtonText}>Start Tap to Pay</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.cashButton} onPress={handleRecordCashOnline}>
+              <Text style={styles.cashButtonText}>Record Cash Payment</Text>
+            </TouchableOpacity>
+          </>
         )}
 
         {step === 'SUCCESS' && (
-          <TouchableOpacity 
-            style={[styles.payButton, { backgroundColor: Colors.cta }]} 
+          <TouchableOpacity
+            style={[styles.payButton, { backgroundColor: Colors.cta }]}
             onPress={() => navigation.popToTop()}
           >
             <Text style={styles.payButtonText}>Done</Text>
@@ -227,7 +273,7 @@ const styles = StyleSheet.create({
   },
   amountValue: {
     fontSize: 48,
-    fontWeight: 'bold',
+    fontWeight: '500',
     color: Colors.textPrimary,
   },
   illustrationContainer: {
@@ -240,6 +286,13 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 20,
     marginTop: Spacing.md,
+  },
+  feeDisclosure: {
+    fontSize: Typography.sizes.micro,
+    color: Colors.textMuted,
+    textAlign: 'center',
+    lineHeight: 18,
+    marginTop: Spacing.sm,
   },
   loaderContainer: {
     alignItems: 'center',
@@ -294,7 +347,7 @@ const styles = StyleSheet.create({
   },
   successTitle: {
     fontSize: Typography.sizes.heading,
-    fontWeight: 'bold',
+    fontWeight: '500',
     color: Colors.success,
     marginBottom: Spacing.xs,
   },
@@ -317,7 +370,18 @@ const styles = StyleSheet.create({
     borderRadius: Radius.element,
     justifyContent: 'center',
     alignItems: 'center',
+    marginBottom: Spacing.sm,
+  },
+  cashButton: {
+    width: '100%',
+    height: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
     marginBottom: Spacing.xl,
+  },
+  cashButtonText: {
+    color: Colors.textMuted,
+    fontSize: Typography.sizes.body,
   },
   payButtonText: {
     color: Colors.white,
