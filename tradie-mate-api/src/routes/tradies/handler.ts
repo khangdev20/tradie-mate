@@ -7,6 +7,7 @@ import { tradieSubscriptions } from '../../db/schema/subscriptions'
 import { eq, and, inArray, count, gte, lt, sql } from 'drizzle-orm'
 import { startOfDay, endOfDay, addDays } from 'date-fns'
 import { toZonedTime } from 'date-fns-tz'
+import { validateLegalConsent } from '../../domain/legal'
 import { ABNService } from '../../services/abn.service'
 import { JobService } from '../../services/job.service'
 import { AppError } from '../../utils/errors'
@@ -77,13 +78,25 @@ export const registerTradieHandler = async (
   request: FastifyRequest<any>,
   reply: FastifyReply
 ) => {
-  const { first_name, last_name, trade_type, abn } = request.body as any
+  const { first_name, last_name, trade_type, abn, legal_consent } = request.body as any
   const user = request.user as any
   const cleanAbn = abn ? String(abn).replace(/\s/g, '') : null
 
   if (!cleanAbn) {
     return reply.status(400).send({ error: 'ABN is required', code: 'ABN_REQUIRED' })
   }
+
+  const consentError = validateLegalConsent(legal_consent)
+  if (consentError) {
+    return reply.status(400).send({
+      error: 'Legal consent required or outdated',
+      code: consentError,
+    })
+  }
+
+  const consentAt = legal_consent.accepted_at
+    ? new Date(legal_consent.accepted_at)
+    : new Date()
 
   const [existingTradie] = await db
     .select()
@@ -102,12 +115,11 @@ export const registerTradieHandler = async (
     })
   }
 
-  let abnDetails: Awaited<ReturnType<typeof ABNService.lookup>> = null
   if (!ABNService.validateLuhn(cleanAbn)) {
     throw new AppError('Invalid ABN format. Please check the number and try again.', 400, 'ABN_INVALID')
   }
 
-  abnDetails = await ABNService.lookup(cleanAbn)
+  const abnDetails = await ABNService.lookup(cleanAbn)
   if (!abnDetails || !abnDetails.active) {
     throw new AppError(
       'ABN could not be verified with the ATO. Please check the number or contact support.',
@@ -128,8 +140,16 @@ export const registerTradieHandler = async (
       abnEntityName: abnDetails.entityName,
       abnGstRegistered: abnDetails.gstRegistered,
       abnVerifiedAt: new Date(),
+      abnVerificationStatus: 'VERIFIED',
+      onboardingStatus: 'PROFILE_SUBMITTED',
       isActive: true,
       isOnboarded: false,
+      termsAcceptedAt: consentAt,
+      termsVersion: legal_consent.terms_version,
+      privacyAcceptedAt: consentAt,
+      privacyVersion: legal_consent.privacy_version,
+      disclaimerAcceptedAt: consentAt,
+      disclaimerVersion: legal_consent.disclaimer_version,
     })
     .returning()
 

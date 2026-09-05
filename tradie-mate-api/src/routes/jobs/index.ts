@@ -1,5 +1,5 @@
 import { FastifyInstance, FastifyRequest } from 'fastify'
-import { requireAuth } from '../../middleware/auth.middleware'
+import { requireAuth, requireOnboarded } from '../../middleware/auth.middleware'
 import { db } from '../../config/db'
 import { jobs } from '../../db/schema/jobs'
 import { customers } from '../../db/schema/customers'
@@ -20,6 +20,7 @@ const twilioClient = twilio(env.TWILIO_ACCOUNT_SID, env.TWILIO_AUTH_TOKEN)
 
 export async function jobRoutes(fastify: FastifyInstance) {
   fastify.addHook('preHandler', requireAuth)
+  fastify.addHook('preHandler', requireOnboarded)
 
   // 1. List jobs
   fastify.get<{ Querystring: { status?: string; limit?: number; offset?: number } }>('/', async (request) => {

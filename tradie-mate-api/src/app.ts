@@ -10,6 +10,7 @@ import { env } from './config/env'
 import { setupErrorHandler } from './utils/errors'
 import responseWrapperPlugin from './plugins/response'
 import { authRoutes } from './routes/auth'
+import { onboardingRoutes } from './routes/onboarding'
 import { tradieRoutes } from './routes/tradies'
 import { jobRoutes } from './routes/jobs'
 import { invoiceRoutes } from './routes/invoices'
@@ -46,6 +47,11 @@ export async function buildApp() {
   // Plugins
   await fastify.register(cors, {
     origin: '*', // Adjust for production React Native + web
+  })
+
+  fastify.addHook('onSend', async (_request, reply, payload) => {
+    reply.header('Referrer-Policy', 'strict-origin-when-cross-origin')
+    return payload
   })
 
   await fastify.register(jwt, {
@@ -97,6 +103,7 @@ export async function buildApp() {
 
   // Phase 1 Routes
   await fastify.register(authRoutes, { prefix: '/auth' })
+  await fastify.register(onboardingRoutes, { prefix: '/onboarding' })
   await fastify.register(tradieRoutes, { prefix: '/tradies' })
   await fastify.register(jobRoutes, { prefix: '/jobs' })
   await fastify.register(invoiceRoutes, { prefix: '/invoices' })
@@ -130,6 +137,7 @@ export async function buildApp() {
 
   // Versioned aliases for the implementation-plan API contract.
   await fastify.register(authRoutes, { prefix: '/api/v1/auth' })
+  await fastify.register(onboardingRoutes, { prefix: '/api/v1/onboarding' })
   await fastify.register(tradieRoutes, { prefix: '/api/v1/tradies' })
   await fastify.register(jobRoutes, { prefix: '/api/v1/jobs' })
   await fastify.register(invoiceRoutes, { prefix: '/api/v1/invoices' })
@@ -164,4 +172,3 @@ export async function buildApp() {
 
   return fastify
 }
-

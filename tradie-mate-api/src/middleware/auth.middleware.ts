@@ -49,3 +49,9 @@ export async function requireABN(req: FastifyRequest, reply: FastifyReply) {
     return reply.status(403).send({ error: 'ABN not verified', code: 'ABN_REQUIRED' })
   }
 }
+
+export async function requireOnboarded(req: FastifyRequest, reply: FastifyReply) {
+  if (!req.tradie.isOnboarded) {
+    return reply.status(403).send({ error: 'Onboarding incomplete', code: 'ONBOARDING_INCOMPLETE' })
+  }
+}

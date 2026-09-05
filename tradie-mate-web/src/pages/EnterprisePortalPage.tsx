@@ -1,7 +1,9 @@
+'use client'
+
 import { useState } from 'react'
 import { useQuery, useMutation } from '@tanstack/react-query'
 import { AppCard, AppButton, EmptyState, StatusBadge } from '@tradiemate/ui'
-import { apiPost } from '../lib/api'
+import { apiPost } from '@/lib/api'
 
 type DispatchJob = {
   id: string
@@ -18,7 +20,8 @@ export function EnterprisePortalPage() {
   const { data, refetch, isFetching } = useQuery({
     queryKey: ['enterprise-jobs', orgId, apiKey],
     queryFn: async () => {
-      const res = await fetch(`/api/enterprise/organizations/${orgId}/jobs`, {
+      const apiBase = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'
+      const res = await fetch(`${apiBase}/enterprise/organizations/${orgId}/jobs`, {
         headers: { 'x-enterprise-api-key': apiKey },
       })
       if (!res.ok) throw new Error('Failed to load jobs')

@@ -1,9 +1,12 @@
+'use client'
+
 import { useEffect, useRef } from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams } from 'next/navigation'
 import { useQuery } from '@tanstack/react-query'
 import mapboxgl from 'mapbox-gl'
 import { AppCard, StatusBadge, MapPanel, EmptyState, AppButton } from '@tradiemate/ui'
-import { apiGet } from '../lib/api'
+import { apiGet } from '@/lib/api'
+import 'mapbox-gl/dist/mapbox-gl.css'
 
 type TrackData = {
   tradieName: string
@@ -18,7 +21,8 @@ type TrackData = {
 }
 
 export function TrackPage() {
-  const { token } = useParams<{ token: string }>()
+  const params = useParams<{ token: string }>()
+  const token = params?.token
   const mapRef = useRef<HTMLDivElement>(null)
   const mapInstance = useRef<mapboxgl.Map | null>(null)
 
@@ -31,10 +35,10 @@ export function TrackPage() {
 
   useEffect(() => {
     if (!mapRef.current || !data?.latitude) return
-    const token = import.meta.env.VITE_MAPBOX_TOKEN
-    if (!token) return
+    const mapboxToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN
+    if (!mapboxToken) return
 
-    mapboxgl.accessToken = token
+    mapboxgl.accessToken = mapboxToken
     if (!mapInstance.current) {
       mapInstance.current = new mapboxgl.Map({
         container: mapRef.current,
