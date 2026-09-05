@@ -6,7 +6,7 @@ import { useOfflineQueueStore } from './useOfflineQueue'
  * Automatically flushes the offline queue when network connectivity returns.
  */
 export function useAutoSync() {
-  const { isConnected, status, setStatus } = useNetworkState()
+  const { isConnected, setStatus } = useNetworkState()
   const syncQueue = useOfflineQueueStore((s) => s.syncQueue)
   const wasOffline = useRef(false)
 

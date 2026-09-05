@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { View, Text, StyleSheet, PanResponder, Animated } from 'react-native'
 import { Colors } from '../../constants/colors'
 import { Typography } from '../../constants/typography'
-import { Spacing, Radius } from '../../constants/spacing'
+import { Radius } from '../../constants/spacing'
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons'
 
 interface SlideToConfirmProps {

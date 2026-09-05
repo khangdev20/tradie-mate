@@ -7,7 +7,6 @@ import {
   SafeAreaView,
   FlatList,
   ActivityIndicator,
-  Alert,
 } from 'react-native'
 import { useAuthStore } from '../../store/auth.store'
 
@@ -24,7 +23,7 @@ const TRADES = [
 
 export const TradeTypeScreen = ({ navigation }: any) => {
   const [selectedTrade, setSelectedTrade] = useState<string | null>(null)
-  const { register, logout, isLoading } = useAuthStore()
+  const { logout, isLoading } = useAuthStore()
 
   const handleContinue = () => {
     if (!selectedTrade) return

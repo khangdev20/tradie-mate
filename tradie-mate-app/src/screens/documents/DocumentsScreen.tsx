@@ -8,7 +8,6 @@ import {
   ActivityIndicator,
   RefreshControl,
   Alert,
-  Platform,
 } from 'react-native'
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons'
 import { Colors } from '../../constants/colors'
@@ -66,7 +65,7 @@ export function DocumentsScreen() {
   const [documents, setDocuments] = useState<TradeDocument[]>([])
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
-  const [uploading, setUploading] = useState<string | null>(null)
+  const [_uploading, setUploading] = useState<string | null>(null)
 
   const fetchDocuments = useCallback(async () => {
     try {

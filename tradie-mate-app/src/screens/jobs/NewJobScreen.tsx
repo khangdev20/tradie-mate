@@ -12,7 +12,7 @@ import {
 } from 'react-native'
 import { Colors } from '../../constants/colors'
 import { Typography } from '../../constants/typography'
-import { Spacing, Radius } from '../../constants/spacing'
+import { Spacing } from '../../constants/spacing'
 import { FormField } from '../../components/ui/FormField'
 import { AppButton } from '../../components/ui/AppButton'
 import { useEntitlements } from '../../hooks/useEntitlements'

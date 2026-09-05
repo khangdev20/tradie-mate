@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useCallback } from 'react'
 import {
   View,
   Text,
@@ -44,6 +44,15 @@ export const OTPScreen = ({ route, navigation }: any) => {
     return () => clearInterval(interval)
   }, [timer])
 
+  const shake = useCallback(() => {
+    Animated.sequence([
+      Animated.timing(shakeAnimation, { toValue: 10, duration: 50, useNativeDriver: true }),
+      Animated.timing(shakeAnimation, { toValue: -10, duration: 50, useNativeDriver: true }),
+      Animated.timing(shakeAnimation, { toValue: 10, duration: 50, useNativeDriver: true }),
+      Animated.timing(shakeAnimation, { toValue: 0, duration: 50, useNativeDriver: true }),
+    ]).start()
+  }, [shakeAnimation])
+
   useEffect(() => {
     if (error) {
       shake()
@@ -52,16 +61,7 @@ export const OTPScreen = ({ route, navigation }: any) => {
       Alert.alert('Error', error)
       clearError()
     }
-  }, [error])
-
-  const shake = () => {
-    Animated.sequence([
-      Animated.timing(shakeAnimation, { toValue: 10, duration: 50, useNativeDriver: true }),
-      Animated.timing(shakeAnimation, { toValue: -10, duration: 50, useNativeDriver: true }),
-      Animated.timing(shakeAnimation, { toValue: 10, duration: 50, useNativeDriver: true }),
-      Animated.timing(shakeAnimation, { toValue: 0, duration: 50, useNativeDriver: true }),
-    ]).start()
-  }
+  }, [error, shake, clearError])
 
   const handleOtpChange = (value: string, index: number) => {
     const newOtp = [...otp]
@@ -91,7 +91,7 @@ export const OTPScreen = ({ route, navigation }: any) => {
       } else {
         // Auth store updates isAuthenticated, RootNavigator handles navigation
       }
-    } catch (err) {
+    } catch {
       // Error handled by useEffect
     }
   }
@@ -103,7 +103,7 @@ export const OTPScreen = ({ route, navigation }: any) => {
       setTimer(60)
       setOtp(['', '', '', '', '', ''])
       inputs.current[0]?.focus()
-    } catch (err) {
+    } catch {
       Alert.alert('Error', 'Failed to resend code')
     }
   }

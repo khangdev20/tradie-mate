@@ -8,7 +8,6 @@ import {
   TouchableOpacity,
   ScrollView,
   Alert,
-  ActivityIndicator,
 } from 'react-native'
 import { Colors } from '../../constants/colors'
 import { Typography } from '../../constants/typography'
