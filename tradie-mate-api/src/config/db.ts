@@ -5,7 +5,7 @@ import * as relations from '../db/relations'
 import { env } from './env'
 
 // Use pooled URL for queries (goes through PgBouncer)
-const queryClient = postgres(env.DATABASE_URL)
+const queryClient = postgres(env.DATABASE_URL, { prepare: false })
 
 // Use direct URL for migrations only (bypasses PgBouncer)
 export const migrationClient = postgres(env.DIRECT_DATABASE_URL, { max: 1 })

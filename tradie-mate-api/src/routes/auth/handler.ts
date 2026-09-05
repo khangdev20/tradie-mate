@@ -81,6 +81,7 @@ export const verifyOtpHandler = async (request: FastifyRequest<any>, reply: Fast
         expires_in: 3600 * 24 * 365,
         tradie_id: tradie ? tradie.id : null,
         is_new_user: !tradie,
+        first_name: tradie ? tradie.firstName : null,
         onboarding_status: tradie ? tradie.onboardingStatus : 'PHONE_VERIFIED',
       }
     }
@@ -113,6 +114,7 @@ export const verifyOtpHandler = async (request: FastifyRequest<any>, reply: Fast
     expires_in: session.expires_in,
     tradie_id: tradie ? tradie.id : null,
     is_new_user: !tradie,
+    first_name: tradie ? tradie.firstName : null,
     onboarding_status: tradie ? tradie.onboardingStatus : 'PHONE_VERIFIED',
   }
 }

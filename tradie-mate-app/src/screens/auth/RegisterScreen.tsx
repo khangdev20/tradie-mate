@@ -21,6 +21,15 @@ const TRADE_TYPES = [
 
 export const RegisterScreen = ({ navigation }: any) => {
   const { registerWithEmail, isLoading } = useAuthStore()
+
+  const handleGoToLogin = () => {
+    if (navigation && navigation.canGoBack()) {
+      navigation.goBack()
+    } else if (navigation) {
+      navigation.navigate('Login')
+    }
+  }
+
   const [form, setForm] = useState({
     email: '',
     password: '',
@@ -176,7 +185,7 @@ export const RegisterScreen = ({ navigation }: any) => {
             </TouchableOpacity>
 
             <TouchableOpacity 
-              onPress={() => navigation.goBack()}
+              onPress={handleGoToLogin}
               style={styles.backButton}
             >
               <Text style={styles.backText}>Already have an account? Sign in</Text>

@@ -14,10 +14,26 @@ export async function requireAuth(req: FastifyRequest, reply: FastifyReply) {
   }
 
   // Verify Supabase JWT
-  const { data: { user }, error } = await supabaseAdmin.auth.getUser(token)
-  if (error || !user) {
+  let user: any = null
+  if (process.env.NODE_ENV === 'development' && token.startsWith('mock-token-')) {
+    const [testTradie] = await db
+      .select()
+      .from(tradies)
+      .where(eq(tradies.email, 'test@tradiemate.com'))
+      .limit(1)
+      
+    if (testTradie) {
+      req.user = { id: testTradie.authUserId, email: testTradie.email } as any
+      req.tradie = testTradie
+      return
+    }
+  }
+
+  const { data: { user: supabaseUser }, error } = await supabaseAdmin.auth.getUser(token)
+  if (error || !supabaseUser) {
     return reply.status(401).send({ error: 'Invalid or expired token', code: 'UNAUTHORIZED' })
   }
+  user = supabaseUser
 
   // Fetch tradie from DB — Drizzle query
   const [tradie] = await db

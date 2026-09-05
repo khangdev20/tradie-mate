@@ -4,7 +4,7 @@ import { AppTabParamList } from './types'
 import { DashboardScreen } from '../../screens/dashboard/DashboardScreen'
 import { JobsNavigator } from '../../screens/jobs/JobsNavigator'
 import { CalendarScreen } from '../../screens/calendar/CalendarScreen'
-import { InvoiceScreen } from '../../screens/invoices/InvoiceScreen'
+import { InvoicesNavigator } from '../../screens/invoices/InvoicesNavigator'
 import { NotificationsScreen } from '../../screens/notifications/NotificationsScreen'
 import { ProfileNavigator } from '../../screens/profile/ProfileNavigator'
 import { Colors } from '../../constants/colors'
@@ -42,7 +42,7 @@ export function AppNavigator() {
       <Tab.Screen name="Dashboard" component={DashboardScreen} />
       <Tab.Screen name="Jobs" component={JobsNavigator} />
       <Tab.Screen name="Calendar" component={CalendarScreen} />
-      <Tab.Screen name="Invoices" component={InvoiceScreen} />
+      <Tab.Screen name="Invoices" component={InvoicesNavigator} />
       <Tab.Screen name="Notifications" component={NotificationsScreen} />
       <Tab.Screen name="Profile" component={ProfileNavigator} />
     </Tab.Navigator>

@@ -364,4 +364,27 @@ export async function jobRoutes(fastify: FastifyInstance) {
       data: { message: 'Dispute submitted. Our team will review within 24 hours.' },
     }
   })
+  // 5. Update job notes
+  fastify.patch<{
+    Params: { id: string }
+    Body: { notes: string }
+  }>('/:id/notes', async (request) => {
+    const { notes } = request.body
+    const tradieId = request.tradie.id
+
+    // Verify ownership
+    await JobService.getJobWithOwnerCheck(request.params.id, tradieId)
+
+    const [updated] = await db
+      .update(jobs)
+      .set({ notes, updatedAt: new Date() })
+      .where(and(eq(jobs.id, request.params.id), eq(jobs.tradieId, tradieId)))
+      .returning()
+
+    return {
+      success: true,
+      data: { id: updated.id, notes: updated.notes },
+    }
+  })
+
 }

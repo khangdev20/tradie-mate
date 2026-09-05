@@ -2,7 +2,7 @@ import { FastifyInstance, FastifyRequest } from 'fastify'
 import { requireAuth, requireOnboarded } from '../../middleware/auth.middleware'
 import { db } from '../../config/db'
 import { invoices, invoiceItems, invoiceSequence } from '../../db/schema/invoices'
-import { eq, and } from 'drizzle-orm'
+import { eq, and, desc } from 'drizzle-orm'
 import { EntitlementService } from '../../services/entitlement.service'
 import { GSTService } from '../../services/gst.service'
 import { PaymentService } from '../../services/payment.service'
@@ -25,7 +25,52 @@ export async function invoiceRoutes(fastify: FastifyInstance) {
   fastify.addHook('preHandler', requireAuth)
   fastify.addHook('preHandler', requireOnboarded)
 
-  // 1. Create Invoice (Sequential + Transaction)
+  // 0. List invoices for tradie
+  fastify.get<{ Querystring: { status?: string; limit?: number; offset?: number } }>('/', async (request) => {
+    const { status, limit = 50, offset = 0 } = request.query
+    const tradieId = request.tradie.id
+
+    const conditions = [eq(invoices.tradieId, tradieId)]
+    if (status) {
+      conditions.push(eq(invoices.status, status as any))
+    }
+
+    const invoiceList = await db
+      .select({
+        id: invoices.id,
+        invoiceNumber: invoices.invoiceNumber,
+        status: invoices.status,
+        subtotalCents: invoices.subtotalCents,
+        gstCents: invoices.gstCents,
+        totalCents: invoices.totalCents,
+        jobId: invoices.jobId,
+        customerId: invoices.customerId,
+        dueAt: invoices.dueAt,
+        paidAt: invoices.paidAt,
+        signedAt: invoices.signedAt,
+        createdAt: invoices.createdAt,
+        updatedAt: invoices.updatedAt,
+      })
+      .from(invoices)
+      .where(and(...conditions))
+      .orderBy(desc(invoices.createdAt))
+      .limit(limit)
+      .offset(offset)
+
+    return {
+      success: true,
+      data: {
+        invoices: invoiceList,
+        meta: {
+          total: invoiceList.length,
+          limit,
+          offset,
+        },
+      },
+    }
+  })
+
+
   fastify.post('/', async (request: FastifyRequest<{
     Body: {
       jobId: string

@@ -12,13 +12,13 @@ import { AppNavigator } from './AppNavigator'
 const RootStack = createNativeStackNavigator()
 
 const LoadingScreen = () => (
-  <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff' }}>
+  <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#FAFAF8' }}>
     <ActivityIndicator size="large" color="#2E6B45" />
   </View>
 )
 
 export function RootNavigator() {
-  const { isAuthenticated, tradieId, refreshSession, logout } = useAuthStore()
+  const { isAuthenticated, tradieId, isOnboarded, fetchOnboardingStatus, refreshSession, logout } = useAuthStore()
   const [isReady, setIsReady] = useState(false)
   const [biometricLocked, setBiometricLocked] = useState(false)
 
@@ -26,8 +26,13 @@ export function RootNavigator() {
     async function bootstrap() {
       try {
         // 1. Check if token exists + not expired
-        if (isAuthenticated && TokenStorage.isExpired()) {
-          await refreshSession()
+        if (isAuthenticated) {
+          if (TokenStorage.isExpired()) {
+            await refreshSession()
+          } else {
+            // Sync onboarding status from backend
+            await fetchOnboardingStatus()
+          }
         }
 
         // 2. Biometric lock if enabled
@@ -47,7 +52,7 @@ export function RootNavigator() {
     }
 
     bootstrap()
-  }, [])
+  }, [isAuthenticated, fetchOnboardingStatus, logout, refreshSession])
 
   // Supabase session listener
   useEffect(() => {
@@ -55,7 +60,14 @@ export function RootNavigator() {
       async (event, session) => {
         if (event === 'SIGNED_OUT') {
           TokenStorage.clearSession()
-          useAuthStore.setState({ isAuthenticated: false, session: null })
+          useAuthStore.setState({ 
+            isAuthenticated: false, 
+            session: null,
+            isOnboarded: false,
+            tradieId: null,
+            onboardingStatus: null,
+            resumeStep: null
+          })
         }
         if (event === 'TOKEN_REFRESHED' && session) {
           TokenStorage.saveSession({
@@ -64,18 +76,19 @@ export function RootNavigator() {
             expires_at:    session.expires_at!,
             tradie_id:     TokenStorage.getTradieId()!,
           })
+          await fetchOnboardingStatus()
         }
       }
     )
     return () => subscription.unsubscribe()
-  }, [])
+  }, [fetchOnboardingStatus])
 
   if (!isReady || biometricLocked) return <LoadingScreen />
 
   return (
     <NavigationContainer>
       <RootStack.Navigator screenOptions={{ headerShown: false }}>
-        {isAuthenticated && tradieId ? (
+        {isAuthenticated && tradieId && isOnboarded ? (
           <RootStack.Screen name="App" component={AppNavigator} />
         ) : (
           <RootStack.Screen name="Auth" component={AuthNavigator} />

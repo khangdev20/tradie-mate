@@ -22,6 +22,14 @@ export const OTPScreen = ({ route, navigation }: any) => {
   const inputs = useRef<TextInput[]>([])
   const shakeAnimation = useRef(new Animated.Value(0)).current
 
+  const handleBack = () => {
+    if (navigation && navigation.canGoBack()) {
+      navigation.goBack()
+    } else if (navigation) {
+      navigation.navigate('Phone')
+    }
+  }
+
   useEffect(() => {
     // Focus first box on mount
     const t = setTimeout(() => inputs.current[0]?.focus(), 500)
@@ -109,7 +117,7 @@ export const OTPScreen = ({ route, navigation }: any) => {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.content}
       >
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+        <TouchableOpacity style={styles.backButton} onPress={handleBack}>
           <Text style={styles.backButtonText}>←</Text>
         </TouchableOpacity>
 
