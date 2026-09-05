@@ -5,7 +5,7 @@ import {
   entitlementOverrides,
   usageCounters
 } from '../db/schema/subscriptions'
-import { eq, and, gt, sql } from 'drizzle-orm'
+import { eq, and, gt, or, isNull, sql } from 'drizzle-orm'
 import { AppError } from '../utils/errors'
 
 export interface EntitlementsPayload {
@@ -36,6 +36,13 @@ const DEFAULT_ENTITLEMENTS: EntitlementsPayload = {
 const GRACE_PERIOD_DAYS = 7
 
 export class EntitlementService {
+  static buildActiveOverrideCondition(now: Date) {
+    return or(
+      isNull(entitlementOverrides.expiresAt),
+      gt(entitlementOverrides.expiresAt, now),
+    )
+  }
+
   static isSubscriptionActive(status: string, currentPeriodEnd: Date): boolean {
     if (status === 'ACTIVE' || status === 'TRIALING') return true
     if (status === 'PAST_DUE') {
@@ -104,7 +111,7 @@ export class EntitlementService {
       .where(
         and(
           eq(entitlementOverrides.tradieId, tradieId),
-          sql`(${entitlementOverrides.expiresAt} IS NULL OR ${entitlementOverrides.expiresAt} > ${now})`
+          this.buildActiveOverrideCondition(now),
         )
       )
 
