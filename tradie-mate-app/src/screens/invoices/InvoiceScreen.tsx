@@ -21,6 +21,7 @@ import api from '../../services/apiService'
 import { useNetworkState } from '../../hooks/useNetworkState'
 import { useOfflineQueue } from '../../hooks/useOfflineQueue'
 import { useHaptics } from '../../hooks/useHaptics'
+import { saveOfflineInvoice } from '../../offline/repositories/invoiceRepository'
 
 interface LineItem {
   id: string
@@ -35,13 +36,6 @@ const QUICK_CHIPS = [
   { label: 'Pipe fitting', price: 2200 },
   { label: 'Call-out Fee', price: 6500 },
 ]
-
-const createLocalUuid = () =>
-  'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (char) => {
-    const random = Math.floor(Math.random() * 16)
-    const value = char === 'x' ? random : (random & 0x3) | 0x8
-    return value.toString(16)
-  })
 
 export function InvoiceScreen({ route, navigation }: any) {
   const { jobId } = route.params || {}
@@ -122,16 +116,23 @@ export function InvoiceScreen({ route, navigation }: any) {
 
     // Offline Save
     if (!isConnected) {
-      const mockInvoiceId = createLocalUuid()
-      addToQueue('CREATE_INVOICE', { ...invoicePayload, invoiceId: mockInvoiceId })
-      
+      const saved = await saveOfflineInvoice({
+        jobId,
+        items: items.map((item) => ({
+          description: item.description,
+          qty: item.qty,
+          unitPriceCents: item.priceCents,
+        })),
+      })
+      addToQueue('CREATE_INVOICE', { ...invoicePayload, invoiceId: saved.localId })
+
       Alert.alert(
         'Offline Mode',
         'Invoice creation has been queued offline. Proceeding to client signature.',
         [
-          { 
-            text: 'Capture Signature', 
-            onPress: () => navigation.navigate('Signature', { invoiceId: mockInvoiceId, amountCents: total }) 
+          {
+            text: 'Capture Signature',
+            onPress: () => navigation.navigate('Signature', { invoiceId: saved.localId, amountCents: saved.totalCents })
           }
         ]
       )
