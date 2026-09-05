@@ -3,12 +3,13 @@ import { requireAuth } from '../../middleware/auth.middleware'
 import { db } from '../../config/db'
 import { tradeDocuments } from '../../db/schema/documents'
 import { redisConnection } from '../../config/redis'
+import { env } from '../../config/env'
+import { supabaseAdmin } from '../../config/supabase'
 import { AppError } from '../../utils/errors'
 import path from 'path'
 import crypto from 'crypto'
 import { Queue } from 'bullmq'
 import { eq } from 'drizzle-orm'
-import { uploadToS3 } from '../../services/s3.service'
 
 // Allowed document types matching the enum
 const VALID_DOC_TYPES = [
@@ -31,7 +32,7 @@ export async function documentRoutes(fastify: FastifyInstance) {
   /**
    * POST /api/v1/documents/upload
    * Uploads a tradie's compliance document (licence, insurance, white card, etc.)
-   * to S3 and queues async OCR verification.
+   * to Supabase Storage and queues async OCR verification.
    *
    * Content-Type: multipart/form-data
    * Fields:
@@ -85,11 +86,11 @@ export async function documentRoutes(fastify: FastifyInstance) {
 
     let storageUrl = ''
 
-    // Upload to S3 (ap-southeast-2) if AWS credentials are available
+    // Upload to Supabase Storage using service-role credentials
     try {
-      storageUrl = await uploadToS3(storagePath, fileBuffer, data.mimetype)
-    } catch (s3Err) {
-      fastify.log.error({ s3Err, storagePath }, 'S3 upload failed')
+      storageUrl = await uploadToSupabaseStorage(storagePath, fileBuffer, data.mimetype)
+    } catch (storageErr) {
+      fastify.log.error({ storageErr, storagePath }, 'Supabase Storage upload failed')
       throw new AppError('File storage failed. Please try again.', 502, 'STORAGE_ERROR')
     }
 
@@ -160,4 +161,20 @@ function mimeToExt(mime: string): string {
     'application/pdf': '.pdf',
   }
   return map[mime] ?? ''
+}
+async function uploadToSupabaseStorage(key: string, body: Buffer, contentType: string): Promise<string> {
+  const bucket = env.SUPABASE_STORAGE_BUCKET
+  const bucketRef = supabaseAdmin.storage.from(bucket)
+
+  const { error: uploadError } = await bucketRef.upload(key, body, {
+    contentType,
+    upsert: false,
+  })
+
+  if (uploadError) {
+    throw uploadError
+  }
+
+  const { data } = bucketRef.getPublicUrl(key)
+  return data.publicUrl
 }
