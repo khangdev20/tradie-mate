@@ -1,4 +1,5 @@
 import admin from 'firebase-admin'
+import type { Messaging } from 'firebase-admin/messaging'
 import { env } from './env'
 
 if (!admin.apps.length) {
@@ -16,5 +17,5 @@ if (!admin.apps.length) {
 }
 
 export const firestore = admin.firestore()
-export const fcm = admin.messaging()
+export const fcm: Messaging = admin.messaging()
 export const firebaseAdmin = admin
