@@ -2,7 +2,7 @@ import React from 'react'
 import { TouchableOpacity, View, Text, StyleSheet } from 'react-native'
 import { Colors } from '../../constants/colors'
 import { Typography } from '../../constants/typography'
-import { Spacing, Radius } from '../../constants/spacing'
+import { Spacing } from '../../constants/spacing'
 import { JobStatusBadge, JobStatus } from './JobStatusBadge'
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons'
 

@@ -29,7 +29,7 @@ export async function processTapToPay(params: {
   invoiceId: string
   onStatusChange?: (status: string) => void
 }): Promise<TerminalPaymentResult> {
-  const { paymentIntentClientSecret, paymentIntentId, invoiceId, onStatusChange, connectionToken } = params
+  const { paymentIntentClientSecret, paymentIntentId, invoiceId, onStatusChange } = params
 
   const resolvedPiId = paymentIntentId || extractPaymentIntentId(paymentIntentClientSecret)
   const useNative = terminalModule && Platform.OS !== 'web'

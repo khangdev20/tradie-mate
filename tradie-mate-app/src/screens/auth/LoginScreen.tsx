@@ -15,7 +15,7 @@ import {
 import { useAuthStore } from '../../store/auth.store'
 
 export const LoginScreen = ({ navigation }: any) => {
-  const { loginWithGoogle, loginWithApple, loginWithEmail, isLoading, error, clearError } = useAuthStore()
+  const { loginWithGoogle, loginWithApple, loginWithEmail, isLoading } = useAuthStore()
   const [showEmail, setShowEmail] = useState(false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -28,7 +28,7 @@ export const LoginScreen = ({ navigation }: any) => {
           navigation.navigate('TradeType')
         }
       }
-    } catch (err) {}
+    } catch {}
   }
 
   const handleAppleLogin = async () => {
@@ -39,13 +39,13 @@ export const LoginScreen = ({ navigation }: any) => {
           navigation.navigate('TradeType')
         }
       }
-    } catch (err) {}
+    } catch {}
   }
 
   const handleEmailLogin = async () => {
     try {
       await loginWithEmail(email, password)
-    } catch (err) {}
+    } catch {}
   }
 
   const toggleEmail = () => {

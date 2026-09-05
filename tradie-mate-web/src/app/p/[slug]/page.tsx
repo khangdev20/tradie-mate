@@ -1,4 +1,4 @@
-import { PublicProfilePage } from '@/pages/PublicProfilePage'
+import { PublicProfilePage } from '@/screens/PublicProfilePage'
 
 export default function PublicProfileRoutePage() {
   return <PublicProfilePage />

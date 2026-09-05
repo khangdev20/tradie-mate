@@ -26,7 +26,7 @@ export default function ProblemSolution() {
             Never miss a job
           </h3>
           <p className="font-body text-body text-on-surface-variant">
-            The smart dashboard shows your today's schedule at a glance. No more
+            The smart dashboard shows your today&apos;s schedule at a glance. No more
             paper diaries.
           </p>
         </div>

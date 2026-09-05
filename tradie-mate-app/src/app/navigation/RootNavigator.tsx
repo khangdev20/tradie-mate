@@ -29,10 +29,9 @@ export function RootNavigator() {
         if (isAuthenticated) {
           if (TokenStorage.isExpired()) {
             await refreshSession()
-          } else {
-            // Sync onboarding status from backend
-            await fetchOnboardingStatus()
           }
+          // Sync onboarding status from backend after any token refresh
+          await fetchOnboardingStatus()
         }
 
         // 2. Biometric lock if enabled

@@ -36,34 +36,8 @@ export function SuppliesScreen() {
   const [loading, setLoading] = useState(false)
   const [locationLoading, setLocationLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [currentLat, setCurrentLat] = useState<number | null>(null)
-  const [currentLng, setCurrentLng] = useState<number | null>(null)
-
-  const getUserLocation = useCallback(async () => {
-    setLocationLoading(true)
-    setError(null)
-
-    try {
-      // React Native Geolocation
-      const Geolocation = require('@react-native-community/geolocation').default
-      Geolocation.getCurrentPosition(
-        (pos: any) => {
-          setCurrentLat(pos.coords.latitude)
-          setCurrentLng(pos.coords.longitude)
-          setLocationLoading(false)
-          fetchSuppliers(pos.coords.latitude, pos.coords.longitude)
-        },
-        (err: any) => {
-          setLocationLoading(false)
-          setError('Location permission is required to find nearby supplies. Please enable in Settings.')
-        },
-        { enableHighAccuracy: true, timeout: 10000 }
-      )
-    } catch (geoErr) {
-      setLocationLoading(false)
-      setError('Location services unavailable.')
-    }
-  }, [])
+  const [_currentLat, setCurrentLat] = useState<number | null>(null)
+  const [_currentLng, setCurrentLng] = useState<number | null>(null)
 
   const fetchSuppliers = useCallback(async (lat: number, lng: number, query?: string) => {
     setLoading(true)
@@ -83,6 +57,32 @@ export function SuppliesScreen() {
       setLoading(false)
     }
   }, [])
+
+  const getUserLocation = useCallback(async () => {
+    setLocationLoading(true)
+    setError(null)
+
+    try {
+      // React Native Geolocation
+      const Geolocation = require('@react-native-community/geolocation').default
+      Geolocation.getCurrentPosition(
+        (pos: any) => {
+          setCurrentLat(pos.coords.latitude)
+          setCurrentLng(pos.coords.longitude)
+          setLocationLoading(false)
+          fetchSuppliers(pos.coords.latitude, pos.coords.longitude)
+        },
+        () => {
+          setLocationLoading(false)
+          setError('Location permission is required to find nearby supplies. Please enable in Settings.')
+        },
+        { enableHighAccuracy: true, timeout: 10000 }
+      )
+    } catch {
+      setLocationLoading(false)
+      setError('Location services unavailable.')
+    }
+  }, [fetchSuppliers])
 
   useEffect(() => {
     getUserLocation()

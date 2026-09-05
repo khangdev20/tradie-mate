@@ -72,6 +72,27 @@ jest.mock('@react-native-firebase/messaging', () => {
   return messaging
 })
 
+jest.mock('@react-native-firebase/app', () => ({
+  __esModule: true,
+  default: {},
+  firebase: {},
+}))
+
+jest.mock('@react-native-firebase/firestore', () => {
+  const firestore = () => ({
+    collection: jest.fn(() => ({
+      doc: jest.fn(() => ({
+        set: jest.fn(() => Promise.resolve()),
+        update: jest.fn(() => Promise.resolve()),
+        delete: jest.fn(() => Promise.resolve()),
+        get: jest.fn(() => Promise.resolve({ exists: false, data: () => null })),
+      })),
+    })),
+  })
+  firestore.FieldValue = { serverTimestamp: jest.fn(() => ({ _methodName: 'serverTimestamp' })) }
+  return firestore
+})
+
 jest.mock('@react-native-community/netinfo', () => ({
   addEventListener: jest.fn(() => jest.fn()),
 }))
@@ -160,3 +181,38 @@ jest.mock('react-native-mmkv', () => ({
 jest.mock('react-native-config', () => ({}))
 
 jest.mock('react-native-vector-icons/MaterialCommunityIcons', () => 'Icon')
+
+jest.mock('react-native-vision-camera', () => ({
+  Camera: 'Camera',
+  useCameraDevice: jest.fn(() => null),
+  useCameraPermission: jest.fn(() => ({
+    hasPermission: false,
+    requestPermission: jest.fn(() => Promise.resolve(false)),
+  })),
+}))
+
+jest.mock('@nozbe/watermelondb', () => ({
+  Database: class {
+    constructor() {}
+    write = jest.fn(async (work) => work())
+    get = () => ({
+      query: () => ({ fetch: jest.fn(() => Promise.resolve([])) }),
+      create: jest.fn(() => Promise.resolve({ id: 'local-id' })),
+      find: jest.fn(() => Promise.resolve({ update: jest.fn(() => Promise.resolve()) })),
+    })
+  },
+  Model: class {},
+  appSchema: (schema) => schema,
+  tableSchema: (schema) => schema,
+}))
+
+jest.mock('@nozbe/watermelondb/adapters/sqlite', () => ({
+  __esModule: true,
+  default: class {},
+}))
+
+jest.mock('@nozbe/watermelondb/decorators', () => ({
+  field: () => () => {},
+  text: () => () => {},
+  date: () => () => {},
+}))

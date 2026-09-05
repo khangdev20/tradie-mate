@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import api from '../services/apiService'
 import { useAuthStore } from '../store/auth.store'
 
@@ -43,7 +43,7 @@ export function useEntitlements() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const fetchSubscription = async () => {
+  const fetchSubscription = useCallback(async () => {
     if (!isAuthenticated) return
     setLoading(true)
     setError(null)
@@ -58,11 +58,11 @@ export function useEntitlements() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [isAuthenticated])
 
   useEffect(() => {
     fetchSubscription()
-  }, [isAuthenticated])
+  }, [fetchSubscription])
 
   const getEntitlement = <K extends keyof Entitlements>(key: K): Entitlements[K] => {
     if (!subscription) return DEFAULT_ENTITLEMENTS[key]

@@ -94,7 +94,7 @@ async function flushBatch(jobId: string) {
   try {
     await api.post('/maps/location-batch', {
       jobId,
-      points: batch.map(({ job_id, ...point }) => point),
+      points: batch.map(({ job_id: _job_id, ...point }) => point),
     })
 
     await firestore()

@@ -35,7 +35,7 @@ export function JobDetailScreen({ route, navigation }: any) {
   const [loading, setLoading] = useState(false)
   const [notes, setNotes] = useState('')
   const [notesSaving, setNotesSaving] = useState(false)
-  const [photos, setPhotos] = useState<string[]>([])
+  const [photos] = useState<string[]>([])
   const notesSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   
   // Map Routing parameters
@@ -44,7 +44,7 @@ export function JobDetailScreen({ route, navigation }: any) {
   const [etaMins, setEtaMins] = useState<number | null>(null)
   const [etaStatus, setEtaStatus] = useState<'LIVE' | 'STALE' | 'NO SIGNAL' | 'ROUTE UNAVAILABLE'>('LIVE')
 
-  const loadJob = async () => {
+  const loadJob = useCallback(async () => {
     try {
       setLoading(true)
       // Check if job exists in offline queue
@@ -70,7 +70,7 @@ export function JobDetailScreen({ route, navigation }: any) {
     } finally {
       setLoading(false)
     }
-  }
+  }, [jobId, queue])
 
   useEffect(() => {
     loadJob()
@@ -80,7 +80,7 @@ export function JobDetailScreen({ route, navigation }: any) {
       // Clear any pending notes save timer on unmount
       if (notesSaveTimerRef.current) clearTimeout(notesSaveTimerRef.current)
     }
-  }, [jobId])
+  }, [jobId, loadJob])
 
   // Debounced notes auto-save (1.5s after user stops typing)
   const handleNotesChange = useCallback((text: string) => {

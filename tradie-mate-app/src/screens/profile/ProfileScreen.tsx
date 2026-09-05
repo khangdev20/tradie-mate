@@ -34,7 +34,7 @@ interface BillingPlan {
 }
 
 export function ProfileScreen({ navigation }: any) {
-  const { subscription, loading, refresh, getEntitlement } = useEntitlements()
+  const { subscription, getEntitlement } = useEntitlements()
   const { logout } = useAuthStore()
   const { queue } = useOfflineQueue()
   const { isConnected } = useNetworkState()

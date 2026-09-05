@@ -9,7 +9,7 @@ export const BiometricService = {
     try {
       const { available } = await rnBiometrics.isSensorAvailable()
       return available
-    } catch (error) {
+    } catch {
       return false
     }
   },
@@ -19,7 +19,7 @@ export const BiometricService = {
     try {
       const { biometryType } = await rnBiometrics.isSensorAvailable()
       return biometryType ?? null
-    } catch (error) {
+    } catch {
       return null
     }
   },
@@ -35,7 +35,7 @@ export const BiometricService = {
         TokenStorage.setBiometricEnabled(true)
       }
       return success
-    } catch (error) {
+    } catch {
       return false
     }
   },
@@ -50,7 +50,7 @@ export const BiometricService = {
         fallbackPromptMessage: 'Enter passcode',
       })
       return success
-    } catch (error) {
+    } catch {
       return false
     }
   },

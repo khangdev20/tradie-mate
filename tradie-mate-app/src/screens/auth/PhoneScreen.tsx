@@ -29,7 +29,7 @@ export const PhoneScreen = ({ navigation }: any) => {
       Alert.alert('Error', error)
       clearError()
     }
-  }, [error])
+  }, [error, clearError])
 
   const handleGetCode = async () => {
     let cleaned = phone.replace(/\s/g, '').replace(/\D/g, '')
@@ -51,7 +51,7 @@ export const PhoneScreen = ({ navigation }: any) => {
     try {
       await sendOtp(normalised)
       navigation.navigate('OTP', { phone: normalised })
-    } catch (err) {
+    } catch {
       // Error handled by useEffect
     }
   }

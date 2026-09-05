@@ -11,18 +11,32 @@ const api: AxiosInstance = axios.create({
   headers: { 'Content-Type': 'application/json' },
 })
 
+const PUBLIC_PATHS = ['/auth/otp/send', '/auth/otp/verify', '/auth/refresh', '/track/']
+
+function isPublicPath(url?: string): boolean {
+  return PUBLIC_PATHS.some((path) => url?.includes(path))
+}
+
+let refreshPromise: Promise<void> | null = null
+
+async function refreshAuthToken(): Promise<void> {
+  if (!refreshPromise) {
+    refreshPromise = (async () => {
+      const { useAuthStore } = require('../store/auth.store') as { useAuthStore: typeof useAuthStoreType }
+      await useAuthStore.getState().refreshSession()
+    })().finally(() => {
+      refreshPromise = null
+    })
+  }
+  return refreshPromise
+}
+
 // Request interceptor — attach token + refresh if expired
 api.interceptors.request.use(async (config) => {
-  // Skip auth for public endpoints
-  const publicPaths = ['/auth/otp/send', '/auth/otp/verify',
-                       '/auth/refresh', '/track/']
-  const isPublic = publicPaths.some(p => config.url?.includes(p))
-  if (isPublic) return config
+  if (isPublicPath(config.url)) return config
 
-  // Refresh if token expiring in < 5 minutes
   if (TokenStorage.isExpired()) {
-    const { useAuthStore } = require('../store/auth.store') as { useAuthStore: typeof useAuthStoreType }
-    await useAuthStore.getState().refreshSession()
+    await refreshAuthToken()
   }
 
   const token = TokenStorage.getAccessToken()
@@ -71,8 +85,7 @@ api.interceptors.response.use(
       isRefreshing = true
 
       try {
-        const { useAuthStore } = require('../store/auth.store') as { useAuthStore: typeof useAuthStoreType }
-        await useAuthStore.getState().refreshSession()
+        await refreshAuthToken()
         const newToken = TokenStorage.getAccessToken()
         processQueue(null, newToken)
         originalRequest.headers.Authorization = `Bearer ${newToken}`

@@ -1,4 +1,4 @@
-import { EnterprisePortalPage } from '@/pages/EnterprisePortalPage'
+import { EnterprisePortalPage } from '@/screens/EnterprisePortalPage'
 
 export default function EnterpriseRoutePage() {
   return <EnterprisePortalPage />
