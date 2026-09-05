@@ -4,7 +4,7 @@ import { db } from '../../config/db'
 import { marketplaceBookings, escrowPayments } from '../../db/schema/marketplace'
 import { tradies } from '../../db/schema/tradies'
 import { jobs } from '../../db/schema/jobs'
-import { eq, and, sql } from 'drizzle-orm'
+import { eq, and, ilike, sql } from 'drizzle-orm'
 import { AppError } from '../../utils/errors'
 import { stripe } from '../../config/stripe'
 import { fcm } from '../../config/firebase'
@@ -32,7 +32,10 @@ export async function marketplaceRoutes(fastify: FastifyInstance) {
       .from(marketplaceBookings)
       .where(
         suburb
-          ? sql`${marketplaceBookings.address} ILIKE ${'%' + suburb + '%'} AND ${marketplaceBookings.status} = 'PENDING'`
+          ? and(
+              ilike(marketplaceBookings.address, `%${suburb}%`),
+              eq(marketplaceBookings.status, 'PENDING'),
+            )
           : eq(marketplaceBookings.status, 'PENDING'),
       )
       .limit(50)
