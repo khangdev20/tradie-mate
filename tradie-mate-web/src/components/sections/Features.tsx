@@ -12,7 +12,7 @@ export default function Features() {
             </h2>
             <p className="font-body text-body text-on-surface-variant mb-6">
               Optimised for one-tap navigation to your next site. TradieMate
-              works fully offline, syncing your data automatically when you're
+              works fully offline, syncing your data automatically when you&apos;re
               back in range.
             </p>
             <ul className="space-y-4">
@@ -51,7 +51,7 @@ export default function Features() {
             </h2>
             <p className="font-body text-body text-on-surface-variant mb-6">
               Give your customers peace of mind with real-time arrival updates.
-              Verified badges show you're the pro they expected.
+              Verified badges show you&apos;re the pro they expected.
             </p>
             <ul className="space-y-4">
               <li className="flex items-start gap-3 font-body text-body">
