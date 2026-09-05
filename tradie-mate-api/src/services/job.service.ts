@@ -123,6 +123,13 @@ export class JobService {
         .from(customers)
         .where(and(eq(customers.id, customerId), eq(customers.tradieId, tradieId)))
         .limit(1)
+      if (!customer) {
+        throw new AppError(
+          'Customer not found or does not belong to you.',
+          400,
+          'CUSTOMER_NOT_FOUND'
+        )
+      }
       customerRecord = customer ?? null
     }
 
