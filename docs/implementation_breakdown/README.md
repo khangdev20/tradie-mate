@@ -272,6 +272,14 @@ To protect the business against data loss caused by server crashes, network outa
 
 ---
 
+## 🚨 P0 — Tradie Registration (execute before Phase 2 web features)
+
+**[P0 Tradie Registration & Onboarding Plan](./P0_tradie_registration_implementation_plan.md)** — highest priority. Unblocks beta signup via `tradie-mate-web` (`/tradie-onboarding`, `/tradie-tracking`), fixes API onboarding gap (`requireAuth` vs new OTP users), and delivers OTP → ABN → document portal end-to-end. Implement this before treating Phase 2 customer-facing web flows as complete.
+
+- **[P0 Flow, Validation & UX (detailed)](./P0_tradie_registration_flow_validation_ux.md)** — per-step screens, client/server validation matrix, state machine, error branches, copy deck, QA scenarios.
+
+---
+
 ## 📂 Implementation Modules Index
 
 The implementation is structured into 4 sequential phases:

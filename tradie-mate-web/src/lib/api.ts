@@ -1,4 +1,4 @@
-const API_BASE = import.meta.env.VITE_API_URL || '/api'
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'
 
 export async function apiGet<T>(path: string): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`)

@@ -1,5 +1,5 @@
 import { FastifyInstance, FastifyRequest } from 'fastify'
-import { requireAuth } from '../../middleware/auth.middleware'
+import { requireAuth, requireOnboarded } from '../../middleware/auth.middleware'
 import { MapboxService } from '../../services/mapbox.service'
 import { LocationService } from '../../services/location.service'
 import { db } from '../../config/db'
@@ -8,6 +8,7 @@ import { AppError } from '../../utils/errors'
 
 export async function mapRoutes(fastify: FastifyInstance) {
   fastify.addHook('preHandler', requireAuth)
+  fastify.addHook('preHandler', requireOnboarded)
 
   fastify.post('/geocode', async (request: FastifyRequest<{
     Body: { address: string }

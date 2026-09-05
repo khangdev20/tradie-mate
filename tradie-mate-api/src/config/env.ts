@@ -69,9 +69,9 @@ const envSchema = z.object({
   // ATO ABN lookup
   ATO_ABN_API_GUID: z.string(),
 
-  // AWS (S3 + Textract)
+  // AWS (S3 + Textract) — bucket optional so local/dev can skip real uploads
   AWS_REGION: z.string().default('ap-southeast-2'),
-  AWS_S3_BUCKET: z.string().default('tradiemate-docs'),
+  AWS_S3_BUCKET: z.string().optional(),
   AWS_ACCESS_KEY_ID: z.string().optional(),
   AWS_SECRET_ACCESS_KEY: z.string().optional(),
 

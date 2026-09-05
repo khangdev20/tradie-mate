@@ -24,12 +24,16 @@ export const tradies = pgTable('tradies', {
   appleId:           text('apple_id').unique(),
 
   // Business
+  businessName:      text('business_name'),
   abn:               varchar('abn', { length: 11 }).unique(),
   abnVerifiedAt:     timestamp('abn_verified_at', { withTimezone: true }),
   abnEntityName:     text('abn_entity_name'),
   abnGstRegistered:  boolean('abn_gst_registered').default(false).notNull(),
+  abnVerificationStatus: varchar('abn_verification_status', { length: 40 }).default('UNVERIFIED').notNull(),
   tradeType:         tradeTypeEnum('trade_type').notNull(),
   tradeSpecialties:  text('trade_specialties').array().default(sql`'{}'`),
+  experienceYears:   varchar('experience_years', { length: 20 }),
+  hasPublicLiabilityDeclared: boolean('has_public_liability_declared'),
 
   // Rates — INTEGER CENTS
   hourlyRateCents:   integer('hourly_rate_cents'),
@@ -69,6 +73,10 @@ export const tradies = pgTable('tradies', {
   totalReviews:       integer('total_reviews').default(0).notNull(),
   avgResponseTimeMin: integer('avg_response_time_min'),
 
+  // Onboarding state machine
+  onboardingStatus:  varchar('onboarding_status', { length: 40 }).default('PHONE_PENDING').notNull(),
+  betaApprovedAt:    timestamp('beta_approved_at', { withTimezone: true }),
+
   // Public profile
   publicProfileSlug:    varchar('public_profile_slug', { length: 80 }).unique(),
   publicProfileEnabled: boolean('public_profile_enabled').default(false).notNull(),
@@ -82,6 +90,14 @@ export const tradies = pgTable('tradies', {
   isActive:          boolean('is_active').default(true).notNull(),
   isOnboarded:       boolean('is_onboarded').default(false).notNull(),
 
+  // Legal consent (Terms, Privacy, Verification Disclaimer)
+  termsAcceptedAt:       timestamp('terms_accepted_at', { withTimezone: true }),
+  termsVersion:          varchar('terms_version', { length: 32 }),
+  privacyAcceptedAt:     timestamp('privacy_accepted_at', { withTimezone: true }),
+  privacyVersion:        varchar('privacy_version', { length: 32 }),
+  disclaimerAcceptedAt:  timestamp('disclaimer_accepted_at', { withTimezone: true }),
+  disclaimerVersion:     varchar('disclaimer_version', { length: 32 }),
+
   createdAt:         timestamp('created_at', { withTimezone: true }).default(sql`now()`).notNull(),
   updatedAt:         timestamp('updated_at', { withTimezone: true }).default(sql`now()`).notNull(),
   deletedAt:         timestamp('deleted_at', { withTimezone: true }),
@@ -90,6 +106,18 @@ export const tradies = pgTable('tradies', {
   index('tradies_trade_type_idx').on(table.tradeType),
   index('tradies_location_idx').on(table.serviceAreaLat, table.serviceAreaLng),
   index('tradies_active_idx').on(table.isActive, table.licenceVerified),
+])
+
+// Onboarding audit events
+export const onboardingEvents = pgTable('onboarding_events', {
+  id:        uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+  tradieId:  uuid('tradie_id').notNull().references(() => tradies.id, { onDelete: 'cascade' }),
+  step:      varchar('step', { length: 50 }).notNull(),
+  metadata:  text('metadata'), // JSON string
+  createdAt: timestamp('created_at', { withTimezone: true }).default(sql`now()`).notNull(),
+}, (table) => [
+  index('onboarding_events_tradie_idx').on(table.tradieId),
+  index('onboarding_events_step_idx').on(table.step),
 ])
 
 // Track which auth methods a tradie has linked

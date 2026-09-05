@@ -1,7 +1,9 @@
-import { useParams } from 'react-router-dom'
+'use client'
+
+import { useParams } from 'next/navigation'
 import { useQuery } from '@tanstack/react-query'
 import { AppCard, StatusBadge, EmptyState } from '@tradiemate/ui'
-import { apiGet } from '../lib/api'
+import { apiGet } from '@/lib/api'
 
 function formatAUD(cents: number) {
   return new Intl.NumberFormat('en-AU', { style: 'currency', currency: 'AUD' }).format(cents / 100)
@@ -22,7 +24,8 @@ type Profile = {
 }
 
 export function PublicProfilePage() {
-  const { slug } = useParams<{ slug: string }>()
+  const params = useParams<{ slug: string }>()
+  const slug = params?.slug
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['profile', slug],

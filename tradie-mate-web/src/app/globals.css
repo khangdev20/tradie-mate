@@ -1,0 +1,154 @@
+@import "tailwindcss";
+
+@theme {
+  --color-on-secondary: #ffffff;
+  --color-on-primary-fixed: #3a0b00;
+  --color-background: #fcf9f8;
+  --color-on-secondary-fixed: #0f2000;
+  --color-error-container: #ffdad6;
+  --color-surface: #fcf9f8;
+  --color-surface-variant: #e5e2e1;
+  --color-tertiary-container: #007ea3;
+  --color-on-tertiary-container: #fbfdff;
+  --color-on-error-container: #93000a;
+  --color-secondary: #3e6a00;
+  --color-secondary-fixed: #b7f473;
+  --color-on-primary-fixed-variant: #852400;
+  --color-on-error: #ffffff;
+  --color-primary: #a5360d;
+  --color-surface-container-high: #eae7e7;
+  --color-on-tertiary-fixed-variant: #004d65;
+  --color-on-primary-container: #fffbff;
+  --color-on-background: #1c1b1b;
+  --color-on-surface-variant: #58423b;
+  --color-tertiary: #006482;
+  --color-secondary-container: #b7f473;
+  --color-surface-container-lowest: #ffffff;
+  --color-outline-variant: #e0c0b6;
+  --color-surface-container-low: #f6f3f2;
+  --color-inverse-on-surface: #f3f0ef;
+  --color-surface-bright: #fcf9f8;
+  --color-secondary-fixed-dim: #9dd75a;
+  --color-on-secondary-fixed-variant: #2d5000;
+  --color-on-primary: #ffffff;
+  --color-surface-tint: #a8380f;
+  --color-primary-fixed: #ffdbd0;
+  --color-on-tertiary-fixed: #001f2a;
+  --color-on-surface: #1c1b1b;
+  --color-outline: #8c7169;
+  --color-surface-dim: #dcd9d9;
+  --color-inverse-surface: #313030;
+  --color-error: #ba1a1a;
+  --color-inverse-primary: #ffb59e;
+  --color-surface-container: #f0eded;
+  --color-primary-container: #c74d24;
+  --color-surface-container-highest: #e5e2e1;
+  --color-on-secondary-container: #427000;
+  --color-primary-fixed-dim: #ffb59e;
+  --color-on-tertiary: #ffffff;
+  --color-tertiary-fixed-dim: #6ed2fe;
+  --color-tertiary-fixed: #bfe9ff;
+
+  --spacing-unit: 8px;
+  --spacing-touch-target-min: 48px;
+  --spacing-margin-desktop: 32px;
+  --spacing-gutter-sm: 16px;
+  --spacing-margin-mobile: 16px;
+  --spacing-gutter-md: 24px;
+
+  --font-inter: var(--font-inter);
+
+  --font-size-headline-xl: 48px;
+  --font-size-headline-xl--line-height: 1.1;
+  --font-size-headline-xl--letter-spacing: -0.02em;
+  --font-size-headline-xl--font-weight: 500;
+
+  --font-size-body: 16px;
+  --font-size-body--line-height: 1.5;
+  --font-size-body--font-weight: 400;
+
+  --font-size-headline-md: 20px;
+  --font-size-headline-md--line-height: 1.4;
+  --font-size-headline-md--font-weight: 500;
+
+  --font-size-caption: 13px;
+  --font-size-caption--line-height: 1.4;
+  --font-size-caption--font-weight: 400;
+
+  --font-size-headline-xl-mobile: 36px;
+  --font-size-headline-xl-mobile--line-height: 1.2;
+  --font-size-headline-xl-mobile--font-weight: 500;
+
+  --font-size-headline-lg: 32px;
+  --font-size-headline-lg--line-height: 1.2;
+  --font-size-headline-lg--font-weight: 500;
+
+  --radius-default: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+}
+
+:root {
+  --background: #fcf9f8;
+  --foreground: #1c1b1b;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-inter);
+}
+
+.tradie-card {
+  background-color: #EDECEA;
+  border: 0.5px solid #E8E6E0;
+  border-radius: 12px;
+}
+
+.hairline-border {
+  border: 0.5px solid #E8E6E0;
+}
+
+.btn-primary {
+  background-color: #D85A30;
+  color: #FFFFFF;
+  min-height: 48px;
+  border-radius: 8px;
+  font-weight: 500;
+  transition: background-color 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-primary:hover {
+  background-color: #C0481E;
+}
+
+.btn-secondary {
+  background-color: #EDECEA;
+  color: #1A1A1A;
+  border: 0.5px solid #E8E6E0;
+  min-height: 48px;
+  border-radius: 8px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  font-family: 'Material Symbols Outlined';
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-smoothing: antialiased;
+}

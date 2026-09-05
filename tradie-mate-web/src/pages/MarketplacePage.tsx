@@ -1,7 +1,9 @@
+'use client'
+
 import { useState } from 'react'
 import { useQuery, useMutation } from '@tanstack/react-query'
 import { AppCard, AppButton, EmptyState, StatusBadge } from '@tradiemate/ui'
-import { apiGet, apiPost } from '../lib/api'
+import { apiGet, apiPost } from '@/lib/api'
 
 function formatAUD(cents: number) {
   return new Intl.NumberFormat('en-AU', { style: 'currency', currency: 'AUD' }).format(cents / 100)
