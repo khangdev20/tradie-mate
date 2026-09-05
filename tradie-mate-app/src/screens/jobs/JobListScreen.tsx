@@ -19,6 +19,7 @@ import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityI
 import { format, isToday, isTomorrow } from 'date-fns'
 import api from '../../services/apiService'
 import { useOfflineQueue } from '../../hooks/useOfflineQueue'
+import { saveLocalJobs, getLocalJobs } from '../../offline/repositories/jobRepository'
 
 const STATUS_FILTERS = ['ALL', 'UPCOMING', 'COMMUTING', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED']
 
@@ -35,10 +36,24 @@ export function JobListScreen({ navigation }: any) {
       setLoading(true)
       const res = await api.get('/jobs') as any
       if (res && res.success) {
-        setJobs(res.data.jobs || [])
+        const remoteJobs = res.data.jobs || []
+        setJobs(remoteJobs)
+        await saveLocalJobs(remoteJobs.map((job: any) => ({
+          id: job.id,
+          title: job.title,
+          status: job.status,
+          description: job.description,
+          address: job.address,
+          customerName: job.customerName,
+          scheduledAt: job.scheduledAt,
+          photos: job.photos,
+          notes: job.notes,
+        })))
       }
     } catch (error) {
-      console.warn('Failed to load jobs:', error)
+      console.warn('Failed to load jobs from API, using local cache:', error)
+      const localJobs = await getLocalJobs()
+      setJobs(localJobs)
     } finally {
       setLoading(false)
       setRefreshing(false)
