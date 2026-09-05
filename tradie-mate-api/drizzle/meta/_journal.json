@@ -33,14 +33,14 @@
     {
       "idx": 4,
       "version": "7",
-      "when": 1782000000000,
+      "when": 1788700000000,
       "tag": "0004_legal_consent",
       "breakpoints": true
     },
     {
       "idx": 5,
       "version": "7",
-      "when": 1782100000000,
+      "when": 1788800000000,
       "tag": "0005_onboarding_state",
       "breakpoints": true
     }
