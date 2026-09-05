@@ -71,3 +71,16 @@ export async function saveOfflineInvoice(params: {
 
   return { localId, ...totals }
 }
+
+export async function saveOfflineSignature(
+  invoiceId: string,
+  signatureData: string,
+): Promise<void> {
+  await database.write(async () => {
+    const invoice = await database.get<Invoice>('invoices').find(invoiceId)
+    await invoice.update((rec) => {
+      rec.signatureData = signatureData
+      rec.synced = false
+    })
+  })
+}

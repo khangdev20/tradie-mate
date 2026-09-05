@@ -16,6 +16,7 @@ import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityI
 import api from '../../services/apiService'
 import { useNetworkState } from '../../hooks/useNetworkState'
 import { useOfflineQueue } from '../../hooks/useOfflineQueue'
+import { saveOfflineSignature } from '../../offline/repositories/invoiceRepository'
 
 export function SignatureScreen({ route, navigation }: any) {
   const { invoiceId, amountCents = 15840 } = route.params
@@ -54,6 +55,7 @@ export function SignatureScreen({ route, navigation }: any) {
 
     // Offline Queue
     if (!isConnected) {
+      await saveOfflineSignature(invoiceId, signature)
       addToQueue('PAY_INVOICE', payload)
       Alert.alert(
         'Offline Signature',
