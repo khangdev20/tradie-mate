@@ -84,7 +84,7 @@ export function IntegrationsScreen() {
             <Text style={styles.cardTitle}>Xero Accounting</Text>
             <StatusBadge
               label={status?.isConnected ? 'Connected' : 'Not connected'}
-              variant={status?.isConnected ? 'success' : 'neutral'}
+              variant={status?.isConnected ? 'success' : 'stone'}
             />
           </View>
           {status?.tenantName && <Text style={styles.meta}>Org: {status.tenantName}</Text>}

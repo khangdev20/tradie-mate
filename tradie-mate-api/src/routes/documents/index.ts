@@ -7,6 +7,7 @@ import { AppError } from '../../utils/errors'
 import path from 'path'
 import crypto from 'crypto'
 import { Queue } from 'bullmq'
+import { eq } from 'drizzle-orm'
 import { uploadToS3 } from '../../services/s3.service'
 
 // Allowed document types matching the enum
@@ -136,7 +137,6 @@ export async function documentRoutes(fastify: FastifyInstance) {
   fastify.get('/', async (request) => {
     const tradieId = request.tradie.id
 
-    const { eq } = await import('drizzle-orm')
     const docs = await db
       .select()
       .from(tradeDocuments)
