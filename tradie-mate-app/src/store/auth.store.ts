@@ -372,36 +372,42 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   refreshSession: async () => {
-    try {
-      const refreshToken = TokenStorage.getRefreshToken()
-      if (!refreshToken) { get().logout(); return }
-
-      if (__DEV__ && refreshToken.startsWith('mock-refresh-token')) {
-        if (TokenStorage.getTradieId()) {
-          await get().fetchOnboardingStatus()
-        }
-        return
-      }
-
-      const { data, error } = await supabase.auth.refreshSession({
-        refresh_token: refreshToken,
-      })
-      if (error || !data.session) { get().logout(); return }
-
-      TokenStorage.saveSession({
-        access_token:  data.session.access_token,
-        refresh_token: data.session.refresh_token,
-        expires_at:    data.session.expires_at!,
-        tradie_id:     TokenStorage.getTradieId()!,
-      })
-      set({ session: data.session })
-      
-      if (TokenStorage.getTradieId()) {
-        await get().fetchOnboardingStatus()
-      }
-    } catch {
-      get().logout()
+    const refreshToken = TokenStorage.getRefreshToken()
+    if (!refreshToken) {
+      await get().logout()
+      throw new Error('No refresh token')
     }
+
+    if (__DEV__ && refreshToken.startsWith('mock-refresh-token')) {
+      // Extend the mock expiry so an expired development session does not
+      // recurse back into refreshSession on the next request.
+      const accessToken = TokenStorage.getAccessToken()
+      if (accessToken) {
+        TokenStorage.saveSession({
+          access_token:  accessToken,
+          refresh_token: refreshToken,
+          expires_at:    Math.floor(Date.now() / 1000) + 3600,
+          tradie_id:     TokenStorage.getTradieId() ?? '',
+        })
+      }
+      return
+    }
+
+    const { data, error } = await supabase.auth.refreshSession({
+      refresh_token: refreshToken,
+    })
+    if (error || !data.session) {
+      await get().logout()
+      throw new Error(error?.message || 'Refresh failed')
+    }
+
+    TokenStorage.saveSession({
+      access_token:  data.session.access_token,
+      refresh_token: data.session.refresh_token,
+      expires_at:    data.session.expires_at!,
+      tradie_id:     TokenStorage.getTradieId() ?? '',
+    })
+    set({ session: data.session })
   },
 
   logout: async () => {
