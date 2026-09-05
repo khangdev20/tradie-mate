@@ -15,16 +15,21 @@ export const TokenStorage = {
     refresh_token: string
     expires_at: number  // Unix timestamp
     tradie_id: string
+    first_name?: string
   }) => {
     authStorage.set('access_token', session.access_token)
     authStorage.set('refresh_token', session.refresh_token)
     authStorage.set('expires_at', String(session.expires_at))
     authStorage.set('tradie_id', session.tradie_id)
+    if (session.first_name) {
+      authStorage.set('first_name', session.first_name)
+    }
   },
 
   getAccessToken: () => authStorage.getString('access_token') ?? null,
   getRefreshToken: () => authStorage.getString('refresh_token') ?? null,
   getTradieId: () => authStorage.getString('tradie_id') ?? null,
+  getFirstName: () => authStorage.getString('first_name') ?? null,
 
   isExpired: () => {
     const expiresAt = authStorage.getString('expires_at')
@@ -38,6 +43,7 @@ export const TokenStorage = {
     authStorage.delete('refresh_token')
     authStorage.delete('expires_at')
     authStorage.delete('tradie_id')
+    authStorage.delete('first_name')
   },
 
   hasBiometricEnabled: () =>

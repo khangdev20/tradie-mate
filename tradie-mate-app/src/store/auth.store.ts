@@ -23,10 +23,19 @@ interface AuthState {
   // State
   session: SupabaseSession | null
   tradieId: string | null
+  firstName: string | null
   isLoading: boolean
   isAuthenticated: boolean
   error: string | null
   activeProvider: AuthProvider | null
+
+  // Onboarding State
+  isOnboarded: boolean
+  onboardingStatus: string | null
+  resumeStep: string | null
+  onboardingBlockers: string[]
+  requiredDocuments: string[]
+  uploadedDocuments: Array<{ doc_type: string; status: string; expires_at?: string }>
 
   // Actions
   sendOtp: (phone: string) => Promise<void>
@@ -43,6 +52,9 @@ interface AuthState {
   forgotPassword: (email: string) => Promise<void>
 
   register: (data: RegisterData) => Promise<void>
+  submitOnboardingProfile: (data: any) => Promise<void>
+  uploadOnboardingDocument: (docType: string, file: any) => Promise<void>
+  fetchOnboardingStatus: () => Promise<void>
   refreshSession: () => Promise<void>
   logout: () => Promise<void>
   clearError: () => void
@@ -51,10 +63,19 @@ interface AuthState {
 export const useAuthStore = create<AuthState>((set, get) => ({
   session:         null,
   tradieId:        TokenStorage.getTradieId(),
+  firstName:       TokenStorage.getFirstName(),
   isLoading:       false,
   isAuthenticated: !!TokenStorage.getAccessToken(),
   error:           null,
   activeProvider:  null,
+
+  // Onboarding Initial State
+  isOnboarded:        false,
+  onboardingStatus:   null,
+  resumeStep:         null,
+  onboardingBlockers: [],
+  requiredDocuments:  [],
+  uploadedDocuments:  [],
 
   sendOtp: async (phone) => {
     set({ isLoading: true, error: null })
@@ -118,9 +139,15 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         refresh_token: session.refresh_token,
         expires_at:    session.expires_at!,
         tradie_id:     result.tradie_id ?? '',
+        first_name:    result.first_name ?? '',
       })
 
-      set({ session, isAuthenticated: true, tradieId: result.tradie_id, activeProvider: 'phone' })
+      set({ session, isAuthenticated: true, tradieId: result.tradie_id, firstName: result.first_name ?? null, activeProvider: 'phone' })
+      
+      if (result.tradie_id) {
+        await get().fetchOnboardingStatus()
+      }
+
       return { is_new_user: result.is_new_user, tradie_id: result.tradie_id }
 
     } catch (err: any) {
@@ -148,6 +175,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       })
 
       set({ isAuthenticated: true, tradieId: result.tradie_id, activeProvider: 'google' })
+      
+      if (result.tradie_id) {
+        await get().fetchOnboardingStatus()
+      }
+
       return { is_new_user: result.is_new_user, tradie_id: result.tradie_id }
     } catch (err: any) {
       if (err.code === 'SIGN_IN_CANCELLED') return { is_new_user: false, tradie_id: null }
@@ -177,6 +209,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       })
 
       set({ isAuthenticated: true, tradieId: result.tradie_id, activeProvider: 'apple' })
+      
+      if (result.tradie_id) {
+        await get().fetchOnboardingStatus()
+      }
+
       return { is_new_user: result.is_new_user, tradie_id: result.tradie_id }
     } catch (err: any) {
       if (err.code === '1001') return { is_new_user: false, tradie_id: null } // user cancelled
@@ -196,8 +233,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         refresh_token: result.refresh_token,
         expires_at:    Math.floor(Date.now() / 1000) + result.expires_in,
         tradie_id:     result.tradie_id,
+        first_name:    result.first_name ?? '',
       })
-      set({ isAuthenticated: true, tradieId: result.tradie_id, activeProvider: 'email' })
+      set({ isAuthenticated: true, tradieId: result.tradie_id, firstName: result.first_name ?? null, activeProvider: 'email' })
+      
+      if (result.tradie_id) {
+        await get().fetchOnboardingStatus()
+      }
     } catch (err: any) {
       set({ error: err.message })
       throw err
@@ -217,6 +259,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         tradie_id:     result.tradie_id,
       })
       set({ isAuthenticated: true, tradieId: result.tradie_id, activeProvider: 'email' })
+      
+      if (result.tradie_id) {
+        await get().fetchOnboardingStatus()
+      }
     } catch (err: any) {
       set({ error: err.message })
       throw err
@@ -237,21 +283,84 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   register: async (data) => {
+    // For backwards compatibility, route to completeProfile but we will use submitOnboardingProfile primarily
+    await get().submitOnboardingProfile(data)
+  },
+
+  submitOnboardingProfile: async (data) => {
     set({ isLoading: true, error: null })
     try {
-      const result = await api.post('/tradies/register', data) as any
-      TokenStorage.saveSession({
-        access_token:  TokenStorage.getAccessToken()!,
-        refresh_token: TokenStorage.getRefreshToken()!,
-        expires_at:    Math.floor(Date.now() / 1000) + 3600,
-        tradie_id:     result.tradie_id,
-      })
-      set({ tradieId: result.tradie_id })
+      const payload = {
+        ...data,
+        legal_consent: {
+          terms_version: '2026-06-02',
+          privacy_version: '2026-06-02',
+          disclaimer_version: '2026-06-02',
+          accepted_at: new Date().toISOString(),
+        }
+      }
+      const result = await api.post('/onboarding/profile', payload) as any
+      
+      if (result.tradie_id) {
+        TokenStorage.saveSession({
+          access_token:  TokenStorage.getAccessToken()!,
+          refresh_token: TokenStorage.getRefreshToken()!,
+          expires_at:    Math.floor(Date.now() / 1000) + 3600,
+          tradie_id:     result.tradie_id,
+        })
+        set({ tradieId: result.tradie_id })
+      }
+      
+      await get().fetchOnboardingStatus()
     } catch (err: any) {
       set({ error: err.message })
       throw err
     } finally {
       set({ isLoading: false })
+    }
+  },
+
+  uploadOnboardingDocument: async (docType, file) => {
+    set({ isLoading: true, error: null })
+    try {
+      const formData = new FormData()
+      formData.append('doc_type', docType)
+      formData.append('file', {
+        uri: file.uri,
+        name: file.name || `${docType.toLowerCase()}.jpg`,
+        type: file.type || 'image/jpeg',
+      } as any)
+
+      await api.post('/documents/upload', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      })
+
+      await get().fetchOnboardingStatus()
+    } catch (err: any) {
+      set({ error: err.message })
+      throw err
+    } finally {
+      set({ isLoading: false })
+    }
+  },
+
+  fetchOnboardingStatus: async () => {
+    try {
+      const result = await api.get('/onboarding/status') as any
+      set({
+        isOnboarded:        result.can_access_app,
+        onboardingStatus:   result.onboarding_status,
+        resumeStep:         result.resume_step,
+        onboardingBlockers: result.blockers || [],
+        requiredDocuments:  result.required_documents || [],
+        uploadedDocuments:  result.documents || [],
+      })
+    } catch (err: any) {
+      // If 403 or 401, they are not onboarded or unauthorized. 
+      // Let's just catch and not crash.
+      console.warn('Fetch onboarding status failed:', err.message)
     }
   },
 
@@ -261,6 +370,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       if (!refreshToken) { get().logout(); return }
 
       if (__DEV__ && refreshToken.startsWith('mock-refresh-token')) {
+        if (TokenStorage.getTradieId()) {
+          await get().fetchOnboardingStatus()
+        }
         return
       }
 
@@ -276,6 +388,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         tradie_id:     TokenStorage.getTradieId()!,
       })
       set({ session: data.session })
+      
+      if (TokenStorage.getTradieId()) {
+        await get().fetchOnboardingStatus()
+      }
     } catch {
       get().logout()
     }
@@ -290,7 +406,19 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       if (get().activeProvider === 'google') await signOutGoogle()
     } catch {}
     TokenStorage.clearSession()
-    set({ session: null, tradieId: null, isAuthenticated: false, activeProvider: null })
+    set({ 
+      session: null, 
+      tradieId: null, 
+      firstName: null, 
+      isAuthenticated: false, 
+      activeProvider: null,
+      isOnboarded: false,
+      onboardingStatus: null,
+      resumeStep: null,
+      onboardingBlockers: [],
+      requiredDocuments: [],
+      uploadedDocuments: [],
+    })
   },
 
   clearError: () => set({ error: null }),

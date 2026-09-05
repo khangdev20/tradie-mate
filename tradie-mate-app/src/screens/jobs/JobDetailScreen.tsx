@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef, useCallback } from 'react'
 import {
   View,
   Text,
@@ -33,7 +33,9 @@ export function JobDetailScreen({ route, navigation }: any) {
   const [job, setJob] = useState<any>(null)
   const [loading, setLoading] = useState(false)
   const [notes, setNotes] = useState('')
+  const [notesSaving, setNotesSaving] = useState(false)
   const [photos, setPhotos] = useState<string[]>([])
+  const notesSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   
   // Map Routing parameters
   const [tradieCoords, setTradieCoords] = useState<{ latitude: number; longitude: number } | null>(null)
@@ -75,8 +77,27 @@ export function JobDetailScreen({ route, navigation }: any) {
     loadJob()
     return () => {
       stopTracking()
+      // Clear any pending notes save timer on unmount
+      if (notesSaveTimerRef.current) clearTimeout(notesSaveTimerRef.current)
     }
   }, [jobId])
+
+  // Debounced notes auto-save (1.5s after user stops typing)
+  const handleNotesChange = useCallback((text: string) => {
+    setNotes(text)
+    if (notesSaveTimerRef.current) clearTimeout(notesSaveTimerRef.current)
+    notesSaveTimerRef.current = setTimeout(async () => {
+      if (!isConnected) return // skip if offline; notes stored in local state
+      try {
+        setNotesSaving(true)
+        await api.patch(`/jobs/${jobId}/notes`, { notes: text })
+      } catch (err) {
+        console.warn('Notes auto-save failed:', err)
+      } finally {
+        setNotesSaving(false)
+      }
+    }, 1500)
+  }, [jobId, isConnected])
 
   // Map directions lookup
   useEffect(() => {
@@ -262,13 +283,18 @@ export function JobDetailScreen({ route, navigation }: any) {
 
         {/* Job Notes */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Job Notes</Text>
+          <View style={styles.notesHeader}>
+            <Text style={styles.sectionTitle}>Job Notes</Text>
+            {notesSaving && (
+              <Text style={styles.savingText}>Saving...</Text>
+            )}
+          </View>
           <TextInput
             style={styles.notesInput}
             multiline
             placeholder="Add specific job issues, requirements, or list materials used..."
             value={notes}
-            onChangeText={setNotes}
+            onChangeText={handleNotesChange}
             placeholderTextColor={Colors.textSubtle}
           />
         </View>
@@ -426,6 +452,17 @@ const styles = StyleSheet.create({
     color: Colors.textMuted,
     marginBottom: Spacing.sm,
   },
+  notesHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: Spacing.sm,
+  },
+  savingText: {
+    fontSize: 11,
+    color: Colors.textMuted,
+    fontStyle: 'italic',
+  },
   notesInput: {
     backgroundColor: Colors.white,
     borderWidth: 0.5,
@@ -437,6 +474,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: Colors.textPrimary,
   },
+
   photoHeaderRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',

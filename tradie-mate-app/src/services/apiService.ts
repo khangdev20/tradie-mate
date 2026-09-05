@@ -92,7 +92,12 @@ api.interceptors.response.use(
     }
 
     // Format error for UI
-    const message = error.response?.data?.error ?? error.message ?? 'Unknown error'
+    const errData = error.response?.data?.error
+    const message =
+      errData && typeof errData === 'object' && 'message' in errData
+        ? errData.message
+        : (typeof errData === 'string' ? errData : (error.message ?? 'Unknown error'))
+    
     return Promise.reject(new Error(message))
   }
 )

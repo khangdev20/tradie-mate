@@ -1,7 +1,7 @@
 // src/routes/tradies/handler.ts
 import { FastifyReply, FastifyRequest } from 'fastify'
 import { db } from '../../config/db'
-import { jobs, invoices, tradies } from '../../db/schema'
+import { jobs, invoices, tradies, customers } from '../../db/schema'
 import { eq, and, inArray, count, gte, lt, sql } from 'drizzle-orm'
 import { startOfDay, endOfDay } from 'date-fns'
 import { toZonedTime } from 'date-fns-tz'
@@ -45,8 +45,30 @@ export async function getDashboardStats(tradieId: string) {
 
     // Next upcoming job
     db
-      .select()
+      .select({
+        id: jobs.id,
+        tradieId: jobs.tradieId,
+        customerId: jobs.customerId,
+        title: jobs.title,
+        description: jobs.description,
+        jobType: jobs.jobType,
+        status: jobs.status,
+        urgency: jobs.urgency,
+        source: jobs.source,
+        scheduledAt: jobs.scheduledAt,
+        estimatedDurationMin: jobs.estimatedDurationMin,
+        address: jobs.address,
+        lat: jobs.lat,
+        lng: jobs.lng,
+        photos: jobs.photos,
+        notes: jobs.notes,
+        createdAt: jobs.createdAt,
+        updatedAt: jobs.updatedAt,
+        customerName: customers.name,
+        customerPhone: customers.phone,
+      })
       .from(jobs)
+      .leftJoin(customers, eq(jobs.customerId, customers.id))
       .where(and(
         eq(jobs.tradieId, tradieId),
         inArray(jobs.status, ['UPCOMING', 'COMMUTING']),

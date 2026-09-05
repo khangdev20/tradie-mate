@@ -16,6 +16,14 @@ export const ForgotPasswordScreen = ({ navigation }: any) => {
   const [email, setEmail] = useState('')
   const [submitted, setSubmitted] = useState(false)
 
+  const handleCancel = () => {
+    if (navigation && navigation.canGoBack()) {
+      navigation.goBack()
+    } else if (navigation) {
+      navigation.navigate('Login')
+    }
+  }
+
   const handleReset = async () => {
     if (!email) {
       Alert.alert('Error', 'Please enter your email address')
@@ -85,7 +93,7 @@ export const ForgotPasswordScreen = ({ navigation }: any) => {
           </TouchableOpacity>
 
           <TouchableOpacity 
-            onPress={() => navigation.goBack()}
+            onPress={handleCancel}
             style={styles.backButton}
           >
             <Text style={styles.backText}>Cancel</Text>

@@ -2,6 +2,7 @@ import { env } from './config/env'
 import { buildApp } from './app'
 
 async function start() {
+  // Force reload server to pick up database migration schema, auth middleware, db config, service, and route handler updates
   const fastify = await buildApp()
 
   try {

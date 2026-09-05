@@ -5,7 +5,7 @@ import {
   entitlementOverrides,
   usageCounters
 } from '../db/schema/subscriptions'
-import { eq, and, gt, sql } from 'drizzle-orm'
+import { eq, and, gt, sql, or, isNull } from 'drizzle-orm'
 import { AppError } from '../utils/errors'
 
 export interface EntitlementsPayload {
@@ -82,7 +82,10 @@ export class EntitlementService {
       .where(
         and(
           eq(entitlementOverrides.tradieId, tradieId),
-          sql`(${entitlementOverrides.expiresAt} IS NULL OR ${entitlementOverrides.expiresAt} > ${now})`
+          or(
+            isNull(entitlementOverrides.expiresAt),
+            gt(entitlementOverrides.expiresAt, now)
+          )
         )
       )
 

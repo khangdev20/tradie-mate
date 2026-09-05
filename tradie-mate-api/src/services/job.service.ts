@@ -1,5 +1,6 @@
 import { db } from '../config/db'
 import { jobs } from '../db/schema/jobs'
+import { customers } from '../db/schema/customers'
 import { eq, and } from 'drizzle-orm'
 import { AppError } from '../utils/errors'
 
@@ -27,8 +28,30 @@ export class JobService {
 
   static async getJobWithOwnerCheck(jobId: string, tradieId: string) {
     const [job] = await db
-      .select()
+      .select({
+        id: jobs.id,
+        tradieId: jobs.tradieId,
+        customerId: jobs.customerId,
+        title: jobs.title,
+        description: jobs.description,
+        jobType: jobs.jobType,
+        status: jobs.status,
+        urgency: jobs.urgency,
+        source: jobs.source,
+        scheduledAt: jobs.scheduledAt,
+        estimatedDurationMin: jobs.estimatedDurationMin,
+        address: jobs.address,
+        lat: jobs.lat,
+        lng: jobs.lng,
+        photos: jobs.photos,
+        notes: jobs.notes,
+        createdAt: jobs.createdAt,
+        updatedAt: jobs.updatedAt,
+        customerName: customers.name,
+        customerPhone: customers.phone,
+      })
       .from(jobs)
+      .leftJoin(customers, eq(jobs.customerId, customers.id))
       .where(and(eq(jobs.id, jobId), eq(jobs.tradieId, tradieId)))
       .limit(1)
 

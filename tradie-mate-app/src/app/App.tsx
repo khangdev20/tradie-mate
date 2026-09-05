@@ -5,6 +5,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { RootNavigator } from './navigation/RootNavigator'
 import { setupSessionRefresh } from '../services/sessionRefresh'
+import { useSyncOnReconnect } from '../hooks/useSyncOnReconnect'
 
 const queryClient = new QueryClient()
 
@@ -12,6 +13,11 @@ import Mapbox from '@rnmapbox/maps'
 import { AppConfig } from '../constants/config'
 
 Mapbox.setAccessToken(AppConfig.mapboxAccessToken)
+
+function AppInner() {
+  useSyncOnReconnect()
+  return <RootNavigator />
+}
 
 export default function App() {
   React.useEffect(() => {
@@ -24,7 +30,7 @@ export default function App() {
       <SafeAreaProvider>
         <QueryClientProvider client={queryClient}>
           <StatusBar barStyle="dark-content" />
-          <RootNavigator />
+          <AppInner />
         </QueryClientProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>

@@ -24,7 +24,7 @@ const TRADES = [
 
 export const TradeTypeScreen = ({ navigation }: any) => {
   const [selectedTrade, setSelectedTrade] = useState<string | null>(null)
-  const { register, isLoading } = useAuthStore()
+  const { register, logout, isLoading } = useAuthStore()
 
   const handleContinue = () => {
     if (!selectedTrade) return
@@ -75,9 +75,9 @@ export const TradeTypeScreen = ({ navigation }: any) => {
 
         <TouchableOpacity 
           style={styles.skipButton}
-          onPress={() => navigation.navigate('Dashboard')}
+          onPress={logout}
         >
-          <Text style={styles.skipText}>Skip for now</Text>
+          <Text style={styles.skipText}>Sign Out</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>

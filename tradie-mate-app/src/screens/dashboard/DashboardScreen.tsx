@@ -19,6 +19,7 @@ import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityI
 import { format } from 'date-fns'
 import api from '../../services/apiService'
 import { useNetworkState } from '../../hooks/useNetworkState'
+import { useAuthStore } from '../../store/auth.store'
 
 interface DashboardStats {
   jobs_today: number
@@ -38,6 +39,15 @@ interface DashboardStats {
 export function DashboardScreen({ navigation }: any) {
   const today = new Date()
   const { status: networkStatus } = useNetworkState()
+  const { firstName } = useAuthStore()
+
+  const getGreeting = () => {
+    const hour = today.getHours()
+    const name = firstName ? `, ${firstName}` : ''
+    if (hour < 12) return `Good morning${name}`
+    if (hour < 17) return `Good afternoon${name}`
+    return `Good evening${name}`
+  }
   const [loading, setLoading] = useState(false)
   const [refreshing, setRefreshing] = useState(false)
   const [stats, setStats] = useState<DashboardStats>({
@@ -122,7 +132,7 @@ export function DashboardScreen({ navigation }: any) {
         {/* Header */}
         <View style={styles.header}>
           <View>
-            <Text style={styles.greeting}>Good morning</Text>
+            <Text style={styles.greeting}>{getGreeting()}</Text>
             <Text style={styles.date}>{format(today, 'EEEE, d MMMM')}</Text>
           </View>
           <SyncIndicator status={networkStatus} />

@@ -2,6 +2,7 @@ import { FastifyInstance, FastifyRequest } from 'fastify'
 import { requireAuth, requireOnboarded } from '../../middleware/auth.middleware'
 import { db } from '../../config/db'
 import { jobs } from '../../db/schema/jobs'
+import { customers } from '../../db/schema/customers'
 import { eq, and, asc } from 'drizzle-orm'
 import { JobService, JobStatus } from '../../services/job.service'
 import { EntitlementService } from '../../services/entitlement.service'
@@ -23,8 +24,30 @@ export async function jobRoutes(fastify: FastifyInstance) {
     }
 
     const jobList = await db
-      .select()
+      .select({
+        id: jobs.id,
+        tradieId: jobs.tradieId,
+        customerId: jobs.customerId,
+        title: jobs.title,
+        description: jobs.description,
+        jobType: jobs.jobType,
+        status: jobs.status,
+        urgency: jobs.urgency,
+        source: jobs.source,
+        scheduledAt: jobs.scheduledAt,
+        estimatedDurationMin: jobs.estimatedDurationMin,
+        address: jobs.address,
+        lat: jobs.lat,
+        lng: jobs.lng,
+        photos: jobs.photos,
+        notes: jobs.notes,
+        createdAt: jobs.createdAt,
+        updatedAt: jobs.updatedAt,
+        customerName: customers.name,
+        customerPhone: customers.phone,
+      })
       .from(jobs)
+      .leftJoin(customers, eq(jobs.customerId, customers.id))
       .where(and(...conditions))
       .limit(limit)
       .offset(offset)
@@ -56,6 +79,8 @@ export async function jobRoutes(fastify: FastifyInstance) {
   fastify.post<{
     Body: {
       customerId?: string
+      customerName?: string
+      customerPhone?: string
       title: string
       description?: string
       jobType?: string
@@ -83,12 +108,38 @@ export async function jobRoutes(fastify: FastifyInstance) {
       console.warn('Geocoding failed for job address:', err)
     }
 
-    // C. Insert job
+    // C. Find or create customer if name and phone are provided
+    let customerId = body.customerId ?? null
+    if (!customerId && body.customerName && body.customerPhone) {
+      const cleanPhone = body.customerPhone.trim()
+      const [existingCust] = await db
+        .select()
+        .from(customers)
+        .where(and(eq(customers.tradieId, tradieId), eq(customers.phone, cleanPhone)))
+        .limit(1)
+
+      if (existingCust) {
+        customerId = existingCust.id
+      } else {
+        const [newCust] = await db
+          .insert(customers)
+          .values({
+            tradieId,
+            name: body.customerName.trim(),
+            phone: cleanPhone,
+            source: 'MANUAL',
+          })
+          .returning()
+        customerId = newCust.id
+      }
+    }
+
+    // D. Insert job
     const [newJob] = await db
       .insert(jobs)
       .values({
         tradieId,
-        customerId: body.customerId ?? null,
+        customerId,
         title: body.title,
         description: body.description ?? null,
         jobType: body.jobType ?? 'Repair',
@@ -105,12 +156,16 @@ export async function jobRoutes(fastify: FastifyInstance) {
       })
       .returning()
 
-    // D. Increment subscription usage counter
+    // E. Increment subscription usage counter
     await EntitlementService.incrementUsage(tradieId, 'jobsCreated')
 
     return reply.status(201).send({
       success: true,
-      data: newJob,
+      data: {
+        ...newJob,
+        customerName: body.customerName ?? null,
+        customerPhone: body.customerPhone ?? null,
+      },
     })
   })
 
@@ -136,5 +191,27 @@ export async function jobRoutes(fastify: FastifyInstance) {
     }
   })
 
-}
+  // 5. Update job notes
+  fastify.patch<{
+    Params: { id: string }
+    Body: { notes: string }
+  }>('/:id/notes', async (request) => {
+    const { notes } = request.body
+    const tradieId = request.tradie.id
 
+    // Verify ownership
+    await JobService.getJobWithOwnerCheck(request.params.id, tradieId)
+
+    const [updated] = await db
+      .update(jobs)
+      .set({ notes, updatedAt: new Date() })
+      .where(and(eq(jobs.id, request.params.id), eq(jobs.tradieId, tradieId)))
+      .returning()
+
+    return {
+      success: true,
+      data: { id: updated.id, notes: updated.notes },
+    }
+  })
+
+}
