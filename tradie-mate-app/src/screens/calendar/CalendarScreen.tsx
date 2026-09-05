@@ -122,7 +122,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
   content: { padding: Spacing.lg, paddingBottom: 40 },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  title: { fontSize: 22, fontWeight: Typography.weights.semibold as any, marginBottom: Spacing.md },
+  title: { fontSize: 22, fontWeight: Typography.weights.semiBold, marginBottom: Spacing.md },
   sectionTitle: { marginTop: Spacing.lg, marginBottom: Spacing.sm, fontWeight: '600' },
   empty: { color: Colors.textMuted },
   jobCard: {
