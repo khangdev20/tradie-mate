@@ -180,6 +180,10 @@ jest.mock('react-native-mmkv', () => ({
 
 jest.mock('react-native-config', () => ({}))
 
+jest.mock('react-native-localize', () => ({
+  getLocales: jest.fn(() => []),
+}))
+
 jest.mock('react-native-vector-icons/MaterialCommunityIcons', () => 'Icon')
 
 jest.mock('react-native-vision-camera', () => ({

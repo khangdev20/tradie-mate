@@ -10,6 +10,7 @@ import { ReviewsScreen } from '../reviews/ReviewsScreen'
 import { SuppliesScreen } from '../supplies/SuppliesScreen'
 import { IntegrationsScreen } from '../integrations/IntegrationsScreen'
 import { VoiceAgentScreen } from '../voice-agent/VoiceAgentScreen'
+import { LanguageScreen } from '../settings/LanguageScreen'
 
 const Stack = createNativeStackNavigator<ProfileStackParamList>()
 
@@ -25,6 +26,7 @@ export function ProfileNavigator() {
       <Stack.Screen name="Supplies" component={SuppliesScreen} />
       <Stack.Screen name="Integrations" component={IntegrationsScreen} />
       <Stack.Screen name="VoiceAgent" component={VoiceAgentScreen} />
+      <Stack.Screen name="Language" component={LanguageScreen} />
     </Stack.Navigator>
   )
 }
