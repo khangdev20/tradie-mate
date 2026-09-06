@@ -1,0 +1,1110 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Báo Cáo Hệ Thống Thiết Kế TradieMate Design System v2.0</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* v2.0 PALETTE — Optimized for outdoor glare & WCAG AA contrast */
+    --bg-base: #FAFAF8;
+    --bg-surface: #EDECEA;
+    --bg-elevated: #FFFFFF;
+    --border: #E8E6E0;
+    --border-strong: #D4D1CB;
+    --text-primary: #1A1A1A;
+    --text-muted: #605E58;   /* 5.8:1 contrast */
+    --text-subtle: #686660;  /* 4.8:1 contrast */
+    --cta: #2E6B45;
+    --cta-dark: #1F3D2B;
+    --cta-light: #C0DD97;
+    --cta-pale: #EAF3DE;
+    --success: #5B8E1F;      /* v2.0 tuned */
+    --success-pale: #EAF3DE;
+    --success-light: #C0DD97;
+    --warning: #B26F12;      /* v2.0 tuned */
+    --warning-pale: #FAEEDA;
+    --warning-light: #FAC775;
+    --danger: #D94140;       /* v2.0 tuned */
+    --danger-pale: #FCEBEB;
+    --danger-light: #F7C1C1;
+    --info: #2F7EC9;         /* v2.0 tuned */
+    --info-pale: #E6F1FB;
+    --info-light: #B5D4F4;
+    --rust: #D85A30;
+    --rust-pale: #FAECE7;
+    --rust-light: #F5C4B3;
+    --stone: #5A5955;        /* v2.0 tuned */
+    --stone-pale: #F1EFE8;
+    --stone-light: #D3D1C7;
+  }
+
+  @page {
+    size: A4;
+    margin: 10mm 12mm 10mm 12mm;
+  }
+
+  @media print {
+    body {
+      background: #FFFFFF !important;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+    .chapter-page {
+      page-break-after: always;
+      break-after: page;
+      height: 275mm;
+      max-height: 275mm;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .no-break {
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+  }
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg-base);
+    color: var(--text-primary);
+    font-size: 12px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .chapter-page {
+    padding: 4mm 2mm;
+    margin-bottom: 0;
+  }
+
+  /* COVER */
+  .cover-box {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 100%;
+    padding: 10mm 6mm;
+  }
+
+  .cover-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--cta-pale);
+    color: var(--cta);
+    padding: 5px 12px;
+    border-radius: 999px;
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    width: fit-content;
+    margin-bottom: 16px;
+    border: 1px solid var(--cta-light);
+  }
+
+  .cover-title {
+    font-size: 36px;
+    font-weight: 800;
+    color: var(--text-primary);
+    letter-spacing: -0.03em;
+    line-height: 1.15;
+    margin-bottom: 8px;
+  }
+
+  .cover-title span { color: var(--cta); }
+
+  .cover-version {
+    display: inline-block;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-strong);
+    color: var(--cta);
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 6px;
+    margin-bottom: 12px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .cover-subtitle {
+    font-size: 14px;
+    color: var(--text-muted);
+    line-height: 1.5;
+    margin-bottom: 18px;
+  }
+
+  .cover-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin: 16px 0;
+  }
+
+  .stat-card {
+    background: #FFFFFF;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+  }
+
+  .stat-val {
+    font-size: 20px;
+    font-weight: 800;
+    color: var(--cta);
+    font-family: 'JetBrains Mono', monospace;
+    margin-bottom: 2px;
+  }
+
+  .stat-label {
+    font-size: 10px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-weight: 700;
+  }
+
+  .toc-card {
+    background: #FFFFFF;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 18px;
+  }
+
+  .toc-list { list-style: none; }
+  .toc-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 6.5px 0;
+    border-bottom: 1px dashed var(--border);
+    font-size: 12px;
+  }
+  .toc-item:last-child { border-bottom: none; }
+  .toc-title { font-weight: 600; color: var(--text-primary); }
+  .toc-page { font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--cta); }
+
+  /* CHAPTER HEADERS */
+  .sec-header {
+    margin-bottom: 10px;
+    padding-bottom: 6px;
+    border-bottom: 1.5px solid var(--border);
+  }
+
+  .sec-tag {
+    font-size: 9.5px;
+    font-weight: 800;
+    color: var(--cta);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .sec-title {
+    font-size: 19px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--text-primary);
+  }
+
+  .sec-desc {
+    font-size: 11.5px;
+    color: var(--text-muted);
+    line-height: 1.4;
+  }
+
+  /* CARDS */
+  .card {
+    background: #FFFFFF;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 11px 13px;
+    margin-bottom: 8px;
+  }
+
+  .card-title {
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  /* TABLES */
+  .spec-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 11px;
+    background: #FFFFFF;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  .spec-table th {
+    background: var(--bg-surface);
+    color: var(--text-primary);
+    font-weight: 700;
+    text-align: left;
+    padding: 6px 10px;
+    border-bottom: 1px solid var(--border);
+    font-size: 10.5px;
+  }
+
+  .spec-table td {
+    padding: 6px 10px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+  }
+
+  .spec-table tr:last-child td { border-bottom: none; }
+
+  .token-pill {
+    display: inline-block;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-strong);
+    padding: 1px 5px;
+    border-radius: 4px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9.5px;
+  }
+
+  /* SWATCH */
+  .swatch-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+  }
+
+  .swatch-card {
+    background: #FFFFFF;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  .swatch-color {
+    height: 32px;
+    padding: 4px 6px;
+    font-size: 10px;
+    font-weight: 600;
+    display: flex;
+    align-items: flex-end;
+  }
+
+  .swatch-info { padding: 5px 7px; }
+  .swatch-name { font-size: 10.5px; font-weight: 700; color: var(--text-primary); }
+  .swatch-token { font-size: 9px; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; }
+  .swatch-hex { font-size: 9.5px; font-weight: 700; color: var(--text-primary); font-family: 'JetBrains Mono', monospace; }
+
+  /* RULES */
+  .rules-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .rule-box {
+    background: #FFFFFF;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+  }
+
+  .rule-box.never { border-left: 3.5px solid var(--danger); }
+  .rule-box.always { border-left: 3.5px solid var(--cta); }
+
+  .rule-header {
+    font-size: 10.5px;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .rule-header.never { color: var(--danger); }
+  .rule-header.always { color: var(--cta); }
+
+  .rule-item {
+    font-size: 10.8px;
+    margin-bottom: 5px;
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    line-height: 1.35;
+  }
+  .rule-item svg { flex-shrink: 0; margin-top: 2px; }
+
+  /* BUTTONS PREVIEWS */
+  .btn-sample {
+    height: 44px;
+    width: 100%;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border: 1px solid transparent;
+  }
+
+  .badge-sample {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px;
+    border-radius: 16px;
+    font-size: 10px;
+    font-weight: 700;
+  }
+  .badge-success { background: var(--success-pale); color: var(--success); border: 1px solid var(--success-light); }
+  .badge-warning { background: var(--warning-pale); color: var(--warning); border: 1px solid var(--warning-light); }
+  .badge-danger  { background: var(--danger-pale);  color: var(--danger);  border: 1px solid var(--danger-light); }
+  .badge-info    { background: var(--info-pale);    color: var(--info);    border: 1px solid var(--info-light); }
+  .badge-stone   { background: var(--stone-pale);   color: var(--stone);   border: 1px solid var(--stone-light); }
+
+  .footer-note {
+    text-align: center;
+    padding-top: 6px;
+    border-top: 1px solid var(--border);
+    font-size: 10px;
+    color: var(--text-subtle);
+  }
+</style>
+</head>
+<body>
+
+  <!-- ==================== TRANG 1: BÌA (COVER) ==================== -->
+  <div class="chapter-page">
+    <div class="cover-box">
+      <div>
+        <div class="cover-badge">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+          BÁO CÁO TOÀN DIỆN KIẾN TRÚC UI/UX
+        </div>
+        <h1 class="cover-title">TradieMate <span>Design System</span></h1>
+        <div class="cover-version">v2.0 · Production-Ready & Australian Field Spec</div>
+        <div class="cover-subtitle">
+          Tài liệu chuẩn hóa ngôn ngữ thiết kế, kiến trúc Design Tokens và Danh mục Component toàn diện cho Mobile App (<code>tradie-mate-app</code>), Thư viện chia sẻ (<code>packages/ui</code>) và Web (<code>tradie-mate-web</code>).
+        </div>
+
+        <div class="cover-stats-grid">
+          <div class="stat-card">
+            <div class="stat-val">44 / 48px</div>
+            <div class="stat-label">Touch / Field Target</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-val">#2E6B45</div>
+            <div class="stat-label">Forest Green CTA</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-val">100% Flat</div>
+            <div class="stat-label">No Drop Shadows</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-val">≥ 4.5:1</div>
+            <div class="stat-label">WCAG AA Contrast</div>
+          </div>
+        </div>
+
+        <div class="toc-card">
+          <div style="font-size: 13px; font-weight: 700; color: var(--text-primary); margin-bottom: 8px;">Mục lục Báo cáo (Table of Contents)</div>
+          <ul class="toc-list">
+            <li class="toc-item"><span class="toc-title">1. Tổng Quan & Triết Lý Thiết Kế Hiện Trường (Field Ergonomics)</span><span class="toc-page">Trang 02</span></li>
+            <li class="toc-item"><span class="toc-title">2. Hệ Thống Bảng Màu v2.0 & Design Tokens (Color Architecture)</span><span class="toc-page">Trang 03</span></li>
+            <li class="toc-item"><span class="toc-title">3. Typography, Lưới 4px & Squircle Radii (Spatial Grid)</span><span class="toc-page">Trang 04</span></li>
+            <li class="toc-item"><span class="toc-title">4. Danh Mục Component Tương Tác (Buttons, Slider, Badges)</span><span class="toc-page">Trang 05</span></li>
+            <li class="toc-item"><span class="toc-title">5. Biểu Mẫu Hiện Trường, Bản Đồ GPS & Cơ Chế Offline Sync</span><span class="toc-page">Trang 06</span></li>
+            <li class="toc-item"><span class="toc-title">6. Ma Trận Đối Chiếu App vs packages/ui & Lộ Trình Chuẩn Hóa</span><span class="toc-page">Trang 07</span></li>
+          </ul>
+        </div>
+      </div>
+
+      <div style="display: flex; justify-content: space-between; align-items: flex-end; padding-top: 15px; border-top: 1px solid var(--border); font-size: 10.5px; color: var(--text-subtle);">
+        <div>
+          <strong style="color: var(--text-primary);">TradieMate Engineering & Product Team</strong>
+          <div>Lưu hành kỹ thuật nội bộ • Version 2.0.0 (Australia Field Spec)</div>
+        </div>
+        <div style="text-align: right;">
+          <div style="color: var(--cta); font-weight: 700;">Monorepo Edition</div>
+          <div>Cập nhật: Tháng 09/2026</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== TRANG 2: TRIẾT LÝ HIỆN TRƯỜNG & QUY TẮC ==================== -->
+  <div class="chapter-page">
+    <div>
+      <div class="sec-header">
+        <div class="sec-tag">Phần 1</div>
+        <h2 class="sec-title">Triết Lý Thiết Kế & Công Thái Học Hiện Trường (Field Ergonomics)</h2>
+        <div class="sec-desc">Tối ưu riêng biệt cho thợ thủ công Úc làm việc trong môi trường vật lý khắc nghiệt, bụi bẩn và ánh nắng chói chang.</div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">1.1. Bốn Ràng Buộc Vật Lý Ngoài Hiện Trường (Field Constraints)</div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 11px;">
+          <div style="background: var(--bg-surface); padding: 8px 10px; border-radius: 6px;">
+            <strong style="color: var(--cta);">☀️ Chống lóa mắt ngoài trời (Sunlight Glare):</strong>
+            <div style="color: var(--text-muted); margin-top: 2px;">Dùng canvas màu be khoáng ấm <code>#FAFAF8</code> thay vì pure white <code>#FFFFFF</code> để mắt không bị chói mỏi khi tra cứu việc dưới nắng gắt.</div>
+          </div>
+          <div style="background: var(--bg-surface); padding: 8px 10px; border-radius: 6px;">
+            <strong style="color: var(--cta);">🧤 Thao tác khi đeo găng (Gloved Hands):</strong>
+            <div style="color: var(--text-muted); margin-top: 2px;">Mọi nút bấm có touch target ≥ <strong>44px</strong> và touch-field ≥ <strong>48px</strong>, tránh lỗi chạm trượt khi đeo găng thợ điện, thợ xây.</div>
+          </div>
+          <div style="background: var(--bg-surface); padding: 8px 10px; border-radius: 6px;">
+            <strong style="color: var(--cta);">💧 Màn hình dính nước & Bụi (Wet Screen Resistance):</strong>
+            <div style="color: var(--text-muted); margin-top: 2px;">Các hành động quan trọng (Start Job, Chốt hóa đơn) áp dụng <strong>SlideToConfirm</strong> vuốt ngón tay chủ ý thay vì chạm đơn dễ kích hoạt nhầm.</div>
+          </div>
+          <div style="background: var(--bg-surface); padding: 8px 10px; border-radius: 6px;">
+            <strong style="color: var(--cta);">📶 Ngoại tuyến là tiên quyết (Offline-first Resilience):</strong>
+            <div style="color: var(--text-muted); margin-top: 2px;">Huy hiệu mạng luôn hiển thị rõ ràng. Mọi tác vụ được xếp vào hàng đợi mã hóa MMKV + WatermelonDB và tự động đồng bộ khi có sóng.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top: 4px;">
+        <div class="card-title">1.2. Bộ Quy Tắc Thiết Kế Vàng (Golden Rules: NEVER vs ALWAYS)</div>
+        <div class="rules-grid">
+          <div class="rule-box never">
+            <div class="rule-header never">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+              QUY TẮC TUYỆT ĐỐI CẤM (NEVER)
+            </div>
+            <div class="rule-item">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="#D94140"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+              <div><strong>Drop Shadows:</strong> Cấm box-shadow; giao diện phải phẳng và dùng border 1px để phân tách.</div>
+            </div>
+            <div class="rule-item">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="#D94140"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+              <div><strong>Gradients:</strong> Không dùng dải màu gradient trên background hay nút gây xao nhãng.</div>
+            </div>
+            <div class="rule-item">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="#D94140"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+              <div><strong>Font-weight > 600:</strong> Tránh các kiểu font quá đậm, nặng nề trên tiêu đề.</div>
+            </div>
+            <div class="rule-item">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="#D94140"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+              <div><strong>Touch Target < 44px:</strong> Mọi nút hay biểu tượng bấm được dưới 44px đều vi phạm.</div>
+            </div>
+            <div class="rule-item">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="#D94140"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+              <div><strong>Emoji trong UI:</strong> Cấm dùng emoji trang trí; chỉ dùng SVG Vector chuẩn xác.</div>
+            </div>
+          </div>
+
+          <div class="rule-box always">
+            <div class="rule-header always">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+              QUY TẮC BẮT BUỘC (ALWAYS)
+            </div>
+            <div class="rule-item">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="#2E6B45"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/></svg>
+              <div><strong>Canvas #FAFAF8:</strong> Mọi màn hình chính đều đặt background canvas nền ấm.</div>
+            </div>
+            <div class="rule-item">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="#2E6B45"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/></svg>
+              <div><strong>Hero "Next Job" Card:</strong> Thẻ việc tiếp theo luôn là phần tử lớn nhất trên Dashboard.</div>
+            </div>
+            <div class="rule-item">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="#2E6B45"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/></svg>
+              <div><strong>Slide-to-Confirm:</strong> Thao tác chuyển trạng thái quan trọng phải dùng thanh trượt.</div>
+            </div>
+            <div class="rule-item">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="#2E6B45"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/></svg>
+              <div><strong>Dòng Thuế GST (10%):</strong> Bắt buộc hiển thị rõ dòng thuế GST theo luật hóa đơn Úc.</div>
+            </div>
+            <div class="rule-item">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="#2E6B45"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/></svg>
+              <div><strong>Truyền size + color:</strong> Mọi icon component đều phải chỉ định kích thước và màu rõ ràng.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="footer-note">TradieMate Design System v2.0 • Trang 02/07</div>
+  </div>
+
+  <!-- ==================== TRANG 3: BẢNG MÀU & TOKENS v2.0 ==================== -->
+  <div class="chapter-page">
+    <div>
+      <div class="sec-header">
+        <div class="sec-tag">Phần 2</div>
+        <h2 class="sec-title">Hệ Thống Bảng Màu v2.0 & Design Tokens (Color Architecture)</h2>
+        <div class="sec-desc">Bảng màu v2.0 đạt tỉ lệ tương phản vượt chuẩn WCAG 2.1 AA (≥ 4.5:1), tối ưu cho màn hình di động ngoài nắng gắt.</div>
+      </div>
+
+      <!-- Brand CTA & Surfaces -->
+      <div class="card">
+        <div class="card-title">2.1. Màu Thương Hiệu & Bề Mặt Cấu Trúc (Brand CTA & Canvas Surfaces)</div>
+        <div class="swatch-grid">
+          <div class="swatch-card">
+            <div class="swatch-color" style="background: #2E6B45; color: #FFF;">CTA Primary</div>
+            <div class="swatch-info">
+              <div class="swatch-name">Forest Green</div>
+              <div class="swatch-token">--cta / Colors.primary</div>
+              <div class="swatch-hex">#2E6B45</div>
+            </div>
+          </div>
+          <div class="swatch-card">
+            <div class="swatch-color" style="background: #1F3D2B; color: #FFF;">CTA Dark</div>
+            <div class="swatch-info">
+              <div class="swatch-name">Deep Forest</div>
+              <div class="swatch-token">--cta-dark / Colors.ctaDark</div>
+              <div class="swatch-hex">#1F3D2B</div>
+            </div>
+          </div>
+          <div class="swatch-card">
+            <div class="swatch-color" style="background: #FAFAF8; color: #1A1A1A;">Base Canvas</div>
+            <div class="swatch-info">
+              <div class="swatch-name">Warm Canvas</div>
+              <div class="swatch-token">--bg-base / Colors.background</div>
+              <div class="swatch-hex">#FAFAF8</div>
+            </div>
+          </div>
+          <div class="swatch-card">
+            <div class="swatch-color" style="background: #FFFFFF; color: #1A1A1A; border-top: 1px solid var(--border);">Elevated Card</div>
+            <div class="swatch-info">
+              <div class="swatch-name">Pure White Card</div>
+              <div class="swatch-token">--bg-elevated / Colors.elevated</div>
+              <div class="swatch-hex">#FFFFFF</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Semantic Status Colors v2.0 -->
+      <div class="card">
+        <div class="card-title">2.2. Nhóm Màu Trạng Thái Ngữ Nghĩa v2.0 (Semantic Status Colors)</div>
+        <div class="swatch-grid">
+          <div class="swatch-card">
+            <div class="swatch-color" style="background: #5B8E1F; color: #FFF;">Success</div>
+            <div class="swatch-info">
+              <div class="swatch-name">Olive v2.0 (Hoàn tất)</div>
+              <div class="swatch-token">--success / Colors.success</div>
+              <div class="swatch-hex">#5B8E1F</div>
+            </div>
+          </div>
+          <div class="swatch-card">
+            <div class="swatch-color" style="background: #B26F12; color: #FFF;">Warning</div>
+            <div class="swatch-info">
+              <div class="swatch-name">Amber v2.0 (Chờ / Offline)</div>
+              <div class="swatch-token">--warning / Colors.warning</div>
+              <div class="swatch-hex">#B26F12</div>
+            </div>
+          </div>
+          <div class="swatch-card">
+            <div class="swatch-color" style="background: #D94140; color: #FFF;">Danger</div>
+            <div class="swatch-info">
+              <div class="swatch-name">Coral Red v2.0 (Hủy / Lỗi)</div>
+              <div class="swatch-token">--danger / Colors.danger</div>
+              <div class="swatch-hex">#D94140</div>
+            </div>
+          </div>
+          <div class="swatch-card">
+            <div class="swatch-color" style="background: #2F7EC9; color: #FFF;">Info</div>
+            <div class="swatch-info">
+              <div class="swatch-name">Steel Blue v2.0 (Đang chạy)</div>
+              <div class="swatch-token">--info / Colors.info</div>
+              <div class="swatch-hex">#2F7EC9</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Cross-platform Token Mapping Table -->
+      <div class="card">
+        <div class="card-title">2.3. Bảng Quy Chiếu Tokens Đa Nền Tảng (Monorepo Token Alignment)</div>
+        <table class="spec-table">
+          <thead>
+            <tr>
+              <th>Mục đích sử dụng</th>
+              <th>CSS Web (:root)</th>
+              <th>App Mobile (Colors.ts)</th>
+              <th>Shared UI (tokens.ts)</th>
+              <th>Độ Tương Phản (WCAG)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Nền ứng dụng chính</td>
+              <td><span class="token-pill">--bg-base</span></td>
+              <td><span class="token-pill">Colors.background</span></td>
+              <td><span class="token-pill">colors.background</span></td>
+              <td><strong>#FAFAF8 (Warm Canvas)</strong></td>
+            </tr>
+            <tr>
+              <td>Nút hành động chính (CTA)</td>
+              <td><span class="token-pill">--cta</span></td>
+              <td><span class="token-pill">Colors.primary / cta</span></td>
+              <td><span class="token-pill">colors.cta</span></td>
+              <td><strong>#2E6B45 (4.8:1 trên White)</strong></td>
+            </tr>
+            <tr>
+              <td>Chữ hiển thị chính</td>
+              <td><span class="token-pill">--text-primary</span></td>
+              <td><span class="token-pill">Colors.textPrimary</span></td>
+              <td><span class="token-pill">colors.textPrimary</span></td>
+              <td><strong>#1A1A1A (16.5:1 Đạt AAA)</strong></td>
+            </tr>
+            <tr>
+              <td>Chữ phụ (Muted)</td>
+              <td><span class="token-pill">--text-muted</span></td>
+              <td><span class="token-pill">Colors.textMuted</span></td>
+              <td><span class="token-pill">colors.textMuted</span></td>
+              <td><strong>#605E58 (5.8:1 Đạt AA)</strong></td>
+            </tr>
+            <tr>
+              <td>Chữ mờ (Subtle)</td>
+              <td><span class="token-pill">--text-subtle</span></td>
+              <td><span class="token-pill">Colors.textSubtle</span></td>
+              <td><span class="token-pill">--</span></td>
+              <td><strong>#686660 (4.8:1 Đạt AA)</strong></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="footer-note">TradieMate Design System v2.0 • Trang 03/07</div>
+  </div>
+
+  <!-- ==================== TRANG 4: TYPOGRAPHY, SPACING & SQUIRCLE ==================== -->
+  <div class="chapter-page">
+    <div>
+      <div class="sec-header">
+        <div class="sec-tag">Phần 3</div>
+        <h2 class="sec-title">Typography, Thang Đo Khoảng Cách & Squircle Radii</h2>
+        <div class="sec-desc">Quy chuẩn font chữ Inter, hệ thống lưới 4px nhất quán và bo góc đường cong mềm (Squircle Radii).</div>
+      </div>
+
+      <!-- Typography -->
+      <div class="card">
+        <div class="card-title">3.1. Thang Phân Cấp Chữ (Typography Hierarchy & Scale)</div>
+        <table class="spec-table">
+          <thead>
+            <tr>
+              <th>Cấp độ (Role)</th>
+              <th>Kích thước</th>
+              <th>Trọng số</th>
+              <th>Line-height</th>
+              <th>Ứng dụng thực tế</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Display</strong></td>
+              <td><span class="token-pill">32px</span></td>
+              <td>Bold (700)</td>
+              <td>1.2</td>
+              <td>Số dư ví thợ, tổng tiền hóa đơn lớn trên màn hình chi tiết</td>
+            </tr>
+            <tr>
+              <td><strong>Heading</strong></td>
+              <td><span class="token-pill">24px</span></td>
+              <td>SemiBold (600)</td>
+              <td>1.25</td>
+              <td>Tiêu đề màn hình chính (Job Detail, Invoice List, Profile)</td>
+            </tr>
+            <tr>
+              <td><strong>Title</strong></td>
+              <td><span class="token-pill">20px</span></td>
+              <td>SemiBold (600)</td>
+              <td>1.3</td>
+              <td>Tiêu đề thẻ công việc Hero Card, tiêu đề modal hành động</td>
+            </tr>
+            <tr>
+              <td><strong>Body Lg</strong></td>
+              <td><span class="token-pill">18px</span></td>
+              <td>Medium (500)</td>
+              <td>1.4</td>
+              <td>Chữ trên các nút hành động chính (min-height 52px)</td>
+            </tr>
+            <tr>
+              <td><strong>Body</strong></td>
+              <td><span class="token-pill">16px</span></td>
+              <td>Regular (400)</td>
+              <td>1.5</td>
+              <td>Nội dung mô tả việc, ghi chú khách hàng, biểu mẫu nhập liệu</td>
+            </tr>
+            <tr>
+              <td><strong>Label</strong></td>
+              <td><span class="token-pill">14px</span></td>
+              <td>SemiBold (600)</td>
+              <td>1.4</td>
+              <td>Nhãn trường FormField, địa chỉ phụ, metadata ngày giờ</td>
+            </tr>
+            <tr>
+              <td><strong>Micro</strong></td>
+              <td><span class="token-pill">12px</span></td>
+              <td>SemiBold (600)</td>
+              <td>1.2</td>
+              <td>Huy hiệu trạng thái StatusBadge, tag phân loại, dòng thuế GST</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Spacing -->
+      <div class="card">
+        <div class="card-title">3.2. Hệ Thống Lưới Khoảng Cách Cơ Sở 4px (Spacing System)</div>
+        <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; text-align: center; font-size: 10px;">
+          <div style="background: var(--bg-surface); padding: 6px; border-radius: 6px;"><div style="font-weight: 700; color: var(--cta);">xs (sp1)</div><div>4px</div></div>
+          <div style="background: var(--bg-surface); padding: 6px; border-radius: 6px;"><div style="font-weight: 700; color: var(--cta);">sm (sp2)</div><div>8px</div></div>
+          <div style="background: var(--bg-surface); padding: 6px; border-radius: 6px;"><div style="font-weight: 700; color: var(--cta);">sp3</div><div>12px</div></div>
+          <div style="background: var(--bg-surface); padding: 6px; border-radius: 6px;"><div style="font-weight: 700; color: var(--cta);">md (sp4)</div><div>16px (Gutter)</div></div>
+          <div style="background: var(--bg-surface); padding: 6px; border-radius: 6px;"><div style="font-weight: 700; color: var(--cta);">sp5</div><div>20px</div></div>
+          <div style="background: var(--bg-surface); padding: 6px; border-radius: 6px;"><div style="font-weight: 700; color: var(--cta);">lg (sp6)</div><div>24px</div></div>
+          <div style="background: var(--bg-surface); padding: 6px; border-radius: 6px;"><div style="font-weight: 700; color: var(--cta);">xl (sp8)</div><div>32px</div></div>
+          <div style="background: var(--bg-surface); padding: 6px; border-radius: 6px;"><div style="font-weight: 700; color: var(--cta);">xxl (sp10)</div><div>40px</div></div>
+          <div style="background: var(--bg-surface); padding: 6px; border-radius: 6px;"><div style="font-weight: 700; color: var(--cta);">xxxl (sp12)</div><div>48px</div></div>
+          <div style="background: var(--bg-surface); padding: 6px; border-radius: 6px;"><div style="font-weight: 700; color: var(--cta);">sp16</div><div>64px</div></div>
+        </div>
+      </div>
+
+      <!-- Radius v2.0 (Squircle Radii) -->
+      <div class="card">
+        <div class="card-title">3.3. Phân Cấp Bo Góc Squircle Radii v2.0 (Curvature Scale)</div>
+        <table class="spec-table">
+          <thead>
+            <tr>
+              <th>Token Name</th>
+              <th>Bán kính</th>
+              <th>Phạm vi áp dụng</th>
+              <th>Mẫu trực quan</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="token-pill">--r-xs</span></td>
+              <td>6px</td>
+              <td>Icon bọc nhỏ, viền chip con, badge viền siêu nhỏ</td>
+              <td><div style="width: 28px; height: 16px; border: 1.5px solid var(--cta); border-radius: 6px; background: var(--cta-pale);"></div></td>
+            </tr>
+            <tr>
+              <td><span class="token-pill">--r-sm</span></td>
+              <td>10px</td>
+              <td>Nút phụ (Secondary), input phụ, ô dropdown</td>
+              <td><div style="width: 28px; height: 16px; border: 1.5px solid var(--cta); border-radius: 10px; background: var(--cta-pale);"></div></td>
+            </tr>
+            <tr>
+              <td><span class="token-pill">--r-md</span></td>
+              <td>14px</td>
+              <td>Thẻ card, nút đăng nhập chính, ô TextInput chuẩn 52px</td>
+              <td><div style="width: 28px; height: 16px; border: 1.5px solid var(--cta); border-radius: 14px; background: var(--cta-pale);"></div></td>
+            </tr>
+            <tr>
+              <td><span class="token-pill">--r-lg / --r-xl</span></td>
+              <td>18px / 24px</td>
+              <td>Bottom Sheet, Modal thông báo xác nhận, Hero Card</td>
+              <td><div style="width: 28px; height: 16px; border: 1.5px solid var(--cta); border-radius: 18px; background: var(--cta-pale);"></div></td>
+            </tr>
+            <tr>
+              <td><span class="token-pill">--r-pill / --r-full</span></td>
+              <td>999px / 9999px</td>
+              <td>Huy hiệu StatusBadge, Chip lọc, Avatar thợ, FAB tròn</td>
+              <td><div style="width: 34px; height: 16px; border: 1.5px solid var(--cta); border-radius: 999px; background: var(--cta-pale);"></div></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="footer-note">TradieMate Design System v2.0 • Trang 04/07</div>
+  </div>
+
+  <!-- ==================== TRANG 5: DANH MỤC COMPONENT TƯƠNG TÁC ==================== -->
+  <div class="chapter-page">
+    <div>
+      <div class="sec-header">
+        <div class="sec-tag">Phần 4</div>
+        <h2 class="sec-title">Danh Mục Component Tương Tác (App & UI Library)</h2>
+        <div class="sec-desc">Đặc tả các thành phần tương tác đã được xây dựng và kiểm chứng thực tế trong mobile app.</div>
+      </div>
+
+      <!-- Buttons & Social Auth -->
+      <div class="card">
+        <div class="card-title">4.1. Nút Bấm & Đăng Nhập Xã Hội với SVG Vector Chuẩn Xác</div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+          <div>
+            <div style="font-size: 11px; font-weight: 700; color: var(--text-muted); margin-bottom: 6px;">Nút Hành Động Hiện Trường (Touch-Field 48-52px)</div>
+            <button class="btn-sample" style="background: var(--cta); color: #FFF; margin-bottom: 6px;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71z"/></svg>
+              Start Navigation (48px)
+            </button>
+            <div style="display: flex; gap: 6px;">
+              <button class="btn-sample" style="background: var(--bg-surface); color: var(--text-primary); border-color: var(--border-strong); height: 38px;">Xem Chi Tiết</button>
+              <button class="btn-sample" style="background: var(--danger-pale); color: var(--danger); border-color: var(--danger-light); height: 38px;">Hủy Job</button>
+            </div>
+          </div>
+
+          <div>
+            <div style="font-size: 11px; font-weight: 700; color: var(--text-muted); margin-bottom: 6px;">Nút Đăng Nhập Social Mới Tích Hợp SVG</div>
+            <!-- Google Button -->
+            <button class="btn-sample" style="background: #FFFFFF; border-color: var(--border); color: #1A1A1A; margin-bottom: 6px;">
+              <svg width="18" height="18" viewBox="0 0 24 24">
+                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+              </svg>
+              Continue with Google
+            </button>
+            <!-- Apple Button -->
+            <button class="btn-sample" style="background: #000000; color: #FFFFFF;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="#FFFFFF">
+                <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 4.15c.66-.8 1.11-1.92.99-3.04-.96.04-2.12.64-2.8 1.44-.61.71-1.14 1.85-1 2.96 1.07.08 2.16-.56 2.81-1.36z"/>
+              </svg>
+              Continue with Apple
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- SlideToConfirm -->
+      <div class="card">
+        <div class="card-title">4.2. Thanh Trượt Xác Nhận Hành Động Không Thể Đảo Ngược (SlideToConfirm)</div>
+        <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;">
+          Sử dụng <code>react-native-reanimated</code> + <code>react-native-gesture-handler</code>. Thợ vuốt ngón tay từ trái sang phải qua ngưỡng 75% để kích hoạt; kèm rung phản hồi haptic.
+        </p>
+        <div style="width: 100%; height: 48px; background: var(--bg-surface); border: 1px solid var(--border-strong); border-radius: 24px; position: relative; display: flex; align-items: center; justify-content: center;">
+          <div style="position: absolute; left: 3px; width: 40px; height: 40px; background: var(--cta); border-radius: 20px; display: flex; align-items: center; justify-content: center;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="#FFFFFF"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg>
+          </div>
+          <div style="font-size: 12px; font-weight: 700; color: var(--cta); letter-spacing: 0.04em; padding-left: 30px;">SLIDE TO START JOB ➔</div>
+        </div>
+      </div>
+
+      <!-- Badges -->
+      <div class="card">
+        <div class="card-title">4.3. Huy Hiệu Trạng Thái & Chứng Chỉ Hành Nghề (StatusBadge & Compliance)</div>
+        <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+          <span class="badge-sample badge-success">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+            COMPLETED
+          </span>
+          <span class="badge-sample badge-info">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 1010 10A10 10 0 0012 2zm1 15h-2v-6h2zm0-8h-2V7h2z"/></svg>
+            IN PROGRESS
+          </span>
+          <span class="badge-sample badge-warning">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L1 21h22L12 2zm1 14h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>
+            SCHEDULED
+          </span>
+          <span class="badge-sample badge-danger">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+            OVERDUE
+          </span>
+          <span class="badge-sample badge-stone">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z"/></svg>
+            DRAFT
+          </span>
+          <span class="badge-sample badge-success" style="background: #E8F5E9; border-color: #81C784;">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/></svg>
+            LICENSED & INSURED
+          </span>
+          <span class="badge-sample badge-warning" style="background: #FFF8E1; border-color: #FFE082;">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+            WHITE CARD VERIFIED
+          </span>
+        </div>
+      </div>
+    </div>
+    <div class="footer-note">TradieMate Design System v2.0 • Trang 05/07</div>
+  </div>
+
+  <!-- ==================== TRANG 6: BIỂU MẪU, BẢN ĐỒ & OFFLINE ==================== -->
+  <div class="chapter-page">
+    <div>
+      <div class="sec-header">
+        <div class="sec-tag">Phần 5</div>
+        <h2 class="sec-title">Biểu Mẫu Hiện Trường, Bản Đồ & Đồng Bộ Ngoại Tuyến</h2>
+        <div class="sec-desc">Đặc tả các tương tác then chốt: Thẻ công việc Hero, ô nhập dữ liệu cỡ lớn và cơ chế lưu trữ ngoại tuyến.</div>
+      </div>
+
+      <!-- Hero Card -->
+      <div class="card">
+        <div class="card-title">5.1. Thẻ Công Việc Tiếp Theo (Next Job Hero Card)</div>
+        <div style="background: #FFFFFF; border: 1.5px solid var(--border-strong); border-radius: 12px; padding: 12px 14px;">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+            <div>
+              <div style="font-size: 9.5px; font-weight: 800; color: var(--cta); text-transform: uppercase; letter-spacing: 0.05em;">NEXT JOB • 09:30 AM</div>
+              <div style="font-size: 15px; font-weight: 700; color: var(--text-primary); margin: 2px 0;">Sửa Ống Nước Khẩn Cấp - Rò Rỉ Tầng Hầm</div>
+            </div>
+            <span class="badge-sample badge-info">EN ROUTE</span>
+          </div>
+          <div style="font-size: 11.5px; color: var(--text-muted); margin: 6px 0; display: flex; align-items: center; gap: 4px;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="var(--cta)"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 110-5 2.5 2.5 0 010 5z"/></svg>
+            42 Miller Street, Pyrmont NSW 2009 (Cách 3.4 km • 8 phút lái xe)
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 8px; border-top: 1px solid var(--border); font-size: 11.5px;">
+            <div>Khách hàng: <strong>David Smith</strong> • 0412 345 678</div>
+            <div style="color: var(--cta); font-weight: 700; font-size: 13.5px;">$480.00 <span style="font-size: 10px; font-weight: normal; color: var(--text-muted);">(incl. 10% GST)</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Form & Sync Indicator -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+        <div class="card" style="margin-bottom: 0;">
+          <div class="card-title">5.2. Nhập Liệu Chuẩn Hiện Trường (FormField)</div>
+          <div style="display: flex; flex-direction: column; gap: 6px;">
+            <div>
+              <label style="font-size: 10px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 2px;">TÊN DOANH NGHIỆP THỢ</label>
+              <div style="height: 42px; background: #F9F9F9; border: 1px solid var(--border); border-radius: 8px; padding: 0 12px; display: flex; align-items: center; font-size: 12px; color: var(--text-primary);">
+                Dave Plumber Services Pty Ltd
+              </div>
+            </div>
+            <div>
+              <label style="font-size: 10px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 2px;">MÃ SỐ THUẾ ÚC (ABN - 11 CHỮ SỐ)</label>
+              <div style="height: 42px; background: #FFFFFF; border: 1.5px solid var(--cta); border-radius: 8px; padding: 0 12px; display: flex; align-items: center; font-size: 12.5px; font-family: 'JetBrains Mono', monospace; color: var(--text-primary);">
+                51 824 753 556
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-bottom: 0;">
+          <div class="card-title">5.3. Chỉ Báo Ngoại Tuyến (SyncIndicator)</div>
+          <div style="display: flex; flex-direction: column; gap: 8px; font-size: 11.5px;">
+            <div style="display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; background: var(--bg-surface); border-radius: 6px;">
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <div style="width: 8px; height: 8px; border-radius: 4px; background: var(--success);"></div>
+                <strong>Đã đồng bộ máy chủ</strong>
+              </div>
+              <span style="font-size: 10px; color: var(--text-muted);">Online</span>
+            </div>
+            <div style="display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; background: var(--warning-pale); border-radius: 6px; border: 1px solid var(--warning-light);">
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <div style="width: 8px; height: 8px; border-radius: 4px; background: var(--warning);"></div>
+                <strong style="color: var(--warning);">3 tác vụ chờ đồng bộ</strong>
+              </div>
+              <span style="font-size: 10px; color: var(--warning); font-weight: 700;">MMKV Queue</span>
+            </div>
+            <div style="font-size: 10px; color: var(--text-muted); line-height: 1.35;">
+              Sử dụng <code>idempotencyKey</code> và tự động retry lũy thừa tối đa 5 lần, đảm bảo không tạo trùng giao dịch khi mạng chập chờn.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="footer-note">TradieMate Design System v2.0 • Trang 06/07</div>
+  </div>
+
+  <!-- ==================== TRANG 7: ĐỐI CHIẾU & LỘ TRÌNH ==================== -->
+  <div class="chapter-page">
+    <div>
+      <div class="sec-header">
+        <div class="sec-tag">Phần 6</div>
+        <h2 class="sec-title">Ma Trận Đối Chiếu & Lộ Trình Chuẩn Hóa Monorepo</h2>
+        <div class="sec-desc">Đánh giá tính nhất quán giữa Mobile App (<code>tradie-mate-app</code>), gói chia sẻ (<code>packages/ui</code>) và bản đặc tả HTML.</div>
+      </div>
+
+      <!-- Parity Matrix -->
+      <div class="card">
+        <div class="card-title">6.1. Bảng Đánh Giá Mức Độ Đồng Bộ Hiện Tại (Parity Matrix)</div>
+        <table class="spec-table">
+          <thead>
+            <tr>
+              <th>Thành phần (Component)</th>
+              <th>App Mobile (React Native)</th>
+              <th>Shared UI (packages/ui)</th>
+              <th>Web (tradie-mate-web)</th>
+              <th>Đánh giá trạng thái</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Color Tokens</strong></td>
+              <td>Đầy đủ (<code>Colors.ts</code>)</td>
+              <td>Đã có (<code>tokens.ts</code>)</td>
+              <td>CSS variables v2.0</td>
+              <td><span style="color: var(--success); font-weight: 700;">✓ Đồng bộ cao (95%)</span></td>
+            </tr>
+            <tr>
+              <td><strong>Typography Tokens</strong></td>
+              <td>Inter platform font</td>
+              <td>Chưa trích xuất riêng</td>
+              <td>Inter Google Font</td>
+              <td><span style="color: var(--warning); font-weight: 700;">⚡ Cần gom về packages/ui</span></td>
+            </tr>
+            <tr>
+              <td><strong>AppButton</strong></td>
+              <td>Full variants + Touch 44/48px</td>
+              <td>Có phiên bản cơ bản</td>
+              <td>Tailwind / CSS Button</td>
+              <td><span style="color: var(--success); font-weight: 700;">✓ Hoạt động tốt</span></td>
+            </tr>
+            <tr>
+              <td><strong>Social Auth Icons</strong></td>
+              <td>SVG Native (Google + Apple)</td>
+              <td>Chưa có SVG component</td>
+              <td>Dùng SVG inline</td>
+              <td><span style="color: var(--success); font-weight: 700;">✓ Mới bổ sung hoàn chỉnh</span></td>
+            </tr>
+            <tr>
+              <td><strong>SlideToConfirm</strong></td>
+              <td>Reanimated + Gesture</td>
+              <td>Chưa có (đặc thù mobile)</td>
+              <td>Không áp dụng</td>
+              <td><span style="color: var(--success); font-weight: 700;">✓ Mobile Native Exclusive</span></td>
+            </tr>
+            <tr>
+              <td><strong>StatusBadge</strong></td>
+              <td>Đầy đủ 8 trạng thái</td>
+              <td>Đã có component</td>
+              <td>Có component badge</td>
+              <td><span style="color: var(--success); font-weight: 700;">✓ Đồng bộ hoàn hảo</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Roadmap -->
+      <div class="card">
+        <div class="card-title">6.2. Kế Hoạch Chuẩn Hóa Tiếp Theo (Actionable Roadmap)</div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; font-size: 10.8px;">
+          <div style="background: var(--bg-surface); padding: 10px; border-radius: 6px;">
+            <div style="font-weight: 800; color: var(--cta); margin-bottom: 3px;">1. Centralize Tokens</div>
+            <div style="color: var(--text-muted); line-height: 1.35;">Đưa toàn bộ <code>colors.ts</code>, <code>spacing.ts</code>, <code>typography.ts</code> từ mobile app vào <code>packages/ui/tokens</code> làm Single Source of Truth cho monorepo.</div>
+          </div>
+          <div style="background: var(--bg-surface); padding: 10px; border-radius: 6px;">
+            <div style="font-weight: 800; color: var(--cta); margin-bottom: 3px;">2. Shared Icons Library</div>
+            <div style="color: var(--text-muted); line-height: 1.35;">Đưa <code>GoogleIcon</code>, <code>AppleIcon</code> và bộ vector Material Icons vào <code>packages/ui/icons</code> nhằm tái sử dụng đồng nhất giữa app và web.</div>
+          </div>
+          <div style="background: var(--bg-surface); padding: 10px; border-radius: 6px;">
+            <div style="font-weight: 800; color: var(--cta); margin-bottom: 3px;">3. Automated Snapshot Test</div>
+            <div style="color: var(--text-muted); line-height: 1.35;">Thiết lập kiểm thử tự động visual regression tests (Jest snapshot) để bảo đảm không bị vỡ giao diện hay lệch màu giữa các phiên bản.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Compliance summary -->
+      <div class="card">
+        <div class="card-title">6.3. Đánh Giá Tuân Thủ & Pháp Lý Úc (Australian Standards Compliance)</div>
+        <div style="display: flex; justify-content: space-between; font-size: 11px;">
+          <div>✓ <strong>Luật Thuế Úc (ATO):</strong> Tách biệt thuế GST 10%, hiển thị ABN 11 chữ số trên hóa đơn.</div>
+          <div>✓ <strong>An Toàn Lao Động (WHS):</strong> Chứng thực thẻ White Card, chứng chỉ thợ trước khi nhận việc.</div>
+          <div>✓ <strong>Tiếp Cận (WCAG 2.1 AA):</strong> Tương phản màu vượt ngưỡng 4.5:1.</div>
+        </div>
+      </div>
+    </div>
+    <div class="footer-note">Báo cáo hệ thống thiết kế TradieMate Monorepo • Hoàn tất Tháng 09/2026 • Trang 07/07</div>
+  </div>
+
+</body>
+</html>

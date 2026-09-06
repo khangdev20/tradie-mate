@@ -58,6 +58,14 @@ target 'TradieMate' do
         File.write(sentry_header, patched) if patched != content
       end
 
+      # Patch RNSentry: disable Hermes sampling profiler since Hermes in RN 0.85 removed HermesRuntime::enableSamplingProfiler
+      rnsentry_source = "#{installer.sandbox.root}/../../node_modules/@sentry/react-native/ios/RNSentry.mm"
+      if File.exist?(rnsentry_source)
+        content = File.read(rnsentry_source)
+        patched = content.gsub("#if __has_include(<hermes/hermes.h>) && SENTRY_PROFILING_SUPPORTED\n#define SENTRY_PROFILING_ENABLED 1\n#import <Sentry/SentryProfilingConditionals.h>\n#else\n#define SENTRY_PROFILING_ENABLED 0\n#define SENTRY_TARGET_PROFILING_SUPPORTED 0\n#endif", "#define SENTRY_PROFILING_ENABLED 0\n#define SENTRY_TARGET_PROFILING_SUPPORTED 0")
+        File.write(rnsentry_source, patched) if patched != content
+      end
+
       # Patch WatermelonDB to remove simdjson dependency if present
       if target.name == 'WatermelonDB'
         target.build_configurations.each do |config|

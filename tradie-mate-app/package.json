@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "start": "react-native start",
-    "ios": "xcodebuild -workspace ios/TradieMate.xcworkspace -scheme TradieMate -destination 'platform=iOS Simulator,id=5C8C4CFC-E069-41B3-8362-73C6AB19A6FC' ONLY_ACTIVE_ARCH=YES -derivedDataPath ios/build build && xcrun simctl install booted ios/build/Build/Products/Debug-iphonesimulator/TradieMate.app && xcrun simctl launch booted com.tradiemate",
+    "ios": "./scripts/run-ios.sh",
     "android": "react-native run-android",
     "test": "jest --watchAll=false",
     "type-check": "tsc --noEmit",
@@ -51,6 +51,7 @@
     "react-native-safe-area-context": "^5.5.2",
     "react-native-screens": "^4.0.0",
     "react-native-signature-canvas": "^5.0.0",
+    "react-native-svg": "^15.15.5",
     "react-native-url-polyfill": "^3.0.0",
     "react-native-vector-icons": "^10.0.0",
     "react-native-vision-camera": "^4.0.0",

@@ -2843,6 +2843,28 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
+  - react-native-document-picker (9.3.1):
+    - hermes-engine
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-Core-prebuilt
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - ReactNativeDependencies
+    - Yoga
   - react-native-geolocation (3.4.0):
     - hermes-engine
     - RCTRequired
@@ -3648,6 +3670,51 @@ PODS:
     - ReactNativeDependencies
     - Sentry/HybridSDK (= 8.41.0)
     - Yoga
+  - RNSVG (15.15.5):
+    - hermes-engine
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-Core-prebuilt
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - ReactNativeDependencies
+    - RNSVG/common (= 15.15.5)
+    - Yoga
+  - RNSVG/common (15.15.5):
+    - hermes-engine
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-Core-prebuilt
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - ReactNativeDependencies
+    - Yoga
   - RNVectorIcons (10.3.0):
     - hermes-engine
     - RCTRequired
@@ -3830,6 +3897,29 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
+  - stripe-terminal-react-native (0.0.1-beta.31):
+    - hermes-engine
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-Core-prebuilt
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - ReactNativeDependencies
+    - StripeTerminal (~> 5.5.0)
+    - Yoga
   - StripeApplePay (25.12.0):
     - StripeCore (= 25.12.0)
   - StripeCore (25.12.0)
@@ -3854,6 +3944,7 @@ PODS:
     - StripeCore (= 25.12.0)
     - StripePayments (= 25.12.0)
     - StripeUICore (= 25.12.0)
+  - StripeTerminal (5.5.0)
   - StripeUICore (25.12.0):
     - StripeCore (= 25.12.0)
   - Turf (4.0.0)
@@ -3914,6 +4005,7 @@ DEPENDENCIES:
   - React-mutationobservernativemodule (from `../node_modules/react-native/ReactCommon/react/nativemodule/mutationobserver`)
   - react-native-biometrics (from `../node_modules/react-native-biometrics`)
   - react-native-config (from `../node_modules/react-native-config`)
+  - react-native-document-picker (from `../node_modules/react-native-document-picker`)
   - "react-native-geolocation (from `../node_modules/@react-native-community/geolocation`)"
   - react-native-mmkv (from `../node_modules/react-native-mmkv`)
   - "react-native-netinfo (from `../node_modules/@react-native-community/netinfo`)"
@@ -3966,11 +4058,13 @@ DEPENDENCIES:
   - RNReanimated (from `../node_modules/react-native-reanimated`)
   - RNScreens (from `../node_modules/react-native-screens`)
   - "RNSentry (from `../node_modules/@sentry/react-native`)"
+  - RNSVG (from `../node_modules/react-native-svg`)
   - RNVectorIcons (from `../node_modules/react-native-vector-icons`)
   - RNWorklets (from `../node_modules/react-native-worklets`)
   - "simdjson (from `../node_modules/@nozbe/simdjson`)"
   - Stripe
   - "stripe-react-native (from `../node_modules/@stripe/stripe-react-native`)"
+  - "stripe-terminal-react-native (from `../node_modules/@stripe/stripe-terminal-react-native`)"
   - VisionCamera (from `../node_modules/react-native-vision-camera`)
   - "WatermelonDB (from `../node_modules/@nozbe/watermelondb`)"
   - Yoga (from `../node_modules/react-native/ReactCommon/yoga`)
@@ -4017,6 +4111,7 @@ SPEC REPOS:
     - StripePayments
     - StripePaymentSheet
     - StripePaymentsUI
+    - StripeTerminal
     - StripeUICore
     - Turf
 
@@ -4104,6 +4199,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-biometrics"
   react-native-config:
     :path: "../node_modules/react-native-config"
+  react-native-document-picker:
+    :path: "../node_modules/react-native-document-picker"
   react-native-geolocation:
     :path: "../node_modules/@react-native-community/geolocation"
   react-native-mmkv:
@@ -4208,6 +4305,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-screens"
   RNSentry:
     :path: "../node_modules/@sentry/react-native"
+  RNSVG:
+    :path: "../node_modules/react-native-svg"
   RNVectorIcons:
     :path: "../node_modules/react-native-vector-icons"
   RNWorklets:
@@ -4216,6 +4315,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/@nozbe/simdjson"
   stripe-react-native:
     :path: "../node_modules/@stripe/stripe-react-native"
+  stripe-terminal-react-native:
+    :path: "../node_modules/@stripe/stripe-terminal-react-native"
   VisionCamera:
     :path: "../node_modules/react-native-vision-camera"
   WatermelonDB:
@@ -4294,6 +4395,7 @@ SPEC CHECKSUMS:
   React-mutationobservernativemodule: a7f3dc483d3e0e0fade0ea00e2cc95e2e462e023
   react-native-biometrics: 43ed5b828646a7862dbc7945556446be00798e7d
   react-native-config: 92071878d2f74a8f4b942bef9c48af9fd08df58b
+  react-native-document-picker: e3de9b5d88cbb1d968812016aca47b27904c83aa
   react-native-geolocation: aba0b4dbf0f9a84c328059efd93af22e9e6190d7
   react-native-mmkv: 2d6cca1ab25152b1bd9fb7dee260f0dc657cb884
   react-native-netinfo: 324785adcc38e79c8e9304a74d0bbe20e957c83a
@@ -4346,6 +4448,7 @@ SPEC CHECKSUMS:
   RNReanimated: dbe1365727409813696964826b407873304f4d51
   RNScreens: 85c533985720c563272c6f6dd19e1278dfd0f5d4
   RNSentry: 727ea17e3e6d58070c80b290775485d986581f11
+  RNSVG: 8efa5ad14ceb98fe56c03793bd55bc4bd30ad84b
   RNVectorIcons: bd88db8836a8611aff4b44f061364c07002a6c2a
   RNWorklets: 4931990f73bc8f347586918b2e13f11dfadf3b75
   SDWebImage: a7f831e1a65eb5e285e3fb046a23fcfbf08e696d
@@ -4354,6 +4457,7 @@ SPEC CHECKSUMS:
   simdjson: 7bb9e33d87737cec966e7b427773c67baa4458fe
   Stripe: 0befd1ef4c49e9e1b5a781f1e61805c856bb9c1c
   stripe-react-native: b6f5bf323c5171fca1336b162e14c456d4c5f78a
+  stripe-terminal-react-native: 00ee22373171b2709378010fed0525bc789e17dc
   StripeApplePay: a58f76d25970050c4b3447cf6d34ce098cd0b517
   StripeCore: c10a35ed2d1f2165ccb8db8077e10c6fa488c6b8
   StripeFinancialConnections: 6abb9257f511f8ba1fd17df07d48058f48eb7b22
@@ -4361,12 +4465,13 @@ SPEC CHECKSUMS:
   StripePayments: fb4105c822f9f07ca2092c86b68ab366b5d4a144
   StripePaymentSheet: 7285761bacc685b160fc31871632554577beec35
   StripePaymentsUI: 6aabff3711d0543db04632a2d102deac7a139095
+  StripeTerminal: e9c7e64089beeed2188e6e6afe8779c01945d13c
   StripeUICore: fb5f1c2f7d702b2879f706e3db3a7b793125256e
   Turf: c9eb11a65d96af58cac523460fd40fec5061b081
   VisionCamera: 7187b3dac1ff3071234ead959ce311875748e14f
   WatermelonDB: b2b2f2b53e930ff3b14286637a8972ddaed9ccbc
   Yoga: e240fec777ff1f21ef42ccebbb44b6d262125855
 
-PODFILE CHECKSUM: 7c3937ce330e148fb8e6c2686e98d7d725a464ce
+PODFILE CHECKSUM: db50e0e656c9c2fb27a232c9a7c17a20665d521e
 
 COCOAPODS: 1.16.2
