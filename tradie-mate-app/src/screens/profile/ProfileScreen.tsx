@@ -23,6 +23,7 @@ import { SyncIndicator } from '../../components/shared/SyncIndicator'
 import api from '../../services/apiService'
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons'
 import { format } from 'date-fns'
+import { useTranslation } from 'react-i18next'
 
 interface BillingPlan {
   code: string
@@ -34,6 +35,7 @@ interface BillingPlan {
 }
 
 export function ProfileScreen({ navigation }: any) {
+  const { t } = useTranslation('common')
   const { subscription, getEntitlement } = useEntitlements()
   const { logout } = useAuthStore()
   const { queue } = useOfflineQueue()
@@ -220,6 +222,7 @@ export function ProfileScreen({ navigation }: any) {
             { label: 'Nearby Supplies', screen: 'Supplies', icon: 'store-marker' },
             { label: 'Integrations', screen: 'Integrations', icon: 'connection' },
             { label: 'AI Voice Agent', screen: 'VoiceAgent', icon: 'phone-in-talk' },
+            { label: t('language.title'), screen: 'Language', icon: 'translate' },
           ].map((item) => (
             <TouchableOpacity
               key={item.screen}

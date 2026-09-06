@@ -45,4 +45,5 @@ export type ProfileStackParamList = {
   Supplies: undefined
   Integrations: undefined
   VoiceAgent: undefined
+  Language: undefined
 }
