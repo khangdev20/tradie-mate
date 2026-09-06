@@ -2,121 +2,812 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>TradieMate Design System v1.0</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>TradieMate Design System v2.0 · Production-Ready & Australian Field Spec</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 :root {
-  --bg-base:#FAFAF8; --bg-surface:#EDECEA; --bg-elevated:#FFFFFF;
-  --border:#E8E6E0; --border-strong:#D4D1CB;
-  --text-primary:#1A1A1A; --text-muted:#888888; --text-subtle:#AAAAAA;
-  --cta:#2E6B45; --cta-dark:#1F3D2B; --cta-light:#C0DD97; --cta-pale:#EAF3DE;
-  --success:#639922; --success-pale:#EAF3DE; --success-light:#C0DD97;
-  --warning:#BA7517; --warning-pale:#FAEEDA; --warning-light:#FAC775;
-  --danger:#E24B4A;  --danger-pale:#FCEBEB;  --danger-light:#F7C1C1;
-  --info:#378ADD;    --info-pale:#E6F1FB;    --info-light:#B5D4F4;
-  --rust:#D85A30;    --rust-pale:#FAECE7;    --rust-light:#F5C4B3;
-  --stone:#5F5E5A;   --stone-pale:#F1EFE8;   --stone-light:#D3D1C7;
-  --sp1:4px;--sp2:8px;--sp3:12px;--sp4:16px;--sp5:20px;--sp6:24px;--sp8:32px;--sp10:40px;--sp12:48px;--sp16:64px;
-  --r-sm:8px;--r-md:12px;--r-lg:16px;--r-pill:20px;--r-full:9999px;
-  --font:'Inter',-apple-system,sans-serif; --mono:'SF Mono','Fira Code',monospace;
-  --touch:44px;
+  /* ═══ 1. IMMUTABLE COLOR PALETTE — Outdoor Glare & Contrast Tuned ═══ */
+  --bg-base:        #FAFAF8; /* Warm canvas for sunlight readability */
+  --bg-surface:     #EDECEA;
+  --bg-elevated:    #FFFFFF;
+  --border:         #E8E6E0;
+  --border-strong:  #D4D1CB;
+  
+  /* Text tokens (WCAG AA Compliant >= 4.5:1 against #FAFAF8 & #FFFFFF) */
+  --text-primary:   #1A1A1A; /* 16.5:1 contrast */
+  --text-muted:     #605E58; /* 5.8:1 contrast */
+  --text-subtle:    #686660; /* 4.8:1 contrast (WCAG AA tuned) */
+  
+  /* Primary Action CTA — Forest Green */
+  --cta:            #2E6B45;
+  --cta-dark:       #1F3D2B;
+  --cta-light:      #C0DD97;
+  --cta-pale:       #EAF3DE;
+
+  /* Semantic Palettes */
+  --success:        #5B8E1F;
+  --success-pale:   #EAF3DE;
+  --success-light:  #C0DD97;
+  
+  --warning:        #B26F12;
+  --warning-text:   #8A5203; /* High-contrast text on warning-pale */
+  --warning-pale:   #FAEEDA;
+  --warning-light:  #FAC775;
+  
+  --danger:         #D94140;
+  --danger-pale:    #FCEBEB;
+  --danger-light:   #F7C1C1;
+  
+  --info:           #2F7EC9;
+  --info-pale:      #E6F1FB;
+  --info-light:     #B5D4F4;
+  
+  --stone:          #5A5955;
+  --stone-pale:     #F1EFE8;
+  --stone-light:    #D3D1C7;
+
+  /* ═══ 2. SPACING SYSTEM (4px base unit) ═══ */
+  --sp1:4px; --sp2:8px; --sp3:12px; --sp4:16px; --sp5:20px;
+  --sp6:24px; --sp8:32px; --sp10:40px; --sp12:48px; --sp16:64px;
+
+  /* ═══ 3. SQUIRCLE RADII SCALE ═══ */
+  --r-xs:6px; --r-sm:10px; --r-md:14px; --r-lg:18px; --r-xl:24px; --r-pill:999px; --r-full:9999px;
+
+  /* ═══ 4. TYPOGRAPHY & TIMING ═══ */
+  --font: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif;
+  --mono: 'SF Mono', 'Fira Code', 'Roboto Mono', monospace;
+
+  /* Animation timing tokens */
+  --duration-fast: 120ms;
+  --duration-base: 200ms;
+  --duration-slow: 300ms;
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-spring: cubic-bezier(0.19, 1, 0.22, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* ═══ 5. TOUCH TARGETS (Gloved-hand safety) ═══ */
+  --touch: 44px;       /* Absolute minimum for all interactive elements */
+  --touch-field: 48px; /* Field-facing primary action minimum */
+
+  /* ═══ 6. ELEVATION TOKENS (Micro-depth, no colored blur glow) ═══ */
+  --shadow-hairline: 0 0 0 1px rgba(0,0,0,0.06);
+  --shadow-card: 0 1px 3px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.025);
+  --shadow-elevated: 0 2px 6px rgba(0,0,0,0.03), 0 10px 24px -4px rgba(0,0,0,0.06);
+  --shadow-float: 0 8px 30px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.04);
+  color-scheme: light; /* Locked to Australian Field Sunlight Light Mode */
 }
+
+/* ═══ STRICT LIGHT MODE (AUSTRALIAN OUTDOOR SUNLIGHT SPEC) ═══
+   TradieMate is light-mode first (#FAFAF8 warm canvas) to ensure maximum contrast
+   under direct sunlight on job sites. System OS dark mode override is disabled.
+*/
+[data-theme="dark-preview-only"] {
+  --bg-base: #141514;
+  --bg-surface: #1E201E;
+  --bg-elevated: #262926;
+  --border: #323632;
+  --border-strong: #454B45;
+  --text-primary: #F5F5F2;
+  --text-muted: #A8A69E;
+  --text-subtle: #8A8880;
+  --cta-pale: #1A3324;
+  --success-pale: #1A3324;
+  --warning-pale: #36260F;
+  --danger-pale: #361414;
+  --info-pale: #12283D;
+  --stone-pale: #282725;
+}
+
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-html{scroll-behavior:smooth}
-body{font-family:var(--font);background:var(--bg-base);color:var(--text-primary);font-size:14px;line-height:1.6;-webkit-font-smoothing:antialiased}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{
+  font-family:var(--font);
+  background:var(--bg-base);
+  color:var(--text-primary);
+  font-size:14px;
+  line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+  text-rendering:optimizeLegibility;
+  font-feature-settings:"cv02","cv03","cv04","cv11","tnum";
+  -webkit-tap-highlight-color:transparent;
+}
 
-/* LAYOUT */
-.layout{display:grid;grid-template-columns:220px 1fr;min-height:100vh}
-.sidebar{background:var(--bg-elevated);border-right:0.5px solid var(--border);padding:var(--sp6) 0;position:sticky;top:0;height:100vh;overflow-y:auto}
-.logo{padding:0 var(--sp5) var(--sp6);border-bottom:0.5px solid var(--border);margin-bottom:var(--sp4)}
-.logo .wm{font-size:15px;font-weight:600;color:var(--cta);letter-spacing:-0.3px}
-.logo .ver{font-size:10px;color:var(--text-muted);margin-top:2px}
+/* ═══ VISUAL HAPTIC TOUCH FEEDBACK (ALL INTERACTIVE ELEMENTS) ═══ */
+button, .btn, .chip, .cswatch, .icard, .li, .tm-tab-item, .tm-dial-btn, .tm-contact-btn, .tm-seg-item, .icon-btn, summary, .ds-tabs button, .view-btn {
+  transition: transform var(--duration-fast) var(--ease-standard), background-color var(--duration-fast), border-color var(--duration-fast), box-shadow var(--duration-fast);
+}
+button:active, .btn:active, .chip:active, .cswatch:active, .icard:active, .li:active, .tm-tab-item:active, .tm-dial-btn:active, .tm-contact-btn:active, .tm-seg-item:active, .icon-btn:active, summary:active, .ds-tabs button:active, .view-btn:active {
+  transform: scale(0.975);
+}
+
+/* ═══ LAYOUT & NAVIGATION ═══ */
+.layout{display:grid;grid-template-columns:236px 1fr;min-height:100vh}
+.sidebar{background:var(--bg-elevated);border-right:1px solid var(--border);padding:var(--sp6) 0;position:sticky;top:0;height:100vh;overflow-y:auto}
+.logo{padding:0 var(--sp5) var(--sp6);border-bottom:1px solid var(--border);margin-bottom:var(--sp4)}
+.logo .wm{font-size:16px;font-weight:600;color:var(--cta);letter-spacing:-0.4px;display:flex;align-items:center;gap:7px}
+.logo .ver{font-size:11px;color:var(--text-muted);margin-top:3px;font-weight:400}
 .ng{padding:var(--sp2) 0}
-.nl{font-size:9px;font-weight:600;color:var(--text-subtle);letter-spacing:.08em;text-transform:uppercase;padding:var(--sp2) var(--sp5) var(--sp1)}
-.ni{display:block;padding:var(--sp2) var(--sp5);font-size:13px;color:var(--text-muted);text-decoration:none;border-left:2px solid transparent;transition:all .12s;cursor:pointer}
+.nl{font-size:10px;font-weight:600;color:var(--text-subtle);letter-spacing:.08em;text-transform:uppercase;padding:var(--sp2) var(--sp5) var(--sp1)}
+.ni{display:flex;align-items:center;justify-content:space-between;padding:9px var(--sp5);font-size:13px;color:var(--text-muted);text-decoration:none;border-left:3px solid transparent;transition:all var(--duration-fast);cursor:pointer;min-height:44px;border-radius:0 8px 8px 0;margin-right:8px}
 .ni:hover{color:var(--text-primary);background:var(--bg-surface)}
-.ni.active{color:var(--cta);border-left-color:var(--cta);background:var(--cta-pale);font-weight:500}
-.main{padding:var(--sp10) var(--sp12);max-width:980px}
-.sec{margin-bottom:var(--sp16);scroll-margin-top:var(--sp6)}
-.sec-title{font-size:22px;font-weight:500;letter-spacing:-.4px;margin-bottom:var(--sp2)}
-.sec-desc{font-size:13px;color:var(--text-muted);margin-bottom:var(--sp8);max-width:560px;line-height:1.7}
-.sub{font-size:12px;font-weight:600;color:var(--text-muted);letter-spacing:.06em;text-transform:uppercase;margin-bottom:var(--sp4);padding-bottom:var(--sp2);border-bottom:.5px solid var(--border)}
+.ni.active{color:var(--cta);border-left-color:var(--cta);background:var(--cta-pale);font-weight:600}
+.ni-badge{font-size:9px;font-weight:600;background:var(--cta);color:#fff;padding:2px 6px;border-radius:10px;text-transform:uppercase;letter-spacing:0.02em}
 
-/* COLORS */
-.cgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:var(--sp3);margin-bottom:var(--sp8)}
-.cswatch{border-radius:var(--r-md);overflow:hidden;border:.5px solid var(--border);background:var(--bg-elevated);cursor:pointer;transition:transform .1s}
-.cswatch:hover{transform:translateY(-2px)}
-.cswatch:hover .scopy{opacity:1}
+.main{padding:var(--sp8) var(--sp10);max-width:1120px;width:100%;min-width:0}
+.sec{margin-bottom:var(--sp16);scroll-margin-top:var(--sp10)}
+.sec-title{font-size:22px;font-weight:600;letter-spacing:-.4px;margin-bottom:var(--sp2);display:flex;align-items:center;gap:10px}
+.sec-desc{font-size:13.5px;color:var(--stone);margin-bottom:var(--sp6);max-width:680px;line-height:1.7}
+.sub{font-size:11px;font-weight:600;color:var(--stone);letter-spacing:.08em;text-transform:uppercase;margin:var(--sp6) 0 var(--sp3);padding-bottom:var(--sp2);border-bottom:1px solid var(--border)}
+
+/* ═══ MOBILE TOP BAR & DRAWER ═══ */
+.mobile-top-bar{display:none;position:sticky;top:0;z-index:900;background:rgba(255,255,255,0.94);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);padding:10px 16px;align-items:center;justify-content:space-between}
+.mobile-top-bar .wm{font-size:15px;font-weight:600;color:var(--cta);display:flex;align-items:center;gap:6px}
+.top-bar-actions{display:flex;align-items:center;gap:8px}
+.icon-btn{min-width:44px;min-height:44px;width:44px;height:44px;border-radius:var(--r-sm);border:1px solid var(--border);background:var(--bg-elevated);display:flex;align-items:center;justify-content:center;color:var(--text-primary);cursor:pointer;font-family:inherit}
+.icon-btn:hover{background:var(--bg-surface)}
+
+.drawer-backdrop{position:fixed;inset:0;background:rgba(26,26,26,0.45);z-index:2000;opacity:0;pointer-events:none;transition:opacity var(--duration-base) ease;backdrop-filter:blur(4px)}
+.drawer-backdrop.open{opacity:1;pointer-events:auto}
+.drawer-panel{position:fixed;top:0;left:0;bottom:0;width:min(320px,85vw);background:var(--bg-elevated);z-index:2001;transform:translateX(-100%);transition:transform var(--duration-slow) var(--ease-spring);overflow-y:auto;padding:var(--sp5) 0;box-shadow:4px 0 24px rgba(0,0,0,0.12)}
+.drawer-backdrop.open .drawer-panel{transform:translateX(0)}
+.drawer-header{padding:0 var(--sp5) var(--sp4);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+
+/* ═══ VIEW MODE SWITCHER BAR ═══ */
+.view-bar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;background:var(--bg-elevated);border:1px solid var(--border);padding:8px 12px;border-radius:var(--r-md);margin-bottom:var(--sp6);box-shadow:var(--shadow-card)}
+.view-info{font-size:12.5px;color:var(--stone)}
+.view-switcher{display:inline-flex;background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--r-pill);padding:3px;gap:3px}
+.view-btn{display:inline-flex;align-items:center;gap:6px;padding:6px 16px;border-radius:var(--r-pill);border:none;background:transparent;font-size:12.5px;font-weight:500;color:var(--stone);cursor:pointer;min-height:44px;transition:all var(--duration-fast)}
+.view-btn.active{background:var(--bg-elevated);color:var(--cta);font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,0.06)}
+
+/* ═══ TITANIUM IPHONE 16 PRO SIMULATOR ═══ */
+.sim-container{display:none;justify-content:center;margin-bottom:var(--sp12);padding:14px 0}
+.sim-container.active{display:flex}
+.phone-frame{
+  width:393px;
+  height:844px;
+  background:var(--bg-base);
+  border-radius:54px;
+  border:4px solid #36383A;
+  outline:8px solid #18191A;
+  box-shadow:0 0 0 1px rgba(255,255,255,0.1), 0 28px 64px -16px rgba(0,0,0,0.32);
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+  position:relative;
+}
+.phone-status{
+  height:46px;
+  padding:0 24px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  font-size:12.5px;
+  font-weight:600;
+  background:rgba(255,255,255,0.95);
+  backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--border);
+  flex-shrink:0;
+  position:relative;
+  z-index:20;
+}
+.phone-island{
+  position:absolute;
+  top:10px;
+  left:50%;
+  transform:translateX(-50%);
+  width:116px;
+  height:28px;
+  background:#000;
+  border-radius:20px;
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  padding-right:9px;
+  box-shadow:0 1px 3px rgba(0,0,0,0.4);
+}
+.phone-island-cam{
+  width:10px;
+  height:10px;
+  background:#0D1117;
+  border-radius:50%;
+  border:1.5px solid #1A2332;
+  box-shadow:inset 0 0 2px #415A77;
+}
+.phone-viewport{
+  flex:1;
+  overflow-y:auto;
+  background:var(--bg-base);
+  display:flex;
+  flex-direction:column;
+  position:relative;
+  -webkit-overflow-scrolling:touch;
+}
+.phone-home{
+  height:22px;
+  background:rgba(255,255,255,0.95);
+  backdrop-filter:blur(16px);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex-shrink:0;
+}
+.phone-home-pill{width:134px;height:4.5px;background:var(--text-primary);border-radius:100px;opacity:0.25}
+
+/* Fixed Overlay Floating Action Button Layer */
+.phone-fab-layer{
+  position:absolute;
+  bottom:74px;
+  right:16px;
+  z-index:40;
+  pointer-events:auto;
+}
+
+/* ═══ UNIFIED NETWORK STATUS COMPONENT ═══ */
+.tm-network-bar{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:10px 14px;
+  border-radius:var(--r-sm);
+  font-size:12.5px;
+  font-weight:500;
+  margin-bottom:12px;
+  transition:all var(--duration-base);
+}
+.tm-network-bar.online{
+  background:var(--cta-pale);
+  border:1px solid var(--cta-light);
+  color:var(--cta);
+}
+.tm-network-bar.offline{
+  background:var(--warning-pale);
+  border:1px solid var(--warning-light);
+  color:var(--warning-text);
+}
+.tm-network-info{display:inline-flex;align-items:center;gap:7px}
+
+/* ═══ SIMULATOR SCREEN CONTENT ═══ */
+.sim-screen{display:none;flex-direction:column;flex:1;padding:14px;padding-bottom:80px}
+.sim-screen.active{display:flex}
+
+.tm-app-bar{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:12px 16px;
+  background:rgba(255,255,255,0.92);
+  backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--border);
+  position:sticky;
+  top:0;
+  z-index:10;
+}
+.tm-app-bar-left{display:flex;align-items:center;gap:10px}
+.tm-app-bar-title{font-size:16px;font-weight:600;letter-spacing:-0.3px;color:var(--text-primary)}
+.tm-app-bar-actions{display:flex;align-items:center;gap:6px}
+
+/* ═══ MOBILE BOTTOM TAB BAR ═══ */
+.tm-bottom-bar{
+  display:flex;
+  background:rgba(255,255,255,0.94);
+  backdrop-filter:blur(20px);
+  border-top:1px solid var(--border);
+  height:64px;
+  align-items:center;
+  justify-content:space-around;
+  flex-shrink:0;
+  position:relative;
+  z-index:30;
+}
+.tm-tab-item{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:2px;
+  color:var(--stone);
+  text-decoration:none;
+  font-size:10.5px;
+  font-weight:500;
+  cursor:pointer;
+  position:relative;
+  flex:1;
+  min-height:48px;
+  height:100%;
+  border:none;
+  background:none;
+  padding:4px 0;
+}
+.tm-tab-icon-wrap{
+  width:44px;
+  height:28px;
+  border-radius:14px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  transition:all var(--duration-fast);
+}
+.tm-tab-item.active .tm-tab-icon-wrap{
+  background:var(--cta-pale);
+  color:var(--cta);
+}
+.tm-tab-item.active{
+  color:var(--cta);
+  font-weight:600;
+}
+.tm-tab-badge{
+  position:absolute;
+  top:5px;
+  right:18%;
+  background:var(--danger);
+  color:#fff;
+  font-size:9.5px;
+  font-weight:600;
+  padding:1px 5px;
+  border-radius:var(--r-pill);
+  min-width:16px;
+  text-align:center;
+  border:1.5px solid #fff;
+}
+
+/* ═══ SLIDE TO CONFIRM ═══ */
+.tm-slider-track{
+  position:relative;
+  height:56px;
+  min-height:48px;
+  background:var(--cta);
+  background-image:linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.14) 50%, rgba(255,255,255,0) 100%);
+  background-size:200px 100%;
+  border-radius:var(--r-pill);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:#fff;
+  font-size:13.5px;
+  font-weight:500;
+  letter-spacing:0.01em;
+  user-select:none;
+  overflow:hidden;
+  cursor:pointer;
+  width:100%;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,0.2), 0 2px 8px rgba(46,107,69,0.25);
+}
+.tm-slider-fill{
+  position:absolute;
+  left:0;
+  top:0;
+  bottom:0;
+  width:54px;
+  background:var(--cta-dark);
+  pointer-events:none;
+}
+.tm-slider-thumb{
+  position:absolute;
+  left:4px;
+  top:4px;
+  width:48px;
+  height:48px;
+  background:#fff;
+  border-radius:50%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:var(--cta);
+  box-shadow:0 2px 8px rgba(0,0,0,0.16), 0 0 0 1px rgba(0,0,0,0.04);
+  touch-action:none;
+  cursor:grab;
+  z-index:2;
+}
+.tm-slider-thumb:active{cursor:grabbing}
+.tm-slider-track.confirmed{
+  background:var(--success);
+  background-image:none;
+}
+.tm-slider-track.confirmed .tm-slider-fill{width:100%!important;background:var(--success)}
+.tm-slider-track.confirmed .tm-slider-thumb{color:var(--success)}
+.tm-chevrons{
+  display:inline-flex;
+  gap:2px;
+  margin-left:6px;
+  opacity:0.75;
+  animation:chevronsPulse 1.8s infinite ease-in-out;
+}
+@keyframes chevronsPulse {
+  0%,100%{opacity:0.4;transform:translateX(0)}
+  50%{opacity:1;transform:translateX(4px)}
+}
+
+/* ═══ MODAL BOTTOM SHEET ═══ */
+.tm-sheet-backdrop{position:fixed;inset:0;background:rgba(26,26,26,0.45);z-index:3000;opacity:0;pointer-events:none;transition:opacity var(--duration-base) ease;display:flex;flex-direction:column;justify-content:flex-end;backdrop-filter:blur(3px)}
+.tm-sheet-backdrop.open{opacity:1;pointer-events:auto}
+.tm-sheet-content{background:var(--bg-elevated);border-radius:24px 24px 0 0;padding:12px 20px calc(24px + env(safe-area-inset-bottom, 0px));width:100%;max-width:500px;margin:0 auto;transform:translateY(100%);transition:transform var(--duration-slow) var(--ease-spring);box-shadow:0 -6px 28px rgba(0,0,0,0.14)}
+.tm-sheet-backdrop.open .tm-sheet-content{transform:translateY(0)}
+.tm-drag-handle{width:40px;height:4.5px;background:var(--border-strong);border-radius:3px;margin:4px auto 16px}
+.tm-sheet-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.tm-sheet-title{font-size:16.5px;font-weight:600;letter-spacing:-0.2px}
+
+/* ═══ BEFORE & AFTER PHOTO CARDS ═══ */
+.tm-photo-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0}
+.tm-photo-card{
+  position:relative;
+  border-radius:var(--r-md);
+  overflow:hidden;
+  border:1px solid var(--border);
+  background:var(--bg-surface);
+  aspect-ratio:4/3;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  box-shadow:var(--shadow-card);
+}
+.tm-photo-tag{
+  position:absolute;
+  top:8px;
+  left:8px;
+  font-size:9.5px;
+  font-weight:600;
+  padding:3px 8px;
+  border-radius:var(--r-pill);
+  text-transform:uppercase;
+  letter-spacing:0.04em;
+  box-shadow:0 1px 3px rgba(0,0,0,0.12);
+  z-index:2;
+}
+.tm-photo-tag.before{background:#1A1A1A;color:#FFFFFF}
+.tm-photo-tag.after{background:var(--cta);color:#FFFFFF}
+.tm-photo-watermark{
+  position:absolute;
+  bottom:6px;
+  left:6px;
+  right:6px;
+  font-size:9px;
+  color:rgba(255,255,255,0.95);
+  background:rgba(26,26,26,0.72);
+  backdrop-filter:blur(4px);
+  padding:3px 6px;
+  border-radius:4px;
+  font-family:var(--mono);
+  text-align:left;
+  line-height:1.3;
+}
+
+/* ═══ DIGITAL SIGNATURE CANVAS ═══ */
+.tm-sig-container{
+  background:var(--bg-elevated);
+  border:1px solid var(--border-strong);
+  border-radius:var(--r-md);
+  overflow:hidden;
+  margin:12px 0;
+  box-shadow:var(--shadow-card);
+}
+.tm-sig-canvas-wrap{
+  position:relative;
+  background:#FFFFFF;
+}
+.tm-sig-canvas{
+  width:100%;
+  height:150px;
+  display:block;
+  cursor:crosshair;
+  touch-action:none;
+}
+.tm-sig-guideline{
+  position:absolute;
+  bottom:26px;
+  left:24px;
+  right:24px;
+  border-bottom:1px dashed var(--border-strong);
+  pointer-events:none;
+  display:flex;
+  justify-content:space-between;
+  font-size:10.5px;
+  color:var(--text-subtle);
+  padding-bottom:3px;
+  font-family:var(--mono);
+}
+.tm-sig-toolbar{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:10px 14px;
+  background:var(--bg-surface);
+  border-top:1px solid var(--border);
+}
+
+/* ═══ AUSTRALIAN GST & INVOICE CALCULATOR ═══ */
+.tm-invoice-card{
+  background:var(--bg-elevated);
+  border:1px solid var(--border);
+  border-radius:var(--r-lg);
+  padding:16px;
+  box-shadow:var(--shadow-card);
+}
+.tm-invoice-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  padding-bottom:12px;
+  border-bottom:1px solid var(--border);
+  margin-bottom:12px;
+}
+.tm-calc-table{width:100%;border-collapse:collapse;font-size:13px}
+.tm-calc-table td,.tm-calc-table th{padding:10px 6px;border-bottom:1px solid var(--border)}
+.tm-calc-table th{font-size:10.5px;font-weight:600;color:var(--stone);text-transform:uppercase;letter-spacing:0.04em}
+.tm-calc-table .row-total{font-weight:600;color:var(--cta-dark);font-size:15px;border-bottom:none}
+.tm-calc-input{
+  width:68px;
+  padding:6px 8px;
+  border:1px solid var(--border-strong);
+  border-radius:6px;
+  font-family:var(--font);
+  font-size:13px;
+  text-align:right;
+  outline:none;
+  font-variant-numeric:tabular-nums;
+  min-height:36px;
+}
+.tm-calc-input:focus{border-color:var(--cta);box-shadow:0 0 0 3px var(--cta-pale)}
+
+/* XERO SYNC BADGE */
+.xero-badge{
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+  padding:4px 9px;
+  border-radius:var(--r-pill);
+  font-size:11px;
+  font-weight:500;
+  background:#E6F4FA;
+  color:#137B9C;
+  border:1px solid #B8E4F2;
+}
+
+/* ═══ SEGMENTED CONTROL (MIN 44PX TOUCH) ═══ */
+.tm-segmented-control{
+  display:flex;
+  background:var(--bg-surface);
+  border:1px solid var(--border);
+  border-radius:var(--r-pill);
+  padding:3px;
+  gap:2px;
+  margin-bottom:14px;
+}
+.tm-seg-item{
+  flex:1;
+  text-align:center;
+  padding:9px 12px;
+  border-radius:var(--r-pill);
+  border:none;
+  background:transparent;
+  font-size:12px;
+  font-weight:500;
+  color:var(--stone);
+  cursor:pointer;
+  min-height:44px; /* Synchronized 44px touch target */
+  transition:all var(--duration-fast);
+}
+.tm-seg-item.active{
+  background:var(--bg-elevated);
+  color:var(--cta);
+  font-weight:600;
+  box-shadow:0 1px 3px rgba(0,0,0,0.06);
+}
+
+/* ═══ CUSTOMER QUICK ACTIONS (48PX TOUCH TARGET) ═══ */
+.tm-contact-actions{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+.tm-contact-btn{
+  display:inline-flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:4px;
+  padding:8px 4px;
+  border-radius:var(--r-sm);
+  border:1px solid var(--border);
+  background:var(--bg-surface);
+  color:var(--text-primary);
+  text-decoration:none;
+  font-size:11px;
+  font-weight:500;
+  min-height:52px; /* Field touch target >= 48px */
+}
+.tm-contact-btn.call{background:var(--info-pale);color:var(--info);border-color:var(--info-light)}
+.tm-contact-btn.msg{background:var(--cta-pale);color:var(--cta);border-color:var(--cta-light)}
+.tm-contact-btn.nav{background:var(--bg-elevated);color:var(--text-primary);border-color:var(--border-strong)}
+
+/* ═══ FAB SPEED DIAL (MIN 44PX) ═══ */
+.tm-fab-container{position:relative;display:inline-block}
+.tm-fab-btn{
+  width:56px;
+  height:56px;
+  min-width:48px;
+  min-height:48px;
+  border-radius:50%;
+  background:var(--cta);
+  color:#fff;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border:none;
+  box-shadow:0 4px 14px rgba(46,107,69,0.36);
+  cursor:pointer;
+  position:relative;
+  z-index:15;
+}
+.tm-speed-dial{position:absolute;bottom:68px;right:0;display:flex;flex-direction:column;gap:10px;opacity:0;pointer-events:none;transform:translateY(8px);transition:all var(--duration-base) ease;z-index:14}
+.tm-fab-container.open .tm-speed-dial{opacity:1;pointer-events:auto;transform:translateY(0)}
+.tm-fab-container.open .tm-fab-btn{transform:rotate(45deg);background:var(--stone)}
+.tm-dial-item{display:flex;align-items:center;justify-content:flex-end;gap:8px}
+.tm-dial-label{background:var(--text-primary);color:#fff;font-size:11px;padding:5px 9px;border-radius:6px;white-space:nowrap}
+.tm-dial-btn{
+  width:44px;
+  height:44px;
+  min-width:44px;
+  min-height:44px; /* Synchronized 44px touch target */
+  border-radius:50%;
+  background:var(--bg-elevated);
+  border:1px solid var(--border-strong);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+  color:var(--text-primary);
+  box-shadow:var(--shadow-card);
+}
+
+/* ═══ EMPTY STATES COMPONENT ═══ */
+.tm-empty-state{
+  text-align:center;
+  padding:32px 20px;
+  background:var(--bg-elevated);
+  border:1px dashed var(--border-strong);
+  border-radius:var(--r-lg);
+}
+.tm-empty-icon{
+  width:52px;
+  height:52px;
+  border-radius:50%;
+  background:var(--bg-surface);
+  color:var(--stone);
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  margin-bottom:12px;
+}
+.tm-empty-title{font-size:15px;font-weight:600;margin-bottom:4px}
+.tm-empty-desc{font-size:12.5px;color:var(--stone);max-width:280px;margin:0 auto 16px;line-height:1.5}
+
+/* ═══ SKELETON LOADING COMPONENT ═══ */
+.tm-skeleton{
+  background:linear-gradient(90deg, var(--bg-surface) 25%, var(--border) 50%, var(--bg-surface) 75%);
+  background-size:200% 100%;
+  border-radius:6px;
+  animation:skeletonPulse 1.6s infinite ease-in-out;
+}
+@keyframes skeletonPulse {
+  0%{background-position:200% 0}
+  100%{background-position:-200% 0}
+}
+.tm-skeleton-card{
+  background:var(--bg-elevated);
+  border:1px solid var(--border);
+  border-radius:var(--r-md);
+  padding:16px;
+  margin-bottom:12px;
+  box-shadow:var(--shadow-card);
+}
+
+/* PULSE DOT */
+.pulse-dot{
+  width:7px;
+  height:7px;
+  border-radius:50%;
+  background:var(--cta);
+  display:inline-block;
+  animation:dotPulse 1.8s infinite ease-in-out;
+}
+@keyframes dotPulse {
+  0%,100%{transform:scale(1);opacity:1}
+  50%{transform:scale(0.75);opacity:0.4}
+}
+
+/* ═══ COLORS & SWATCHES ═══ */
+.cgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:var(--sp3);margin-bottom:var(--sp8)}
+.cswatch{border-radius:var(--r-md);overflow:hidden;border:1px solid var(--border);background:var(--bg-elevated);cursor:pointer;box-shadow:var(--shadow-card)}
 .sblock{height:68px;position:relative;display:flex;align-items:flex-end;padding:var(--sp2)}
-.scopy{opacity:0;background:rgba(0,0,0,.4);color:#fff;font-size:10px;font-family:var(--mono);padding:2px 6px;border-radius:4px;transition:opacity .15s}
+.scopy{opacity:0;background:rgba(0,0,0,.6);color:#fff;font-size:10px;font-family:var(--mono);padding:2px 6px;border-radius:4px;transition:opacity .15s}
+.cswatch:hover .scopy,.cswatch:focus .scopy{opacity:1}
 .smeta{padding:var(--sp3)}
 .sname{font-size:12px;font-weight:500}
-.stoken{font-size:10px;color:var(--text-muted);font-family:var(--mono);margin-top:2px}
+.stoken{font-size:10px;color:var(--stone);font-family:var(--mono);margin-top:2px}
 .shex{font-size:10px;color:var(--text-subtle);font-family:var(--mono)}
 
 /* SVG ICON COMPONENT */
 .mdi{display:inline-block;vertical-align:middle;flex-shrink:0}
 .mdi svg{display:block}
 
-/* TYPOGRAPHY */
-.tspec{background:var(--bg-elevated);border:.5px solid var(--border);border-radius:var(--r-md);padding:var(--sp5) var(--sp6);margin-bottom:var(--sp3);display:grid;grid-template-columns:1fr 180px;gap:var(--sp4);align-items:center}
+/* TYPOGRAPHY SPEC */
+.tspec{background:var(--bg-elevated);border:1px solid var(--border);border-radius:var(--r-md);padding:var(--sp4) var(--sp5);margin-bottom:var(--sp3);display:grid;grid-template-columns:1fr 180px;gap:var(--sp4);align-items:center;box-shadow:var(--shadow-card)}
 .tmeta{text-align:right}
 .tml{font-size:10px;color:var(--text-subtle);font-family:var(--mono)}
-.tmv{font-size:11px;color:var(--text-muted);font-family:var(--mono)}
+.tmv{font-size:11px;color:var(--stone);font-family:var(--mono)}
 
-/* SPACING */
-.srow{display:flex;align-items:center;gap:var(--sp4);padding:var(--sp3) 0;border-bottom:.5px solid var(--border)}
+/* SPACING & RADIUS */
+.srow{display:flex;align-items:center;gap:var(--sp4);padding:var(--sp3) 0;border-bottom:1px solid var(--border)}
 .sblk{background:var(--cta-pale);border:1px solid var(--cta-light);border-radius:3px;flex-shrink:0}
 .stok{font-size:11px;font-family:var(--mono);min-width:80px}
-.spx{font-size:11px;color:var(--text-muted);font-family:var(--mono);min-width:36px}
-
-/* RADIUS */
+.spx{font-size:11px;color:var(--stone);font-family:var(--mono);min-width:36px}
 .rgrid{display:flex;gap:var(--sp5);flex-wrap:wrap;margin-top:var(--sp4)}
 .ritem{display:flex;flex-direction:column;align-items:center;gap:var(--sp3)}
-.rblock{width:72px;height:72px;background:var(--cta-pale);border:1.5px solid var(--cta-light)}
-.rlabel{font-size:10px;font-family:var(--mono);color:var(--text-muted);text-align:center;line-height:1.5}
+.rblock{width:68px;height:68px;background:var(--cta-pale);border:1.5px solid var(--cta-light)}
+.rlabel{font-size:10px;font-family:var(--mono);color:var(--stone);text-align:center;line-height:1.5}
 
-/* DEMO ROW */
+/* ═══ BUTTONS (MIN 44PX / 48PX FIELD) ═══ */
 .demo{display:flex;flex-wrap:wrap;gap:var(--sp3);align-items:center;padding:var(--sp4) 0}
-
-/* BUTTONS */
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:var(--sp2);min-height:var(--touch);padding:0 var(--sp5);border-radius:var(--r-sm);font-family:var(--font);font-size:14px;font-weight:500;border:none;cursor:pointer;transition:all .12s;white-space:nowrap}
-.btn-p{background:var(--cta);color:#fff}.btn-p:hover{background:var(--cta-dark)}
-.btn-s{background:var(--bg-surface);color:var(--text-primary);border:.5px solid var(--border)}.btn-s:hover{background:var(--border)}
+.btn{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:var(--sp2);
+  min-height:var(--touch); /* Absolute 44px min */
+  padding:0 var(--sp5);
+  border-radius:var(--r-sm);
+  font-family:var(--font);
+  font-size:13.5px;
+  font-weight:500;
+  border:none;
+  cursor:pointer;
+  white-space:nowrap;
+  position:relative;
+}
+.btn-p{background:var(--cta);color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,0.2), 0 2px 6px rgba(46,107,69,0.25)}.btn-p:hover{background:var(--cta-dark)}
+.btn-s{background:var(--bg-surface);color:var(--text-primary);border:1px solid var(--border)}.btn-s:hover{background:var(--border)}
 .btn-o{background:transparent;color:var(--cta);border:1px solid var(--cta)}.btn-o:hover{background:var(--cta-pale)}
-.btn-g{background:transparent;color:var(--text-muted);border:.5px solid var(--border)}.btn-g:hover{color:var(--text-primary);background:var(--bg-surface)}
-.btn-d{background:var(--danger);color:#fff}.btn-d:hover{background:#c43a39}
+.btn-g{background:transparent;color:var(--stone);border:1px solid var(--border)}.btn-g:hover{color:var(--text-primary);background:var(--bg-surface)}
+.btn-d{background:var(--danger);color:#fff}.btn-d:hover{background:#bf3433}
 .btn-ok{background:var(--info);color:#fff}.btn-ok:hover{opacity:.9}
-.btn-sm{min-height:32px;padding:0 var(--sp3);font-size:12px;border-radius:6px}
-.btn-lg{min-height:52px;padding:0 var(--sp8);font-size:16px}
-.slide{background:var(--cta);color:#fff;border-radius:var(--r-pill);height:56px;width:300px;font-size:15px;font-weight:500;position:relative;border:none;cursor:pointer;padding:0 var(--sp6) 0 70px;text-align:left;user-select:none;display:inline-flex;align-items:center}
-.slide .thumb{position:absolute;left:6px;top:6px;width:44px;height:44px;background:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--cta)}
+.btn-sm{min-height:44px;padding:0 var(--sp4);font-size:12.5px;border-radius:8px} /* Raised to 44px touch target */
+.btn-lg{min-height:52px;padding:0 var(--sp8);font-size:15px}
+.btn-block{width:100%}
 
-/* BADGES */
-.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:var(--r-pill);font-size:10px;font-weight:500;white-space:nowrap}
-.bdot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+/* ═══ BADGES ═══ */
+.badge{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:var(--r-pill);font-size:11px;font-weight:500;white-space:nowrap}
 .b-ok{background:var(--success-pale);color:var(--success)}
-.b-w{background:var(--warning-pale);color:var(--warning)}
+.b-w{background:var(--warning-pale);color:var(--warning-text)} /* High-contrast text */
 .b-d{background:var(--danger-pale);color:var(--danger)}
 .b-i{background:var(--info-pale);color:var(--info)}
 .b-n{background:var(--stone-pale);color:var(--stone)}
 .b-c{background:var(--cta-pale);color:var(--cta)}
 
-/* CARDS */
-.card{background:var(--bg-elevated);border:.5px solid var(--border);border-radius:var(--r-md);padding:var(--sp5)}
-.card-s{background:var(--bg-surface);border:.5px solid var(--border);border-radius:var(--r-md);padding:var(--sp5)}
+/* ═══ CARDS & STAT BOXES ═══ */
+.card{background:var(--bg-elevated);border:1px solid var(--border);border-radius:var(--r-md);padding:var(--sp5);box-shadow:var(--shadow-card)}
+.card-s{background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--r-md);padding:var(--sp5)}
 .sg{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--sp3)}
-.sb{background:var(--bg-surface);border-radius:var(--r-md);padding:var(--sp4);border:.5px solid var(--border)}
-.sl{font-size:10px;color:var(--text-muted);margin-bottom:var(--sp1)}
-.sv{font-size:22px;font-weight:500;letter-spacing:-.5px}
-.ss{font-size:10px;color:var(--text-subtle);margin-top:2px}
+.sb{background:var(--bg-surface);border-radius:var(--r-md);padding:var(--sp4);border:1px solid var(--border)}
+.sl{font-size:10px;color:var(--stone);margin-bottom:var(--sp1);text-transform:uppercase;letter-spacing:0.04em}
+.sv{font-size:22px;font-weight:600;letter-spacing:-.5px;font-variant-numeric:tabular-nums}
+.ss{font-size:10.5px;color:var(--text-subtle);margin-top:2px}
 
-/* FORMS */
+/* ═══ FORMS ═══ */
 .fg{display:flex;flex-direction:column;gap:var(--sp2)}
 .fl{font-size:12px;font-weight:500}
-.fh{font-size:11px;color:var(--text-muted)}
-.input{height:var(--touch);padding:0 var(--sp4);border:.5px solid var(--border-strong);border-radius:var(--r-sm);background:var(--bg-elevated);font-family:var(--font);font-size:14px;color:var(--text-primary);outline:none;transition:border-color .12s;width:100%}
+.fh{font-size:11px;color:var(--stone)}
+.input{
+  min-height:var(--touch);
+  padding:0 var(--sp4);
+  border:1px solid var(--border-strong);
+  border-radius:var(--r-sm);
+  background:var(--bg-elevated);
+  font-family:var(--font);
+  font-size:14px;
+  color:var(--text-primary);
+  outline:none;
+  transition:border-color var(--duration-fast), box-shadow var(--duration-fast);
+  width:100%;
+}
 .input:focus{border-color:var(--cta);box-shadow:0 0 0 3px var(--cta-pale)}
 .input::placeholder{color:var(--text-subtle)}
 .input-ok{border-color:var(--success)!important}
@@ -124,87 +815,130 @@ body{font-family:var(--font);background:var(--bg-base);color:var(--text-primary)
 .input-err{border-color:var(--danger)!important}
 .input-err:focus{box-shadow:0 0 0 3px var(--danger-pale)!important}
 .ferr{font-size:11px;color:var(--danger)}
-.sel{height:var(--touch);padding:0 40px 0 var(--sp4);border:.5px solid var(--border-strong);border-radius:var(--r-sm);background:var(--bg-elevated) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23888' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 14px center;font-family:var(--font);font-size:14px;color:var(--text-primary);outline:none;appearance:none;cursor:pointer;transition:border-color .12s}
+.sel{
+  min-height:var(--touch);
+  padding:0 40px 0 var(--sp4);
+  border:1px solid var(--border-strong);
+  border-radius:var(--r-sm);
+  background:var(--bg-elevated) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%235A5955' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 14px center;
+  font-family:var(--font);
+  font-size:14px;
+  color:var(--text-primary);
+  outline:none;
+  appearance:none;
+  cursor:pointer;
+}
 .sel:focus{border-color:var(--cta);box-shadow:0 0 0 3px var(--cta-pale)}
 .twrap{display:flex;align-items:center;gap:var(--sp3)}
-.tog{position:relative;width:44px;height:26px;flex-shrink:0}
+.tog{position:relative;width:44px;height:44px;flex-shrink:0;display:flex;align-items:center}
 .tog input{opacity:0;width:0;height:0;position:absolute}
-.ttrack{position:absolute;inset:0;background:var(--stone-light);border-radius:var(--r-full);cursor:pointer;transition:background .2s}
+.ttrack{position:absolute;left:0;right:0;top:10px;bottom:10px;background:var(--stone-light);border-radius:var(--r-full);cursor:pointer;transition:background var(--duration-base)}
 .tog input:checked+.ttrack{background:var(--cta)}
-.tthumb{position:absolute;top:3px;left:3px;width:20px;height:20px;background:#fff;border-radius:50%;transition:transform .2s;pointer-events:none;box-shadow:0 1px 4px rgba(0,0,0,.2)}
-.tog input:checked~.tthumb{transform:translateX(18px)}
+.tthumb{position:absolute;top:13px;left:3px;width:18px;height:18px;background:#fff;border-radius:50%;transition:transform var(--duration-base);pointer-events:none;box-shadow:0 1px 3px rgba(0,0,0,0.2)}
+.tog input:checked~.tthumb{transform:translateX(20px)}
 .tlabel{font-size:13px}
-.thint{font-size:11px;color:var(--text-muted)}
+.thint{font-size:11px;color:var(--stone)}
 
-/* CHIPS */
-.chip{display:inline-flex;align-items:center;gap:var(--sp2);padding:6px 12px;border-radius:var(--r-pill);border:.5px solid var(--border);background:var(--bg-elevated);font-size:12px;cursor:pointer;transition:all .12s;user-select:none}
+/* ═══ CHIPS (MIN 44PX TOUCH) ═══ */
+.chip{display:inline-flex;align-items:center;gap:var(--sp2);padding:10px 16px;border-radius:var(--r-pill);border:1px solid var(--border);background:var(--bg-elevated);font-size:13px;cursor:pointer;user-select:none;min-height:44px} /* Synchronized 44px */
 .chip:hover{border-color:var(--cta-light);background:var(--cta-pale)}
 .chip.on{background:var(--cta);border-color:var(--cta);color:#fff}
 .chip.on .mdi svg path{fill:#fff}
 
-/* LIST ITEMS */
-.li{display:flex;align-items:center;gap:var(--sp4);padding:var(--sp4);background:var(--bg-elevated);border:.5px solid var(--border);border-radius:var(--r-md);cursor:pointer;transition:background .1s;margin-bottom:var(--sp2)}
+/* ═══ LIST ITEMS ═══ */
+.li{display:flex;align-items:center;gap:var(--sp4);padding:var(--sp4);background:var(--bg-elevated);border:1px solid var(--border);border-radius:var(--r-md);cursor:pointer;margin-bottom:var(--sp2);box-shadow:var(--shadow-card)}
 .li:hover{background:var(--bg-surface)}
-.liico{width:40px;height:40px;border-radius:var(--r-sm);background:var(--cta-pale);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.liico{width:42px;height:42px;border-radius:var(--r-sm);background:var(--cta-pale);display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .libody{flex:1;min-width:0}
 .lit{font-size:14px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.lis{font-size:12px;color:var(--text-muted)}
+.lis{font-size:12px;color:var(--stone)}
 .lir{text-align:right;flex-shrink:0}
-.lia{font-size:14px;font-weight:500}
-.litm{font-size:11px;color:var(--text-muted)}
+.lia{font-size:14px;font-weight:600;font-variant-numeric:tabular-nums}
+.litm{font-size:11px;color:var(--stone)}
 
-/* AVATAR */
-.av{width:40px;height:40px;border-radius:50%;background:var(--rust-pale);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:500;color:var(--rust);flex-shrink:0}
+/* ═══ AVATAR (MIGRATED FULLY FROM RUST TO FOREST GREEN & STONE) ═══ */
+.av{width:44px;height:44px;border-radius:50%;background:var(--cta-pale);display:flex;align-items:center;justify-content:center;font-size:13.5px;font-weight:600;color:var(--cta);flex-shrink:0}
 .av-lg{width:56px;height:56px;font-size:18px}
-.av-sm{width:28px;height:28px;font-size:10px}
+.av-sm{width:32px;height:32px;font-size:11px}
 
-/* NOTIF */
-.notif{display:flex;align-items:flex-start;gap:var(--sp3);padding:var(--sp4);background:var(--bg-elevated);border:.5px solid var(--border);border-radius:var(--r-md);margin-bottom:var(--sp2)}
+/* ═══ NOTIFICATIONS ═══ */
+.notif{display:flex;align-items:flex-start;gap:var(--sp3);padding:var(--sp4);background:var(--bg-elevated);border:1px solid var(--border);border-radius:var(--r-md);margin-bottom:var(--sp2);box-shadow:var(--shadow-card)}
 .notif.unread{background:var(--cta-pale);border-color:var(--cta-light)}
-.ndot{width:8px;height:8px;border-radius:50%;margin-top:5px;flex-shrink:0}
-.ndot.u{background:var(--cta)}
-.ndot.r{border:1.5px solid var(--border-strong);background:transparent}
 .nbody{flex:1}
 .nt{font-size:13px;font-weight:500;margin-bottom:2px}
-.ns{font-size:12px;color:var(--text-muted)}
+.ns{font-size:12px;color:var(--stone)}
 .ntm{font-size:11px;color:var(--text-subtle);white-space:nowrap}
 
-/* ICON GRID */
-.igrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:var(--sp3)}
-.icard{background:var(--bg-elevated);border:.5px solid var(--border);border-radius:var(--r-md);padding:var(--sp4);display:flex;flex-direction:column;align-items:center;gap:var(--sp2);cursor:pointer;transition:all .12s}
+/* ═══ ICON GRID ═══ */
+.igrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:var(--sp3)}
+.icard{background:var(--bg-elevated);border:1px solid var(--border);border-radius:var(--r-md);padding:var(--sp3);display:flex;flex-direction:column;align-items:center;gap:var(--sp2);cursor:pointer;text-align:center;box-shadow:var(--shadow-card);min-height:80px;justify-content:center}
 .icard:hover{background:var(--cta-pale);border-color:var(--cta-light)}
 .icard:hover .mdi svg path{fill:var(--cta)}
-.iname{font-size:10px;color:var(--text-muted);font-family:var(--mono);text-align:center;word-break:break-all}
-.isize-row{display:flex;align-items:center;gap:var(--sp4);padding:var(--sp4) 0;border-bottom:.5px solid var(--border)}
-.isize-label{font-size:11px;color:var(--text-muted);min-width:60px}
+.iname{font-size:10.5px;color:var(--stone);font-family:var(--mono);word-break:break-all}
 
-/* ICON USAGE TABLE */
-.utable{width:100%;border-collapse:collapse}
-.utable th{font-size:10px;font-weight:600;color:var(--text-subtle);letter-spacing:.06em;text-transform:uppercase;text-align:left;padding:var(--sp2) var(--sp3);border-bottom:.5px solid var(--border)}
-.utable td{font-size:13px;padding:var(--sp3);border-bottom:.5px solid var(--border);vertical-align:middle}
-.utable tr:last-child td{border-bottom:none}
-.utable td:first-child{width:48px}
-.utable .rn{font-family:var(--mono);font-size:11px;color:var(--text-muted)}
-.utable .sc{font-size:12px;color:var(--text-muted)}
-
-/* CODE */
-.code{background:#1A1A1A;color:#C0DD97;border-radius:var(--r-sm);padding:var(--sp5);font-family:var(--mono);font-size:12px;line-height:1.8;overflow-x:auto;margin:var(--sp4) 0;position:relative}
-.ck{color:#FAC775}.cv{color:#B5D4F4}.cc{color:#555}
-.cbtn{position:absolute;top:var(--sp3);right:var(--sp3);background:rgba(255,255,255,.1);border:none;color:#aaa;font-size:11px;padding:4px 8px;border-radius:4px;cursor:pointer;font-family:var(--font);transition:all .1s}
-.cbtn:hover{background:rgba(255,255,255,.2);color:#fff}
+/* ═══ CODE DISPLAY ═══ */
+.code{background:#1A1A1A;color:#C0DD97;border-radius:var(--r-sm);padding:var(--sp5);font-family:var(--mono);font-size:12px;line-height:1.8;overflow-x:auto;margin:var(--sp4) 0;position:relative;white-space:pre-wrap;box-shadow:inset 0 1px 3px rgba(0,0,0,0.5)}
+.ck{color:#FAC775}.cv{color:#B5D4F4}.cc{color:#777}
+.cbtn{position:absolute;top:var(--sp3);right:var(--sp3);background:rgba(255,255,255,.14);border:none;color:#aaa;font-size:11px;padding:6px 12px;border-radius:6px;cursor:pointer;font-family:var(--font);min-height:36px}
+.cbtn:hover{background:rgba(255,255,255,.28);color:#fff}
 .cbtn.done{color:#C0DD97}
 
-/* TOAST */
-#toast{position:fixed;bottom:24px;right:24px;background:var(--text-primary);color:var(--bg-elevated);padding:10px 16px;border-radius:var(--r-sm);font-size:12px;opacity:0;transform:translateY(8px);transition:all .2s;pointer-events:none;z-index:1000}
+/* ═══ TOAST ═══ */
+#toast{position:fixed;bottom:calc(24px + env(safe-area-inset-bottom, 0px));right:24px;background:#1A1A1A;color:#FFFFFF;padding:11px 22px;border-radius:var(--r-pill);font-size:13px;font-weight:500;opacity:0;transform:translateY(12px);transition:all var(--duration-base) var(--ease-spring);pointer-events:none;z-index:9999;box-shadow:var(--shadow-float)}
 #toast.show{opacity:1;transform:translateY(0)}
 
-::-webkit-scrollbar{width:4px;height:4px}
-::-webkit-scrollbar-thumb{background:var(--border-strong);border-radius:2px}
+/* ═══ PATTERNS & SPEC CARDS ═══ */
+.ds-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}
+.ds-card{padding:22px;background:var(--bg-elevated);border:1px solid var(--border);border-radius:var(--r-lg);min-width:0;box-shadow:var(--shadow-card)}
+.ds-card h3{font-size:16px;font-weight:600;margin-bottom:6px;letter-spacing:-0.2px}
+.ds-note{color:var(--stone);font-size:13px;margin:6px 0 16px;line-height:1.5}
+.ds-kicker{font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--cta);font-weight:600;display:block;margin-bottom:4px}
+.ds-hero{padding:28px;border:1px solid var(--border);border-radius:18px;background:var(--cta-pale);margin-bottom:32px;box-shadow:var(--shadow-card)}
+.ds-hero h1{font-size:32px;font-weight:600;letter-spacing:-1px;margin:8px 0}
+.ds-hero p{max-width:640px;color:var(--stone);line-height:1.6}
+.ds-tabs{display:flex;border-bottom:1px solid var(--border);gap:8px;margin-bottom:16px;overflow:auto}
+.ds-tabs button{background:none;border:0;border-bottom:2px solid transparent;padding:10px 14px;min-height:44px;font:inherit;color:var(--stone);cursor:pointer}
+.ds-tabs [aria-selected=true]{border-color:var(--cta);color:var(--cta);font-weight:600}
+.ds-timeline{list-style:none;border-left:2px solid var(--border);margin:20px 8px;padding-left:24px}
+.ds-timeline li{position:relative;padding-bottom:24px}
+.ds-timeline li:before{content:'';position:absolute;left:-31px;top:6px;width:12px;height:12px;background:var(--cta);border-radius:50%}
+.ds-timeline small{display:block;color:var(--stone)}
+.ds-table-wrap{overflow:auto}
+.ds-table{width:100%;border-collapse:collapse;white-space:nowrap}
+.ds-table th,.ds-table td{text-align:left;padding:12px 10px;border-bottom:1px solid var(--border)}
+.ds-table th{font-size:11.5px;color:var(--stone);background:var(--bg-base)}
+details{border-bottom:1px solid var(--border);padding:8px 0}
+summary{cursor:pointer;min-height:44px;padding:10px 0;font-weight:500}
+
+/* ═══ RESPONSIVE BREAKPOINTS ═══ */
+@media(max-width:900px){
+  .layout{display:block}
+  .sidebar{display:none}
+  .mobile-top-bar{display:flex}
+  .main{padding:18px 14px}
+  .ds-grid{grid-template-columns:1fr}
+  #toast{left:16px;right:16px;bottom:calc(16px + env(safe-area-inset-bottom, 0px));text-align:center}
+}
+@media(max-width:600px){
+  .cgrid{grid-template-columns:repeat(2,1fr)}
+  .igrid{grid-template-columns:repeat(3,1fr)}
+  .sg{grid-template-columns:1fr}
+  .tspec{grid-template-columns:1fr}
+  .tmeta{text-align:left}
+  .ds-hero{padding:20px}
+  .ds-hero h1{font-size:24px}
+  .phone-frame{width:100%;height:84vh;max-height:800px;border-radius:36px;border-width:3px;outline-width:6px}
+}
+@media(prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  *,*::before,*::after{animation:none!important;transition:none!important}
+}
 </style>
 </head>
 <body>
+<a class="skip" href="#main" style="position:fixed;top:-100px;left:16px;z-index:9999;background:var(--bg-elevated);padding:10px">Skip to content</a>
 
-<!-- SVG ICON DEFINITIONS — embed all MCI paths as inline symbols -->
+<!-- SVG ICON DEFINITIONS -->
 <svg style="display:none" xmlns="http://www.w3.org/2000/svg">
   <symbol id="i-wrench" viewBox="0 0 24 24"><path d="M22.7,19L13.6,9.9C14.5,7.6 14,4.9 12.1,3C10.1,1 7.1,0.6 4.7,1.7L9,6L6,9L1.6,4.7C0.4,7.1 0.9,10.1 2.9,12.1C4.8,14 7.5,14.5 9.8,13.6L18.9,22.7C19.3,23.1 19.9,23.1 20.3,22.7L22.6,20.4C23.1,20 23.1,19.3 22.7,19Z"/></symbol>
   <symbol id="i-lightning" viewBox="0 0 24 24"><path d="M11 15H6L13 1V9H18L11 23V15Z"/></symbol>
@@ -228,73 +962,718 @@ body{font-family:var(--font);background:var(--bg-base);color:var(--text-primary)
   <symbol id="i-scan" viewBox="0 0 24 24"><path d="M4,6H6V18H4V6M7,6H8V18H7V6M9,6H12V18H9V6M13,6H14V18H13V6M16,6H18V18H16V6M19,6H20V18H19V6M2,4V8H0V4A2,2 0 0,1 2,2H6V4H2M22,2A2,2 0 0,1 24,4V8H22V4H18V2H22M2,16V20H6V22H2A2,2 0 0,1 0,20V16H2M22,20V16H24V20A2,2 0 0,1 22,22H18V20H22Z"/></symbol>
   <symbol id="i-star" viewBox="0 0 24 24"><path d="M12,17.27L18.18,21L16.54,13.97L22,9.24L14.81,8.62L12,2L9.19,8.62L2,9.24L7.45,13.97L5.82,21L12,17.27Z"/></symbol>
   <symbol id="i-account" viewBox="0 0 24 24"><path d="M12,19.2C9.5,19.2 7.29,17.92 6,16C6.03,14 10,12.9 12,12.9C14,12.9 17.97,14 18,16C16.71,17.92 14.5,19.2 12,19.2M12,5A3,3 0 0,1 15,8A3,3 0 0,1 12,11A3,3 0 0,1 9,8A3,3 0 0,1 12,5M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12C22,6.47 17.5,2 12,2Z"/></symbol>
-  <symbol id="i-pencil" viewBox="0 0 24 24"><path d="M20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18,2.9 17.35,2.9 16.96,3.29L15.12,5.12L18.87,8.87M3,17.25V21H6.75L17.81,9.93L14.06,6.18L3,17.25Z"/></symbol>
-  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M9,3V4H4V6H5V19A2,2 0 0,0 7,21H17A2,2 0 0,0 19,19V6H20V4H15V3H9M9,8H11V17H9V8M13,8H15V17H13V8Z"/></symbol>
-  <symbol id="i-chevron-r" viewBox="0 0 24 24"><path d="M8.59,16.58L13.17,12L8.59,7.41L10,6L16,12L10,18L8.59,16.58Z"/></symbol>
-  <symbol id="i-arrow-l" viewBox="0 0 24 24"><path d="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z"/></symbol>
-  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M10,17L6,13L7.41,11.59L10,14.17L16.59,7.58L18,9M12,1L3,5V11C3,16.55 6.84,21.74 12,23C17.16,21.74 21,16.55 21,11V5L12,1Z"/></symbol>
-  <symbol id="i-clock" viewBox="0 0 24 24"><path d="M12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22C6.47,22 2,17.5 2,12A10,10 0 0,1 12,2M12.5,7V12.25L17,14.92L16.25,16.15L11,13V7H12.5Z"/></symbol>
   <symbol id="i-calendar" viewBox="0 0 24 24"><path d="M19,19H5V8H19M16,1V3H8V1H6V3H5C3.89,3 3,3.89 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5C21,3.89 20.1,3 19,3H18V1M17,12H12V17H17V12Z"/></symbol>
   <symbol id="i-home" viewBox="0 0 24 24"><path d="M10,20V14H14V20H19V12H22L12,3L2,12H5V20H10Z"/></symbol>
   <symbol id="i-briefcase" viewBox="0 0 24 24"><path d="M10,2H14A2,2 0 0,1 16,4V6H20A2,2 0 0,1 22,8V19A2,2 0 0,1 20,21H4C2.89,21 2,20.1 2,19V8C2,6.89 2.89,6 4,6H8V4C8,2.89 8.89,2 10,2M14,6V4H10V6H14Z"/></symbol>
   <symbol id="i-receipt" viewBox="0 0 24 24"><path d="M3 22L4.5 20.5L6 22L7.5 20.5L9 22L10.5 20.5L12 22L13.5 20.5L15 22L16.5 20.5L18 22L19.5 20.5L21 22V2L19.5 3.5L18 2L16.5 3.5L15 2L13.5 3.5L12 2L10.5 3.5L9 2L7.5 3.5L6 2L4.5 3.5L3 2"/></symbol>
   <symbol id="i-truck" viewBox="0 0 24 24"><path d="M18,18.5A1.5,1.5 0 0,1 16.5,17A1.5,1.5 0 0,1 18,15.5A1.5,1.5 0 0,1 19.5,17A1.5,1.5 0 0,1 18,18.5M19.5,9.5L21.46,12H17V9.5M6,18.5A1.5,1.5 0 0,1 4.5,17A1.5,1.5 0 0,1 6,15.5A1.5,1.5 0 0,1 7.5,17A1.5,1.5 0 0,1 6,18.5M20,8H17V4H3C1.89,4 1,4.89 1,6V17H3A3,3 0 0,0 6,20A3,3 0 0,0 9,17H15A3,3 0 0,0 18,20A3,3 0 0,0 21,17H23V12L20,8Z"/></symbol>
-  <symbol id="i-tools" viewBox="0 0 24 24"><path d="M21.71 20.29L20.29 21.71A1 1 0 0 1 18.88 21.71L7 9.85A3.81 3.81 0 0 1 6 10A4 4 0 0 1 2.22 4.7L4.76 7.24L5.29 6.71L6.71 5.29L7.24 4.76L4.7 2.22A4 4 0 0 1 10 6A3.81 3.81 0 0 1 9.85 7L21.71 18.88A1 1 0 0 1 21.71 20.29M2.29 18.88A1 1 0 0 0 2.29 20.29L3.71 21.71A1 1 0 0 0 5.12 21.71L10.59 16.25L7.76 13.42M20 2L16 4V6L13.83 8.17L15.83 10.17L18 8H20L22 4Z"/></symbol>
   <symbol id="i-water" viewBox="0 0 24 24"><path d="M19,14.5C19,14.5 21,16.67 21,18A2,2 0 0,1 19,20A2,2 0 0,1 17,18C17,16.67 19,14.5 19,14.5M5,18V9A2,2 0 0,1 3,7A2,2 0 0,1 5,5V4A2,2 0 0,1 7,2H9A2,2 0 0,1 11,4V5H19A2,2 0 0,1 21,7V9L21,11A1,1 0 0,1 22,12A1,1 0 0,1 21,13H17A1,1 0 0,1 16,12A1,1 0 0,1 17,11V9H11V18H12A2,2 0 0,1 14,20V22H2V20A2,2 0 0,1 4,18H5Z"/></symbol>
-  <symbol id="i-gst" viewBox="0 0 24 24"><path d="M11.8 10.9C9.53 10.31 8.8 9.7 8.8 8.75C8.8 7.66 9.81 6.9 11.5 6.9C13.28 6.9 13.94 7.75 14 9H16.21C16.14 7.28 15.09 5.7 13 5.19V3H10V5.16C8.06 5.58 6.5 6.84 6.5 8.77C6.5 11.08 8.41 12.23 11.2 12.9C13.7 13.5 14.2 14.38 14.2 15.31C14.2 16 13.71 17.1 11.5 17.1C9.44 17.1 8.63 16.18 8.5 15H6.32C6.44 17.19 8.08 18.42 10 18.83V21H13V18.85C14.95 18.5 16.5 17.35 16.5 15.3C16.5 12.46 14.07 11.49 11.8 10.9Z"/></symbol>
-  <symbol id="i-settings" viewBox="0 0 24 24"><path d="M12,15.5A3.5,3.5 0 0,1 8.5,12A3.5,3.5 0 0,1 12,8.5A3.5,3.5 0 0,1 15.5,12A3.5,3.5 0 0,1 12,15.5M19.43,12.97C19.47,12.65 19.5,12.33 19.5,12C19.5,11.67 19.47,11.34 19.43,11L21.54,9.37C21.73,9.22 21.78,8.95 21.66,8.73L19.66,5.27C19.54,5.05 19.27,4.96 19.05,5.05L16.56,6.05C16.04,5.66 15.5,5.32 14.87,5.07L14.5,2.42C14.46,2.18 14.25,2 14,2H10C9.75,2 9.54,2.18 9.5,2.42L9.13,5.07C8.5,5.32 7.96,5.66 7.44,6.05L4.95,5.05C4.73,4.96 4.46,5.05 4.34,5.27L2.34,8.73C2.21,8.95 2.27,9.22 2.46,9.37L4.57,11C4.53,11.34 4.5,11.67 4.5,12C4.5,12.33 4.53,12.65 4.57,12.97L2.46,14.63C2.27,14.78 2.21,15.05 2.34,15.27L4.34,18.73C4.46,18.95 4.73,19.03 4.95,18.95L7.44,17.94C7.96,18.34 8.5,18.68 9.13,18.93L9.5,21.58C9.54,21.82 9.75,22 10,22H14C14.25,22 14.46,21.82 14.5,21.58L14.87,18.93C15.5,18.67 16.04,18.34 16.56,17.94L19.05,18.95C19.27,19.03 19.54,18.95 19.66,18.73L21.66,15.27C21.78,15.05 21.73,14.78 21.54,14.63L19.43,12.97Z"/></symbol>
-  <symbol id="i-map" viewBox="0 0 24 24"><path d="M20.5,3L20.34,3.03L15,5.1L9,3L3.36,4.9C3.15,4.97 3,5.15 3,5.38V20.5A0.5,0.5 0 0,0 3.5,21L3.66,20.97L9,18.9L15,21L20.64,19.1C20.85,19.03 21,18.85 21,18.62V3.5A0.5,0.5 0 0,0 20.5,3M10,5.47L14,6.87V18.53L10,17.13V5.47M5,6.46L8,5.45V17.15L5,18.31V6.46M19,17.54L16,18.55V6.86L19,5.7V17.54Z"/></symbol>
-  <symbol id="i-offline" viewBox="0 0 24 24"><path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20M13,7H11V13H13M13,15H11V17H13"/></symbol>
+  <symbol id="i-menu" viewBox="0 0 24 24"><path d="M3,6H21V8H3V6M3,11H21V13H3V11M3,16H21V18H3V16Z"/></symbol>
+  <symbol id="i-close" viewBox="0 0 24 24"><path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z"/></symbol>
+  <symbol id="i-sync" viewBox="0 0 24 24"><path d="M12,18A6,6 0 0,1 6,12C6,11 6.25,10.03 6.7,9.2L5.24,7.74C4.46,8.97 4,10.43 4,12A8,8 0 0,0 12,20V23L16,19L12,15V18M12,4V1L8,5L12,9V6A6,6 0 0,1 18,12C18,13 17.75,13.97 17.3,14.8L18.76,16.26C19.54,15.03 20,13.57 20,12A8,8 0 0,0 12,4Z"/></symbol>
+  <symbol id="i-signature" viewBox="0 0 24 24"><path d="M2.4,17.4L9.6,10.2L13.8,14.4L6.6,21.6L2.4,17.4M16.5,7.5L14.7,5.7C14.3,5.3 13.7,5.3 13.3,5.7L10.8,8.2L15,12.4L17.5,9.9C17.9,9.5 17.9,8.9 17.5,8.5L16.5,7.5M2,22L4,21.5L2.5,20L2,22Z"/></symbol>
+  <symbol id="i-camera-plus" viewBox="0 0 24 24"><path d="M4,4H7L9,2H15L17,4H20A2,2 0 0,1 22,6V18A2,2 0 0,1 20,20H4A2,2 0 0,1 2,18V6A2,2 0 0,1 4,4M12,7A5,5 0 0,0 7,12A5,5 0 0,0 12,17A5,5 0 0,0 17,12A5,5 0 0,0 12,7M12,9A3,3 0 0,1 15,12A3,3 0 0,1 12,15A3,3 0 0,1 9,12A3,3 0 0,1 12,9M11,10V11H10V13H11V14H13V13H14V11H13V10H11Z"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"/></symbol>
+  <symbol id="i-cellphone" viewBox="0 0 24 24"><path d="M17,19H7V5H17M17,1H7C5.89,1 5,1.89 5,3V21A2,2 0 0,0 7,23H17A2,2 0 0,0 19,21V3C19,1.89 18.1,1 17,1Z"/></symbol>
   <symbol id="i-xero" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1.41 16.09V20h-2.67v-1.93c-1.71-.36-3.16-1.46-3.27-3.4h1.96c.1 1.05.82 1.87 2.65 1.87 1.96 0 2.4-.98 2.4-1.59 0-.83-.44-1.61-2.67-2.14-2.48-.6-4.18-1.62-4.18-3.67 0-1.72 1.39-2.84 3.11-3.21V4h2.67v1.95c1.86.45 2.79 1.86 2.85 3.39H14.3c-.05-1.11-.64-1.87-2.22-1.87-1.5 0-2.4.68-2.4 1.64 0 .84.65 1.39 2.67 1.91s4.18 1.39 4.18 3.91c-.01 1.83-1.38 2.83-3.12 3.16z"/></symbol>
-  <symbol id="i-stripe" viewBox="0 0 24 24"><path d="M13.48 7.8c0-.88.72-1.22 1.9-1.22 1.7 0 3.84.52 5.54 1.44V3.34C19.14 2.52 17.36 2 14.56 2c-4.58 0-7.64 2.38-7.64 6.34 0 6.16 8.5 5.18 8.5 7.84 0 1.04-.9 1.38-2.16 1.38-1.88 0-4.26-.76-6.14-1.8v4.76c2.08.9 4.18 1.28 6.14 1.28 4.68 0 7.9-2.3 7.9-6.32 0-6.68-8.68-5.48-8.68-7.68z"/></symbol>
 </svg>
+
+<!-- MOBILE TOP BAR -->
+<header class="mobile-top-bar">
+  <div class="wm">
+    <span class="mdi" style="color:var(--cta)"><svg width="20" height="20" viewBox="0 0 24 24"><use href="#i-wrench"/></svg></span>
+    <span>TradieMate</span>
+  </div>
+  <div class="top-bar-actions">
+    <button class="btn btn-s btn-sm" id="btn-toggle-sim-mobile" onclick="toggleViewMode('simulator')">
+      <span class="mdi" style="color:var(--cta)"><svg width="16" height="16" viewBox="0 0 24 24"><use href="#i-cellphone"/></svg></span> Simulator
+    </button>
+    <button class="icon-btn" id="btn-open-drawer" aria-label="Open Navigation Menu">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><use href="#i-menu"/></svg>
+    </button>
+  </div>
+</header>
+
+<!-- MOBILE DRAWER BACKDROP & PANEL -->
+<div class="drawer-backdrop" id="mobile-drawer">
+  <nav class="drawer-panel" aria-label="Mobile Navigation">
+    <div class="drawer-header">
+      <div>
+        <div style="font-size:15px;font-weight:600;color:var(--cta)">TradieMate</div>
+        <div style="font-size:11px;color:var(--stone)">Design System v2.0</div>
+      </div>
+      <button class="icon-btn" id="btn-close-drawer" aria-label="Close Navigation Menu">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><use href="#i-close"/></svg>
+      </button>
+    </div>
+    <div class="ng">
+      <div class="nl">View Mode</div>
+      <a class="ni" href="#" onclick="toggleViewMode('doc');closeDrawer();return false"><span>📄 Documentation</span></a>
+      <a class="ni" href="#" onclick="toggleViewMode('simulator');closeDrawer();return false"><span>📱 Mobile Simulator</span><span class="ni-badge">Interactive</span></a>
+    </div>
+    <div class="ng">
+      <div class="nl">Field Essentials</div>
+      <a class="ni" href="#mobile-components" onclick="closeDrawer()"><span>Field Components</span><span class="ni-badge">v2.0</span></a>
+      <a class="ni" href="#mobile-slider" onclick="closeDrawer()">Slide to Confirm</a>
+      <a class="ni" href="#mobile-signature" onclick="closeDrawer()">Digital Signature Pad</a>
+      <a class="ni" href="#mobile-photos" onclick="closeDrawer()">Before/After Photos</a>
+      <a class="ni" href="#mobile-gst" onclick="closeDrawer()">Live GST Calculator</a>
+      <a class="ni" href="#empty-states" onclick="closeDrawer()">Empty States</a>
+      <a class="ni" href="#skeletons" onclick="closeDrawer()">Skeleton Loading</a>
+    </div>
+    <div class="ng">
+      <div class="nl">Core Components</div>
+      <a class="ni" href="#buttons" onclick="closeDrawer()">Buttons</a>
+      <a class="ni" href="#badges" onclick="closeDrawer()">Badges</a>
+      <a class="ni" href="#cards" onclick="closeDrawer()">Cards</a>
+      <a class="ni" href="#forms" onclick="closeDrawer()">Forms</a>
+      <a class="ni" href="#chips" onclick="closeDrawer()">Chips</a>
+      <a class="ni" href="#lists" onclick="closeDrawer()">List Items</a>
+      <a class="ni" href="#notifs" onclick="closeDrawer()">Notifications</a>
+    </div>
+    <div class="ng">
+      <div class="nl">Foundations</div>
+      <a class="ni" href="#colors" onclick="closeDrawer()">Colors</a>
+      <a class="ni" href="#typography" onclick="closeDrawer()">Typography</a>
+      <a class="ni" href="#spacing" onclick="closeDrawer()">Spacing & Radius</a>
+      <a class="ni" href="#tokens" onclick="closeDrawer()">CSS Tokens</a>
+      <a class="ni" href="#rules" onclick="closeDrawer()">Design Rules</a>
+    </div>
+  </nav>
+</div>
 
 <div class="layout">
 
-<!-- SIDEBAR -->
+<!-- DESKTOP SIDEBAR -->
 <nav class="sidebar">
   <div class="logo">
-    <div class="wm">TradieMate</div>
-    <div class="ver">Design System · v1.0 · May 2026</div>
+    <div class="wm">
+      <span class="mdi" style="color:var(--cta)"><svg width="18" height="18" viewBox="0 0 24 24"><use href="#i-wrench"/></svg></span>
+      <span>TradieMate</span>
+    </div>
+    <div class="ver">Design System · v2.0 Production-Ready</div>
   </div>
   <div class="ng">
-    <div class="nl">Foundation</div>
-    <a class="ni active" onclick="goTo('colors')">Colors</a>
-    <a class="ni" onclick="goTo('typography')">Typography</a>
-    <a class="ni" onclick="goTo('spacing')">Spacing</a>
-    <a class="ni" onclick="goTo('radius')">Border radius</a>
+    <div class="nl">Field Essentials</div>
+    <a class="ni" href="#mobile-components"><span>Field Components</span><span class="ni-badge">v2.0</span></a>
+    <a class="ni" href="#navigation">Navigation & Tabs</a>
+    <a class="ni" href="#cards">Cards & Jobs</a>
+    <a class="ni" href="#empty-states">Empty States</a>
+    <a class="ni" href="#skeletons">Skeleton Loading</a>
   </div>
   <div class="ng">
-    <div class="nl">Components</div>
-    <a class="ni" onclick="goTo('icons')">Icons (MCI)</a>
-    <a class="ni" onclick="goTo('buttons')">Buttons</a>
-    <a class="ni" onclick="goTo('badges')">Badges</a>
-    <a class="ni" onclick="goTo('cards')">Cards</a>
-    <a class="ni" onclick="goTo('forms')">Forms</a>
-    <a class="ni" onclick="goTo('chips')">Chips</a>
-    <a class="ni" onclick="goTo('lists')">List items</a>
-    <a class="ni" onclick="goTo('avatars')">Avatars</a>
-    <a class="ni" onclick="goTo('notifs')">Notifications</a>
+    <div class="nl">Core Components</div>
+    <a class="ni" href="#buttons">Buttons</a>
+    <a class="ni" href="#badges">Badges</a>
+    <a class="ni" href="#forms">Forms & Selection</a>
+    <a class="ni" href="#chips">Trade Chips</a>
+    <a class="ni" href="#lists">List items</a>
+    <a class="ni" href="#avatars">Avatars</a>
+    <a class="ni" href="#notifs">Notifications</a>
+    <a class="ni" href="#data-display">Data & Filtering</a>
+  </div>
+  <div class="ng">
+    <div class="nl">Foundations</div>
+    <a class="ni active" href="#colors">Colors</a>
+    <a class="ni" href="#typography">Typography</a>
+    <a class="ni" href="#spacing">Spacing & Radius</a>
+    <a class="ni" href="#icons">Icons (MCI)</a>
   </div>
   <div class="ng">
     <div class="nl">Reference</div>
-    <a class="ni" onclick="goTo('tokens')">CSS tokens</a>
-    <a class="ni" onclick="goTo('rules')">Design rules</a>
+    <a class="ni" href="#tokens">CSS tokens</a>
+    <a class="ni" href="#rules">Design rules</a>
   </div>
 </nav>
 
-<!-- MAIN -->
-<main class="main">
+<!-- MAIN CONTENT -->
+<main class="main" id="main" tabindex="-1">
 
-  <div style="margin-bottom:var(--sp10)">
-    <div style="font-size:28px;font-weight:500;letter-spacing:-.6px;margin-bottom:var(--sp2)">Design System</div>
-    <div style="font-size:14px;color:var(--text-muted);max-width:500px;line-height:1.7">Dành cho thợ kỹ thuật Úc. Light mode only. Outdoor readability. Min 44px touch. Không shadow, không gradient. Icons: MaterialCommunityIcons.</div>
+  <!-- HERO SECTION -->
+  <header class="ds-hero">
+    <span class="ds-kicker">TradieMate / Interface System / v2.0 Production-Ready</span>
+    <h1>Built for the working day.</h1>
+    <p>Standardized design system engineered for Australian trade contractors: high-contrast readability under direct sunlight, tactile hit-areas for gloved hands, and strict ATO tax transparency.</p>
+    <div class="demo">
+      <button class="btn btn-p" onclick="toggleViewMode('simulator')">
+        <span class="mdi" style="color:#fff"><svg width="18" height="18" viewBox="0 0 24 24"><use href="#i-cellphone"/></svg></span> Launch Mobile Simulator
+      </button>
+      <a class="btn btn-o" href="#mobile-components">View Field Components</a>
+    </div>
+  </header>
+
+  <!-- VIEW MODE SWITCHER BAR -->
+  <div class="view-bar">
+    <div class="view-info">
+      <strong>Viewport Mode:</strong> Seamlessly switch between full technical documentation and the interactive iPhone 16 Pro simulator.
+    </div>
+    <div class="view-switcher" role="radiogroup" aria-label="Interface View Mode">
+      <button class="view-btn active" id="btn-view-doc" onclick="toggleViewMode('doc')" aria-checked="true" role="radio">
+        📄 Document View
+      </button>
+      <button class="view-btn" id="btn-view-sim" onclick="toggleViewMode('simulator')" aria-checked="false" role="radio">
+        📱 Mobile Simulator (393px)
+      </button>
+    </div>
   </div>
+
+  <!-- INTERACTIVE PHONE SIMULATOR CONTAINER (IPHONE 16 PRO) -->
+  <div class="sim-container" id="sim-container">
+    <div class="phone-frame">
+      <!-- Authentic iOS Status bar -->
+      <div class="phone-status">
+        <span>9:41</span>
+        <div class="phone-island"><div class="phone-island-cam"></div></div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <span style="font-size:11px;font-family:var(--mono);font-weight:600">5G</span>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><use href="#i-wifi"/></svg>
+          <svg width="22" height="11" viewBox="0 0 24 12" fill="none" style="margin-left:2px">
+            <rect x="0.5" y="0.5" width="20" height="11" rx="3.5" stroke="currentColor" stroke-width="1.2"/>
+            <rect x="2" y="2" width="14" height="8" rx="2" fill="currentColor"/>
+            <path d="M22 4C22.6 4.5 23 5.2 23 6C23 6.8 22.6 7.5 22 8V4Z" fill="currentColor"/>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Simulator App Bar -->
+      <div class="tm-app-bar">
+        <div class="tm-app-bar-left">
+          <span class="mdi" style="color:var(--cta)"><svg width="20" height="20" viewBox="0 0 24 24"><use href="#i-wrench"/></svg></span>
+          <span class="tm-app-bar-title" id="sim-appbar-title">Dashboard</span>
+        </div>
+        <div class="tm-app-bar-actions">
+          <button class="btn btn-s btn-sm" style="min-height:36px;padding:0 10px;font-size:11px" onclick="toggleNetworkMode()" title="Toggle Online/Offline for testing">
+            <span id="sim-net-toggle-text">Toggle Offline</span>
+          </button>
+          <button class="icon-btn" style="min-width:36px;min-height:36px;width:36px;height:36px;border:none;background:none" onclick="showToast('Notification menu')">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="var(--stone)"><use href="#i-bell"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Viewport screens -->
+      <div class="phone-viewport">
+        
+        <!-- SCREEN 1: DASHBOARD -->
+        <div class="sim-screen active" id="screen-home">
+          <!-- Unified Network Status Bar (Single Source of Truth) -->
+          <div class="tm-network-bar online" id="sim-network-status">
+            <span class="tm-network-info">
+              <span class="pulse-dot"></span>
+              <span id="sim-net-status-text">Online · Local cache synced</span>
+            </span>
+            <button class="btn btn-s btn-sm" style="min-height:32px;padding:0 10px;font-size:11px" onclick="triggerSync()">Sync</button>
+          </div>
+
+          <!-- Greeting Header -->
+          <div style="margin-bottom:12px">
+            <div style="font-size:11px;color:var(--stone);text-transform:uppercase;letter-spacing:.05em;font-weight:600">Monday, 7 September</div>
+            <div style="font-size:20px;font-weight:600;letter-spacing:-0.4px">G'day, Dave 🪚</div>
+          </div>
+
+          <!-- Next Job Card (Hero element) -->
+          <div class="card" style="border-left:4px solid var(--cta);padding:15px;margin-bottom:14px;position:relative">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start">
+              <div>
+                <span class="badge b-c" style="font-size:10px;padding:2px 7px;margin-bottom:4px">
+                  <span class="pulse-dot" style="margin-right:2px"></span> NEXT JOB · 9:30 AM
+                </span>
+                <div style="font-size:16px;font-weight:600;margin-top:4px">Hot Water System Valve</div>
+                <div style="font-size:12.5px;color:var(--stone);margin-top:3px;display:flex;align-items:center;gap:4px">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="var(--stone)"><use href="#i-marker"/></svg> 42 Churchill St, Paddington
+                </div>
+              </div>
+              <span class="badge b-c" style="font-weight:600;font-size:12px">$380 est.</span>
+            </div>
+
+            <div style="display:flex;align-items:center;gap:6px;margin-top:8px;font-size:11.5px;color:var(--stone)">
+              <span class="badge b-n" style="font-size:9.5px;padding:2px 6px">ETA 12 MINS</span>
+              <span>2.4 km · Traffic light</span>
+            </div>
+            
+            <div class="tm-contact-actions" style="margin-top:12px">
+              <a class="tm-contact-btn call" href="tel:0400000000" onclick="event.preventDefault();showToast('Dialing customer: 0400 000 000')">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><use href="#i-phone"/></svg>
+                <span>Call Sarah</span>
+              </a>
+              <a class="tm-contact-btn msg" href="sms:0400000000" onclick="event.preventDefault();showToast('SMS template: Dave on the way (12m)')">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><use href="#i-message"/></svg>
+                <span>Send ETA</span>
+              </a>
+              <a class="tm-contact-btn nav" href="#" onclick="event.preventDefault();showToast('Opening Maps for turn-by-turn navigation')">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><use href="#i-navigate"/></svg>
+                <span>Navigate</span>
+              </a>
+            </div>
+
+            <!-- Silky Smooth Interactive Slide to Confirm -->
+            <div style="margin-top:14px">
+              <div class="tm-slider-track" id="sim-slider-start" data-action="Start Commute">
+                <div class="tm-slider-fill"></div>
+                <div class="tm-slider-thumb">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><use href="#i-truck"/></svg>
+                </div>
+                <span class="tm-slider-text">Slide to Start Commute <span class="tm-chevrons">›››</span></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Stats Grid -->
+          <div class="sg" style="margin-bottom:14px">
+            <div class="sb">
+              <div class="sl">Today's Jobs</div>
+              <div class="sv">4</div>
+              <div class="ss" style="color:var(--cta);font-weight:500">2 remaining</div>
+            </div>
+            <div class="sb">
+              <div class="sl">Pending Quotes</div>
+              <div class="sv" style="color:var(--warning)">2</div>
+              <div class="ss">Awaiting client</div>
+            </div>
+            <div class="sb">
+              <div class="sl">Est. Revenue</div>
+              <div class="sv">$840</div>
+              <div class="ss" style="color:var(--success);font-weight:500">↑ 14% vs avg</div>
+            </div>
+          </div>
+
+          <!-- Schedule list item -->
+          <div style="font-size:11px;font-weight:600;color:var(--stone);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Upcoming Today</div>
+          <div class="li" style="padding:11px" onclick="showToast('Job #105 selected')">
+            <div class="liico" style="background:var(--warning-pale);width:42px;height:42px">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="var(--warning)"><use href="#i-lightning"/></svg>
+            </div>
+            <div class="libody">
+              <div class="lit" style="font-size:13.5px">Switchboard Safety Upgrade</div>
+              <div class="lis" style="font-size:11.5px">Tom Wu · 2:00 PM · Fortitude Valley</div>
+            </div>
+            <div class="lir">
+              <div class="lia" style="font-size:13.5px">$580</div>
+              <span class="badge b-w" style="font-size:9px;padding:1px 5px">Scheduled</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- SCREEN 2: JOBS & FILTER -->
+        <div class="sim-screen" id="screen-jobs">
+          <div class="tm-segmented-control">
+            <button class="tm-seg-item active" onclick="switchSimJobTab(this,'today')">Today (4)</button>
+            <button class="tm-seg-item" onclick="switchSimJobTab(this,'upcoming')">Upcoming (8)</button>
+            <button class="tm-seg-item" onclick="switchSimJobTab(this,'done')">Completed</button>
+          </div>
+
+          <div style="display:flex;gap:8px;margin-bottom:12px">
+            <input class="input" style="min-height:44px;font-size:13px" placeholder="Search customer or address...">
+            <button class="btn btn-s" style="min-height:44px;padding:0 14px" onclick="showToast('Filter options')">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><use href="#i-wrench"/></svg>
+            </button>
+          </div>
+
+          <div id="sim-jobs-list">
+            <div class="li" style="padding:12px;margin-bottom:8px">
+              <div class="liico"><svg width="20" height="20" viewBox="0 0 24 24" fill="var(--cta)"><use href="#i-wrench"/></svg></div>
+              <div class="libody">
+                <div class="lit">Hot water system valve</div>
+                <div class="lis">42 Churchill St · Sarah Mitchell</div>
+              </div>
+              <div class="lir">
+                <div class="lia">$380</div>
+                <span class="badge b-c" style="font-size:9px">9:30 AM</span>
+              </div>
+            </div>
+            <div class="li" style="padding:12px;margin-bottom:8px">
+              <div class="liico" style="background:var(--warning-pale)"><svg width="20" height="20" viewBox="0 0 24 24" fill="var(--warning)"><use href="#i-lightning"/></svg></div>
+              <div class="libody">
+                <div class="lit">Safety switchboard check</div>
+                <div class="lis">15 Queen St · Tom Wu</div>
+              </div>
+              <div class="lir">
+                <div class="lia">$220</div>
+                <span class="badge b-w" style="font-size:9px">11:30 AM</span>
+              </div>
+            </div>
+            <div class="li" style="padding:12px;margin-bottom:8px">
+              <div class="liico" style="background:var(--stone-pale)"><svg width="20" height="20" viewBox="0 0 24 24" fill="var(--stone)"><use href="#i-hammer"/></svg></div>
+              <div class="libody">
+                <div class="lit">Deck bearer replacement</div>
+                <div class="lis">8 Bay St · Mark Taylor</div>
+              </div>
+              <div class="lir">
+                <div class="lia">$650</div>
+                <span class="badge b-n" style="font-size:9px">2:00 PM</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SCREEN 3: ON-SITE FIELD TOOLS -->
+        <div class="sim-screen" id="screen-field">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+            <div>
+              <div style="font-size:14.5px;font-weight:600">Job #104 — On-Site Proof</div>
+              <div style="font-size:11.5px;color:var(--stone)">Photo proof & customer sign-off</div>
+            </div>
+            <span class="badge b-ok" style="font-size:10px">In Progress</span>
+          </div>
+
+          <!-- Realistic Before / After Photo Comparison -->
+          <div class="tm-photo-grid">
+            <div class="tm-photo-card">
+              <span class="tm-photo-tag before">Before</span>
+              <svg width="100%" height="100%" viewBox="0 0 160 120" fill="none" style="display:block">
+                <rect width="160" height="120" fill="#EAE5DE"/>
+                <path d="M25 60 H135" stroke="#A8652B" stroke-width="14" stroke-linecap="round"/>
+                <circle cx="80" cy="60" r="14" fill="#6E401F"/>
+                <path d="M80 66 Q75 82 80 96 Q85 82 80 66Z" fill="#2F7EC9" opacity="0.8"/>
+              </svg>
+              <div class="tm-photo-watermark">09:32 AM · LEAK IDENTIFIED</div>
+            </div>
+            
+            <div class="tm-photo-card" style="border:1.5px solid var(--cta)">
+              <span class="tm-photo-tag after">After</span>
+              <svg width="100%" height="100%" viewBox="0 0 160 120" fill="none" style="display:block">
+                <rect width="160" height="120" fill="#E2EBE2"/>
+                <path d="M25 60 H135" stroke="#B8C0C8" stroke-width="14" stroke-linecap="round"/>
+                <circle cx="80" cy="60" r="14" fill="#D4AF37"/>
+                <rect x="74" y="32" width="12" height="18" rx="3" fill="#2E6B45"/>
+                <circle cx="80" cy="60" r="4" fill="#FFFFFF"/>
+              </svg>
+              <div class="tm-photo-watermark">10:45 AM · PRESSURE TEST OK</div>
+            </div>
+          </div>
+
+          <!-- Digital Signature Pad with smooth Bezier curve -->
+          <div class="tm-sig-container">
+            <div style="padding:8px 12px;font-size:12px;font-weight:600;background:var(--bg-surface);display:flex;justify-content:space-between;align-items:center">
+              <span>Customer Sign-Off</span>
+              <button class="btn btn-g btn-sm" style="min-height:36px;padding:0 10px;font-size:11px" onclick="clearSimCanvas()">Clear</button>
+            </div>
+            <div class="tm-sig-canvas-wrap">
+              <canvas id="sim-sig-canvas" class="tm-sig-canvas" width="350" height="130"></canvas>
+              <div class="tm-sig-guideline">
+                <span>✕ Sign above line</span>
+                <span>Sarah Mitchell</span>
+              </div>
+            </div>
+            <div class="tm-sig-toolbar">
+              <span style="font-size:10px;color:var(--stone)">🔒 ETA 1999 Compliant</span>
+              <button class="btn btn-p btn-sm" style="min-height:36px;padding:0 14px" onclick="showToast('Signature accepted & attached to Invoice #0043')">Accept Signature</button>
+            </div>
+          </div>
+
+          <!-- Bottom Sheet Trigger -->
+          <button class="btn btn-s btn-block" style="margin-top:6px;min-height:48px" onclick="openSimSheet()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><use href="#i-file"/></svg> View Job Action Sheet
+          </button>
+        </div>
+
+        <!-- SCREEN 4: FAST INVOICE & LIVE GST WITH XERO INTEGRATION -->
+        <div class="sim-screen" id="screen-invoices">
+          <div class="tm-invoice-card">
+            <div class="tm-invoice-header">
+              <div>
+                <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px">
+                  <span style="font-size:11px;font-weight:600;color:var(--cta);letter-spacing:0.06em">TAX INVOICE · TRADIEMATE</span>
+                  <span class="xero-badge"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><use href="#i-xero"/></svg> Xero Synced</span>
+                </div>
+                <div style="font-size:15px;font-weight:600">Sarah Mitchell</div>
+                <div style="font-size:11px;color:var(--stone)">42 Churchill St, Paddington · ABN 51 824 753 556</div>
+              </div>
+              <span class="badge b-c" style="font-size:10px">#INV-2026-0043</span>
+            </div>
+
+            <table class="tm-calc-table" id="sim-gst-table">
+              <thead>
+                <tr><th>Description</th><th style="text-align:right">Input</th><th style="text-align:right">Subtotal</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Labour (Plumbing)</td>
+                  <td style="text-align:right"><input class="tm-calc-input" id="sim-labor-hrs" type="number" value="2.5" min="0" step="0.5" onchange="runSimGST()"> × $120</td>
+                  <td style="text-align:right" id="sim-val-labor">$300.00</td>
+                </tr>
+                <tr>
+                  <td>Brass Duo Valve Kit</td>
+                  <td style="text-align:right"><input class="tm-calc-input" id="sim-parts-cost" type="number" value="140" min="0" step="10" onchange="runSimGST()"></td>
+                  <td style="text-align:right" id="sim-val-parts">$140.00</td>
+                </tr>
+                <tr>
+                  <td>Callout Fee</td>
+                  <td style="text-align:right"><input class="tm-calc-input" id="sim-callout-cost" type="number" value="60" min="0" step="10" onchange="runSimGST()"></td>
+                  <td style="text-align:right" id="sim-val-callout">$60.00</td>
+                </tr>
+                <tr>
+                  <td colspan="2" style="text-align:right;color:var(--stone)">Net Subtotal</td>
+                  <td style="text-align:right;font-weight:500" id="sim-val-sub">$500.00</td>
+                </tr>
+                <tr>
+                  <td colspan="2" style="text-align:right;color:var(--warning-text)">
+                    <span class="badge b-w" style="font-size:9.5px;padding:2px 6px">10% ATO GST</span>
+                  </td>
+                  <td style="text-align:right;font-weight:600;color:var(--warning-text)" id="sim-val-gst">$50.00</td>
+                </tr>
+                <tr class="row-total">
+                  <td colspan="2" style="text-align:right">Total AUD (Inc. GST)</td>
+                  <td style="text-align:right;font-size:17px;color:var(--cta)" id="sim-val-total">$550.00</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <button class="btn btn-p btn-block" style="margin-top:14px;min-height:50px" onclick="showToast('Invoice sent to customer + synced to Xero account')">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><use href="#i-receipt"/></svg> Send Invoice & PayID ($550.00)
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Pinned Floating Action Button Outside Scroll Stream -->
+      <div class="phone-fab-layer">
+        <div class="tm-fab-container" id="sim-fab">
+          <div class="tm-speed-dial">
+            <div class="tm-dial-item">
+              <span class="tm-dial-label">Scan Receipt (OCR)</span>
+              <button class="tm-dial-btn" onclick="showToast('Camera opened to scan supplier receipt')" aria-label="Scan receipt"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><use href="#i-scan"/></svg></button>
+            </div>
+            <div class="tm-dial-item">
+              <span class="tm-dial-label">Create New Job</span>
+              <button class="tm-dial-btn" onclick="openSimSheet()" aria-label="Create job"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><use href="#i-plus"/></svg></button>
+            </div>
+          </div>
+          <button class="tm-fab-btn" onclick="document.getElementById('sim-fab').classList.toggle('open')" aria-label="Quick Actions">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><use href="#i-plus"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Simulator Bottom Navigation Tab Bar (Apple Squircle Glass) -->
+      <nav class="tm-bottom-bar">
+        <button class="tm-tab-item active" onclick="switchSimScreen('home', this)">
+          <div class="tm-tab-icon-wrap"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><use href="#i-home"/></svg></div>
+          <span>Home</span>
+        </button>
+        <button class="tm-tab-item" onclick="switchSimScreen('jobs', this)">
+          <div class="tm-tab-icon-wrap"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><use href="#i-briefcase"/></svg></div>
+          <span>Jobs</span>
+          <span class="tm-tab-badge">4</span>
+        </button>
+        <button class="tm-tab-item" onclick="switchSimScreen('field', this)">
+          <div class="tm-tab-icon-wrap"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><use href="#i-camera"/></svg></div>
+          <span>Proof</span>
+        </button>
+        <button class="tm-tab-item" onclick="switchSimScreen('invoices', this)">
+          <div class="tm-tab-icon-wrap"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><use href="#i-receipt"/></svg></div>
+          <span>Invoice</span>
+        </button>
+        <button class="tm-tab-item" onclick="showToast('Profile & Certifications screen')">
+          <div class="tm-tab-icon-wrap"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><use href="#i-account"/></svg></div>
+          <span>Dave</span>
+        </button>
+      </nav>
+
+      <!-- Simulator Home indicator bar -->
+      <div class="phone-home"><div class="phone-home-pill"></div></div>
+
+      <!-- Simulator Modal Bottom Sheet -->
+      <div class="tm-sheet-backdrop" id="sim-sheet">
+        <div class="tm-sheet-content">
+          <div class="tm-drag-handle"></div>
+          <div class="tm-sheet-header">
+            <div class="tm-sheet-title">Job #104 Actions</div>
+            <button class="icon-btn" style="min-width:36px;min-height:36px;width:36px;height:36px" onclick="closeSimSheet()"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><use href="#i-close"/></svg></button>
+          </div>
+          <div style="display:grid;gap:8px">
+            <button class="btn btn-s btn-block" style="justify-content:flex-start;min-height:48px" onclick="showToast('Reschedule modal opened');closeSimSheet()">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="var(--stone)"><use href="#i-calendar"/></svg> Reschedule Booking Time
+            </button>
+            <button class="btn btn-s btn-block" style="justify-content:flex-start;min-height:48px" onclick="showToast('Invoice drafted from Job #104');closeSimSheet()">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="var(--stone)"><use href="#i-receipt"/></svg> Generate Client Invoice
+            </button>
+            <button class="btn btn-d btn-block" style="justify-content:flex-start;min-height:48px" onclick="showToast('Cancellation notice sent to customer');closeSimSheet()">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="#fff"><use href="#i-close-circle"/></svg> Cancel Booking
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- SECTION: MOBILE FIELD COMPONENTS SPECIFICATION -->
+  <section class="sec" id="mobile-components">
+    <h2 class="sec-title">
+      <span class="mdi" style="color:var(--cta)"><svg width="24" height="24" viewBox="0 0 24 24"><use href="#i-cellphone"/></svg></span>
+      <span>Mobile Field Components</span>
+      <span class="badge b-c">v2.0 Spec</span>
+    </h2>
+    <p class="sec-desc">Essential field components designed for on-site tradespeople. Optimized for the one-handed Thumb Zone, accidental-touch prevention when wearing gloves, and strict Australian compliance.</p>
+
+    <div class="ds-grid">
+      <!-- 1. SLIDE TO CONFIRM -->
+      <article class="ds-card" id="mobile-slider">
+        <span class="ds-kicker">Safety & Intent</span>
+        <h3>Interactive Slide To Confirm</h3>
+        <p class="ds-note">Prevents accidental taps during critical field actions (Start Commute, Arrived On Site, Complete Job). Contractors slide past 82% threshold with smooth spring-back physics.</p>
+        
+        <div style="padding:14px 0">
+          <div class="tm-slider-track" id="doc-slider" data-action="Complete Job">
+            <div class="tm-slider-fill"></div>
+            <div class="tm-slider-thumb">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><use href="#i-check"/></svg>
+            </div>
+            <span class="tm-slider-text">Slide to Complete Job <span class="tm-chevrons">›››</span></span>
+          </div>
+          <div style="margin-top:12px;display:flex;gap:10px;align-items:center">
+            <button class="btn btn-g btn-sm" onclick="resetSlider('doc-slider')">Reset Slider</button>
+            <span id="slider-status-label" style="font-size:12px;color:var(--stone)"></span>
+          </div>
+        </div>
+      </article>
+
+      <!-- 2. DIGITAL SIGNATURE PAD -->
+      <article class="ds-card" id="mobile-signature">
+        <span class="ds-kicker">Proof of Work</span>
+        <h3>Digital Signature Pad (Bezier Smoothing)</h3>
+        <p class="ds-note">HTML5 Canvas signature pad with anti-aliased quadratic Bezier interpolation, producing smooth, natural ink strokes just like a pen on paper.</p>
+        
+        <div class="tm-sig-container">
+          <div class="tm-sig-toolbar">
+            <span style="font-size:12px;font-weight:600">Client Signature</span>
+            <button class="btn btn-g btn-sm" style="min-height:36px;padding:0 10px" onclick="clearDocCanvas()">Clear</button>
+          </div>
+          <div class="tm-sig-canvas-wrap">
+            <canvas id="doc-sig-canvas" class="tm-sig-canvas" width="480" height="130"></canvas>
+            <div class="tm-sig-guideline">
+              <span>✕ Sign above line</span>
+              <span>Accepted & Received</span>
+            </div>
+          </div>
+          <div class="tm-sig-toolbar">
+            <span style="font-size:11px;color:var(--stone)">Touch or mouse supported</span>
+            <button class="btn btn-p btn-sm" style="min-height:36px;padding:0 14px" onclick="showToast('Customer signature saved to cloud storage')">Save Signature</button>
+          </div>
+        </div>
+      </article>
+
+      <!-- 3. BEFORE / AFTER PHOTO GRID -->
+      <article class="ds-card" id="mobile-photos">
+        <span class="ds-kicker">Documentation</span>
+        <h3>Before & After Photo Comparison</h3>
+        <p class="ds-note">Before and after visual audit. Automatically pairs work photos with immutable timestamps and GPS coordinates for proof-of-work billing.</p>
+        
+        <div class="tm-photo-grid">
+          <div class="tm-photo-card">
+            <span class="tm-photo-tag before">Before</span>
+            <svg width="100%" height="100%" viewBox="0 0 160 120" fill="none" style="display:block">
+              <rect width="160" height="120" fill="#EAE5DE"/>
+              <path d="M25 60 H135" stroke="#A8652B" stroke-width="14" stroke-linecap="round"/>
+              <circle cx="80" cy="60" r="14" fill="#6E401F"/>
+              <path d="M80 66 Q75 82 80 96 Q85 82 80 66Z" fill="#2F7EC9" opacity="0.8"/>
+            </svg>
+            <div class="tm-photo-watermark">09:15 AM · LEAK IDENTIFIED</div>
+          </div>
+          <div class="tm-photo-card" style="border:1.5px solid var(--cta)">
+            <span class="tm-photo-tag after">After</span>
+            <svg width="100%" height="100%" viewBox="0 0 160 120" fill="none" style="display:block">
+              <rect width="160" height="120" fill="#E2EBE2"/>
+              <path d="M25 60 H135" stroke="#B8C0C8" stroke-width="14" stroke-linecap="round"/>
+              <circle cx="80" cy="60" r="14" fill="#D4AF37"/>
+              <rect x="74" y="32" width="12" height="18" rx="3" fill="#2E6B45"/>
+              <circle cx="80" cy="60" r="4" fill="#FFFFFF"/>
+            </svg>
+            <div class="tm-photo-watermark">10:45 AM · PRESSURE TEST OK</div>
+          </div>
+        </div>
+      </article>
+
+      <!-- 4. AUSTRALIAN GST & INVOICE CALCULATOR -->
+      <article class="ds-card" id="mobile-gst">
+        <span class="ds-kicker">Tax Compliance (ATO)</span>
+        <h3>Live Australian GST Calculator (Shared Core Engine)</h3>
+        <p class="ds-note">Powered by a single shared `calculateGST()` engine. Australian consumer law requires clear itemisation of the mandatory 10% Goods and Services Tax.</p>
+
+        <div style="overflow-x:auto">
+          <table class="tm-calc-table" id="doc-gst-table">
+            <thead><tr><th>Cost Breakdown</th><th style="text-align:right">Input</th><th style="text-align:right">Amount</th></tr></thead>
+            <tbody>
+              <tr>
+                <td>Labour (Hours)</td>
+                <td style="text-align:right"><input class="tm-calc-input" id="doc-labor-hrs" type="number" value="3" min="0" step="0.5" onchange="runDocGST()"> × $120</td>
+                <td style="text-align:right" id="doc-val-labor">$360.00</td>
+              </tr>
+              <tr>
+                <td>Materials & Parts</td>
+                <td style="text-align:right"><input class="tm-calc-input" id="doc-parts-cost" type="number" value="180" min="0" step="10" onchange="runDocGST()"></td>
+                <td style="text-align:right" id="doc-val-parts">$180.00</td>
+              </tr>
+              <tr>
+                <td>Callout Fee</td>
+                <td style="text-align:right"><input class="tm-calc-input" id="doc-callout-cost" type="number" value="0" min="0" step="10" onchange="runDocGST()"></td>
+                <td style="text-align:right" id="doc-val-callout">$0.00</td>
+              </tr>
+              <tr>
+                <td colspan="2" style="text-align:right;color:var(--stone)">Net Subtotal</td>
+                <td style="text-align:right;font-weight:500" id="doc-val-sub">$540.00</td>
+              </tr>
+              <tr>
+                <td colspan="2" style="text-align:right;color:var(--warning-text)">
+                  <span class="badge b-w" style="font-size:9.5px;padding:2px 6px">10% ATO GST</span>
+                </td>
+                <td style="text-align:right;font-weight:600;color:var(--warning-text)" id="doc-val-gst">$54.00</td>
+              </tr>
+              <tr class="row-total">
+                <td colspan="2" style="text-align:right">Invoice Total AUD (Inc. GST)</td>
+                <td style="text-align:right;color:var(--cta);font-size:16px" id="doc-val-total">$594.00</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </article>
+
+      <!-- 5. EMPTY STATES -->
+      <article class="ds-card" id="empty-states">
+        <span class="ds-kicker">Edge Case UX</span>
+        <h3>Standard Empty States</h3>
+        <p class="ds-note">Consistent layout for zero-data states: lightweight outline icon, clear headline, concise description, and direct call-to-action.</p>
+
+        <div class="tm-empty-state">
+          <div class="tm-empty-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><use href="#i-calendar"/></svg>
+          </div>
+          <div class="tm-empty-title">No jobs scheduled today</div>
+          <div class="tm-empty-desc">Take a break or create a new job to start building your work queue.</div>
+          <button class="btn btn-p btn-sm" onclick="showToast('Create job form opened')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><use href="#i-plus"/></svg> Create New Job
+          </button>
+        </div>
+      </article>
+
+      <!-- 6. SKELETON LOADING STATES -->
+      <article class="ds-card" id="skeletons">
+        <span class="ds-kicker">Perceived Performance</span>
+        <h3>Skeleton Loading States</h3>
+        <p class="ds-note">Preserves exact border-radius and component geometry during network fetch, eliminating Cumulative Layout Shift (CLS).</p>
+
+        <div class="tm-skeleton-card">
+          <div style="display:flex;justify-content:space-between;margin-bottom:12px">
+            <div class="tm-skeleton" style="width:110px;height:18px;border-radius:12px"></div>
+            <div class="tm-skeleton" style="width:60px;height:18px;border-radius:12px"></div>
+          </div>
+          <div class="tm-skeleton" style="width:75%;height:16px;margin-bottom:8px"></div>
+          <div class="tm-skeleton" style="width:50%;height:12px;margin-bottom:14px"></div>
+          <div style="display:flex;gap:8px">
+            <div class="tm-skeleton" style="flex:1;height:44px;border-radius:8px"></div>
+            <div class="tm-skeleton" style="width:80px;height:44px;border-radius:8px"></div>
+          </div>
+        </div>
+      </article>
+    </div>
+  </section>
 
   <!-- COLORS -->
   <div class="sec" id="colors">
-    <div class="sec-title">Colors</div>
-    <div class="sec-desc">Warm white background cho outdoor readability. Forest Green là CTA chính. Click swatch để copy hex.</div>
+    <div class="sec-title">Colors & Semantic Tokens</div>
+    <div class="sec-desc">Warm white background for outdoor readability under direct sunlight. Forest Green #2E6B45 is the primary action CTA. Click any swatch to copy HEX.</div>
     <div class="sub">Background & Surface</div>
     <div class="cgrid">
       <div class="cswatch" onclick="copyHex('#FAFAF8',this)"><div class="sblock" style="background:#FAFAF8;border-bottom:.5px solid #eee"><span class="scopy">#FAFAF8</span></div><div class="smeta"><div class="sname">Background</div><div class="stoken">--bg-base</div><div class="shex">#FAFAF8</div></div></div>
@@ -309,456 +1688,272 @@ body{font-family:var(--font);background:var(--bg-base);color:var(--text-primary)
       <div class="cswatch" onclick="copyHex('#C0DD97',this)"><div class="sblock" style="background:#C0DD97;border-bottom:.5px solid #eee"><span class="scopy">#C0DD97</span></div><div class="smeta"><div class="sname">CTA Light</div><div class="stoken">--cta-light</div><div class="shex">#C0DD97</div></div></div>
       <div class="cswatch" onclick="copyHex('#EAF3DE',this)"><div class="sblock" style="background:#EAF3DE;border-bottom:.5px solid #eee"><span class="scopy">#EAF3DE</span></div><div class="smeta"><div class="sname">CTA Pale</div><div class="stoken">--cta-pale</div><div class="shex">#EAF3DE</div></div></div>
     </div>
-    <div class="sub">Semantic</div>
+    <div class="sub">Semantic (WCAG AA Contrast Tuned)</div>
     <div class="cgrid">
-      <div class="cswatch" onclick="copyHex('#639922',this)"><div class="sblock" style="background:#639922"><span class="scopy">#639922</span></div><div class="smeta"><div class="sname">Success</div><div class="stoken">--success</div><div class="shex">#639922</div></div></div>
-      <div class="cswatch" onclick="copyHex('#BA7517',this)"><div class="sblock" style="background:#BA7517"><span class="scopy">#BA7517</span></div><div class="smeta"><div class="sname">Warning</div><div class="stoken">--warning</div><div class="shex">#BA7517</div></div></div>
-      <div class="cswatch" onclick="copyHex('#E24B4A',this)"><div class="sblock" style="background:#E24B4A"><span class="scopy">#E24B4A</span></div><div class="smeta"><div class="sname">Danger</div><div class="stoken">--danger</div><div class="shex">#E24B4A</div></div></div>
-      <div class="cswatch" onclick="copyHex('#378ADD',this)"><div class="sblock" style="background:#378ADD"><span class="scopy">#378ADD</span></div><div class="smeta"><div class="sname">Info / Maps</div><div class="stoken">--info</div><div class="shex">#378ADD</div></div></div>
-      <div class="cswatch" onclick="copyHex('#D85A30',this)"><div class="sblock" style="background:#D85A30"><span class="scopy">#D85A30</span></div><div class="smeta"><div class="sname">Rust (legacy)</div><div class="stoken">--rust</div><div class="shex">#D85A30</div></div></div>
-      <div class="cswatch" onclick="copyHex('#5F5E5A',this)"><div class="sblock" style="background:#5F5E5A"><span class="scopy">#5F5E5A</span></div><div class="smeta"><div class="sname">Stone</div><div class="stoken">--stone</div><div class="shex">#5F5E5A</div></div></div>
-    </div>
-    <div class="sub">Text</div>
-    <div class="cgrid">
-      <div class="cswatch" onclick="copyHex('#1A1A1A',this)"><div class="sblock" style="background:#1A1A1A"><span class="scopy">#1A1A1A</span></div><div class="smeta"><div class="sname">Primary</div><div class="stoken">--text-primary</div><div class="shex">#1A1A1A</div></div></div>
-      <div class="cswatch" onclick="copyHex('#888888',this)"><div class="sblock" style="background:#888"><span class="scopy">#888888</span></div><div class="smeta"><div class="sname">Muted</div><div class="stoken">--text-muted</div><div class="shex">#888888</div></div></div>
-      <div class="cswatch" onclick="copyHex('#AAAAAA',this)"><div class="sblock" style="background:#aaa;border-bottom:.5px solid #eee"><span class="scopy">#AAAAAA</span></div><div class="smeta"><div class="sname">Subtle</div><div class="stoken">--text-subtle</div><div class="shex">#AAAAAA</div></div></div>
+      <div class="cswatch" onclick="copyHex('#5B8E1F',this)"><div class="sblock" style="background:#5B8E1F"><span class="scopy">#5B8E1F</span></div><div class="smeta"><div class="sname">Success</div><div class="stoken">--success</div><div class="shex">#5B8E1F</div></div></div>
+      <div class="cswatch" onclick="copyHex('#B26F12',this)"><div class="sblock" style="background:#B26F12"><span class="scopy">#B26F12</span></div><div class="smeta"><div class="sname">Warning</div><div class="stoken">--warning</div><div class="shex">#B26F12</div></div></div>
+      <div class="cswatch" onclick="copyHex('#D94140',this)"><div class="sblock" style="background:#D94140"><span class="scopy">#D94140</span></div><div class="smeta"><div class="sname">Danger</div><div class="stoken">--danger</div><div class="shex">#D94140</div></div></div>
+      <div class="cswatch" onclick="copyHex('#2F7EC9',this)"><div class="sblock" style="background:#2F7EC9"><span class="scopy">#2F7EC9</span></div><div class="smeta"><div class="sname">Info / Maps</div><div class="stoken">--info</div><div class="shex">#2F7EC9</div></div></div>
+      <div class="cswatch" onclick="copyHex('#5A5955',this)"><div class="sblock" style="background:#5A5955"><span class="scopy">#5A5955</span></div><div class="smeta"><div class="sname">Stone</div><div class="stoken">--stone</div><div class="shex">#5A5955</div></div></div>
+      <div class="cswatch" onclick="copyHex('#686660',this)"><div class="sblock" style="background:#686660"><span class="scopy">#686660</span></div><div class="smeta"><div class="sname">Text Subtle</div><div class="stoken">--text-subtle</div><div class="shex">#686660</div></div></div>
     </div>
   </div>
 
   <!-- TYPOGRAPHY -->
   <div class="sec" id="typography">
-    <div class="sec-title">Typography</div>
-    <div class="sec-desc">Font: Inter. Weight 500 heading · 400 body. Không dùng 700.</div>
-    <div class="tspec"><div style="font-size:28px;font-weight:500;letter-spacing:-.6px">Display heading</div><div class="tmeta"><div class="tml">size · weight</div><div class="tmv">28px · 500</div></div></div>
-    <div class="tspec"><div style="font-size:22px;font-weight:500;letter-spacing:-.4px">Section title</div><div class="tmeta"><div class="tml">size · weight</div><div class="tmv">22px · 500</div></div></div>
-    <div class="tspec"><div style="font-size:18px;font-weight:500;letter-spacing:-.3px">Card title</div><div class="tmeta"><div class="tml">size · weight</div><div class="tmv">18px · 500</div></div></div>
+    <div class="sec-title">Typography Scale</div>
+    <div class="sec-desc">Font: Inter. Weight 600/500 heading · 400 body. Optimized for high sunlight clarity via font-feature-settings ("cv02", "cv03", "cv04", "cv11", "tnum").</div>
+    <div class="tspec"><div style="font-size:28px;font-weight:600;letter-spacing:-.6px">Display heading</div><div class="tmeta"><div class="tml">size · weight</div><div class="tmv">28px · 600</div></div></div>
+    <div class="tspec"><div style="font-size:22px;font-weight:600;letter-spacing:-.4px">Section title</div><div class="tmeta"><div class="tml">size · weight</div><div class="tmv">22px · 600</div></div></div>
+    <div class="tspec"><div style="font-size:18px;font-weight:600;letter-spacing:-.3px">Card title</div><div class="tmeta"><div class="tml">size · weight</div><div class="tmv">18px · 600</div></div></div>
     <div class="tspec"><div style="font-size:15px;font-weight:500">List item title</div><div class="tmeta"><div class="tml">size · weight</div><div class="tmv">15px · 500</div></div></div>
     <div class="tspec"><div style="font-size:14px;font-weight:400">Body — descriptions, job notes, invoice items</div><div class="tmeta"><div class="tml">size · weight</div><div class="tmv">14px · 400</div></div></div>
-    <div class="tspec"><div style="font-size:12px;color:var(--text-muted)">Caption — timestamps, metadata, secondary info</div><div class="tmeta"><div class="tml">size · weight</div><div class="tmv">12px · 400</div></div></div>
-    <div class="tspec"><div style="font-size:10px;font-weight:500;color:var(--text-muted);letter-spacing:.06em;text-transform:uppercase">SECTION LABEL</div><div class="tmeta"><div class="tml">size · weight</div><div class="tmv">10px · 500 · caps</div></div></div>
-    <div class="tspec"><div><span class="badge b-ok">Verified</span>&nbsp;<span style="font-size:11px;color:var(--text-muted)">badges only</span></div><div class="tmeta"><div class="tml">size · weight</div><div class="tmv">9–10px · 500</div></div></div>
+    <div class="tspec"><div style="font-size:12px;color:var(--stone)">Caption — timestamps, metadata, secondary info</div><div class="tmeta"><div class="tml">size · weight</div><div class="tmv">12px · 400</div></div></div>
+    <div class="tspec"><div style="font-size:10px;font-weight:600;color:var(--stone);letter-spacing:.08em;text-transform:uppercase">SECTION LABEL</div><div class="tmeta"><div class="tml">size · weight</div><div class="tmv">10px · 600 · caps</div></div></div>
   </div>
 
-  <!-- SPACING -->
+  <!-- SPACING & RADIUS -->
   <div class="sec" id="spacing">
-    <div class="sec-title">Spacing</div>
-    <div class="sec-desc">Base unit 4px. Scale: 4 / 8 / 12 / 16 / 20 / 24 / 32 / 40 / 48 / 64px.</div>
-    <div style="background:var(--bg-elevated);border:.5px solid var(--border);border-radius:var(--r-md);padding:var(--sp4) var(--sp5)">
-      <div class="srow" style="border-bottom:.5px solid var(--border)"><span style="font-size:10px;font-family:var(--mono);color:var(--text-subtle);min-width:80px">Token</span><span style="font-size:10px;font-family:var(--mono);color:var(--text-subtle);min-width:36px">px</span><span style="font-size:10px;font-family:var(--mono);color:var(--text-subtle)">Visual</span></div>
-      <div class="srow"><span class="stok">--sp1</span><span class="spx">4px</span><div class="sblk" style="width:4px;height:14px"></div></div>
-      <div class="srow"><span class="stok">--sp2</span><span class="spx">8px</span><div class="sblk" style="width:8px;height:14px"></div></div>
-      <div class="srow"><span class="stok">--sp3</span><span class="spx">12px</span><div class="sblk" style="width:12px;height:14px"></div></div>
-      <div class="srow"><span class="stok">--sp4</span><span class="spx">16px</span><div class="sblk" style="width:16px;height:14px"></div></div>
-      <div class="srow"><span class="stok">--sp5</span><span class="spx">20px</span><div class="sblk" style="width:20px;height:14px"></div></div>
-      <div class="srow"><span class="stok">--sp6</span><span class="spx">24px</span><div class="sblk" style="width:24px;height:14px"></div></div>
-      <div class="srow"><span class="stok">--sp8</span><span class="spx">32px</span><div class="sblk" style="width:32px;height:14px"></div></div>
-      <div class="srow"><span class="stok">--sp10</span><span class="spx">40px</span><div class="sblk" style="width:40px;height:14px"></div></div>
-      <div class="srow"><span class="stok">--sp12</span><span class="spx">48px</span><div class="sblk" style="width:48px;height:14px"></div></div>
-      <div class="srow" style="border:none"><span class="stok">--sp16</span><span class="spx">64px</span><div class="sblk" style="width:64px;height:14px"></div></div>
-    </div>
-  </div>
-
-  <!-- RADIUS -->
-  <div class="sec" id="radius">
-    <div class="sec-title">Border radius</div>
-    <div class="sec-desc">Card: 12px. Element: 8px. Badge/chip: 20px. Avatar: 9999px.</div>
+    <div class="sec-title">Spacing & Squircle Radius</div>
+    <div class="sec-desc">Base unit 4px. Card: 14px. Element: 10px. Pill/Badge: 999px. Touch target $\ge$ 44px (48px for field-facing controls).</div>
     <div class="rgrid">
-      <div class="ritem"><div class="rblock" style="border-radius:0"></div><div class="rlabel">0<br>none</div></div>
-      <div class="ritem"><div class="rblock" style="border-radius:4px"></div><div class="rlabel">4px<br>xs</div></div>
-      <div class="ritem"><div class="rblock" style="border-radius:var(--r-sm)"></div><div class="rlabel">8px<br>--r-sm<br><span style="color:var(--cta)">elements</span></div></div>
-      <div class="ritem"><div class="rblock" style="border-radius:var(--r-md)"></div><div class="rlabel">12px<br>--r-md<br><span style="color:var(--cta)">cards</span></div></div>
-      <div class="ritem"><div class="rblock" style="border-radius:var(--r-lg)"></div><div class="rlabel">16px<br>--r-lg<br>modals</div></div>
-      <div class="ritem"><div class="rblock" style="border-radius:var(--r-pill)"></div><div class="rlabel">20px<br>--r-pill<br><span style="color:var(--cta)">badges</span></div></div>
-      <div class="ritem"><div class="rblock" style="border-radius:var(--r-full)"></div><div class="rlabel">9999px<br>--r-full<br>avatars</div></div>
+      <div class="ritem"><div class="rblock" style="border-radius:var(--r-sm)"></div><div class="rlabel">10px<br>--r-sm<br><span style="color:var(--cta)">elements</span></div></div>
+      <div class="ritem"><div class="rblock" style="border-radius:var(--r-md)"></div><div class="rlabel">14px<br>--r-md<br><span style="color:var(--cta)">cards</span></div></div>
+      <div class="ritem"><div class="rblock" style="border-radius:var(--r-lg)"></div><div class="rlabel">18px<br>--r-lg<br>modals</div></div>
+      <div class="ritem"><div class="rblock" style="border-radius:var(--r-pill)"></div><div class="rlabel">999px<br>--r-pill<br><span style="color:var(--cta)">badges</span></div></div>
     </div>
   </div>
 
   <!-- ICONS -->
   <div class="sec" id="icons">
     <div class="sec-title">Icons — MaterialCommunityIcons</div>
-    <div class="sec-desc">Library: <code style="font-family:var(--mono);font-size:12px;background:var(--bg-surface);padding:2px 6px;border-radius:4px">@react-native-vector-icons/MaterialCommunityIcons</code>. Chỉ dùng outline style. Không dùng emoji hoặc unicode ký tự thay icon. Click icon để copy tên.</div>
+    <div class="sec-desc">Outline style only from MCI. Never substitute emojis or unicode glyphs for system icons. Click an icon to copy its name.</div>
 
-    <div class="sub">Icon sizes</div>
-    <div style="background:var(--bg-elevated);border:.5px solid var(--border);border-radius:var(--r-md);padding:var(--sp5);margin-bottom:var(--sp8)">
-      <div class="isize-row">
-        <span class="isize-label">16px</span>
-        <div style="display:flex;align-items:center;gap:var(--sp4)">
-          <span class="mdi" style="color:var(--text-muted)"><svg width="16" height="16" viewBox="0 0 24 24"><use href="#i-bell"/></svg></span>
-          <span class="mdi" style="color:var(--text-muted)"><svg width="16" height="16" viewBox="0 0 24 24"><use href="#i-marker"/></svg></span>
-          <span class="mdi" style="color:var(--text-muted)"><svg width="16" height="16" viewBox="0 0 24 24"><use href="#i-clock"/></svg></span>
-          <span style="font-size:11px;color:var(--text-subtle)">Badges, labels, inline</span>
-        </div>
-      </div>
-      <div class="isize-row">
-        <span class="isize-label">20px</span>
-        <div style="display:flex;align-items:center;gap:var(--sp4)">
-          <span class="mdi" style="color:var(--text-primary)"><svg width="20" height="20" viewBox="0 0 24 24"><use href="#i-bell"/></svg></span>
-          <span class="mdi" style="color:var(--text-primary)"><svg width="20" height="20" viewBox="0 0 24 24"><use href="#i-marker"/></svg></span>
-          <span class="mdi" style="color:var(--text-primary)"><svg width="20" height="20" viewBox="0 0 24 24"><use href="#i-clock"/></svg></span>
-          <span style="font-size:11px;color:var(--text-subtle)">List items, form labels</span>
-        </div>
-      </div>
-      <div class="isize-row">
-        <span class="isize-label">24px</span>
-        <div style="display:flex;align-items:center;gap:var(--sp4)">
-          <span class="mdi" style="color:var(--text-primary)"><svg width="24" height="24" viewBox="0 0 24 24"><use href="#i-bell"/></svg></span>
-          <span class="mdi" style="color:var(--text-primary)"><svg width="24" height="24" viewBox="0 0 24 24"><use href="#i-marker"/></svg></span>
-          <span class="mdi" style="color:var(--text-primary)"><svg width="24" height="24" viewBox="0 0 24 24"><use href="#i-clock"/></svg></span>
-          <span style="font-size:11px;color:var(--text-subtle)">Tab bar, action buttons (default)</span>
-        </div>
-      </div>
-      <div class="isize-row" style="border:none">
-        <span class="isize-label">32px</span>
-        <div style="display:flex;align-items:center;gap:var(--sp4)">
-          <span class="mdi" style="color:var(--cta)"><svg width="32" height="32" viewBox="0 0 24 24"><use href="#i-bell"/></svg></span>
-          <span class="mdi" style="color:var(--cta)"><svg width="32" height="32" viewBox="0 0 24 24"><use href="#i-marker"/></svg></span>
-          <span class="mdi" style="color:var(--cta)"><svg width="32" height="32" viewBox="0 0 24 24"><use href="#i-clock"/></svg></span>
-          <span style="font-size:11px;color:var(--text-subtle)">Card icons, section headers</span>
-        </div>
-      </div>
-    </div>
-
-    <div class="sub">Icon usage — app screens</div>
-    <div style="background:var(--bg-elevated);border:.5px solid var(--border);border-radius:var(--r-md);overflow:hidden;margin-bottom:var(--sp8)">
-      <table class="utable">
-        <thead><tr><th>Icon</th><th>MCI name</th><th>Screen / context</th><th>Color</th></tr></thead>
-        <tbody>
-          <tr><td><span class="mdi" style="color:var(--cta)"><svg width="22" height="22" viewBox="0 0 24 24"><use href="#i-navigate"/></svg></span></td><td class="rn">navigation</td><td>Start Navigation button, map heading</td><td class="sc">--cta</td></tr>
-          <tr><td><span class="mdi" style="color:var(--text-primary)"><svg width="22" height="22" viewBox="0 0 24 24"><use href="#i-marker"/></svg></span></td><td class="rn">map-marker</td><td>Job address, suburb label</td><td class="sc">--text-muted</td></tr>
-          <tr><td><span class="mdi" style="color:var(--info)"><svg width="22" height="22" viewBox="0 0 24 24"><use href="#i-phone"/></svg></span></td><td class="rn">phone</td><td>Call customer button</td><td class="sc">--info</td></tr>
-          <tr><td><span class="mdi" style="color:var(--info)"><svg width="22" height="22" viewBox="0 0 24 24"><use href="#i-message"/></svg></span></td><td class="rn">message-text</td><td>SMS customer button</td><td class="sc">--info</td></tr>
-          <tr><td><span class="mdi" style="color:var(--warning)"><svg width="22" height="22" viewBox="0 0 24 24"><use href="#i-bell"/></svg></span></td><td class="rn">bell</td><td>Notifications tab, unread indicator</td><td class="sc">--warning (unread)</td></tr>
-          <tr><td><span class="mdi" style="color:var(--text-primary)"><svg width="22" height="22" viewBox="0 0 24 24"><use href="#i-file"/></svg></span></td><td class="rn">file-document</td><td>Invoice, document card</td><td class="sc">--text-primary</td></tr>
-          <tr><td><span class="mdi" style="color:var(--success)"><svg width="22" height="22" viewBox="0 0 24 24"><use href="#i-dollar"/></svg></span></td><td class="rn">currency-usd</td><td>Earnings, payment received</td><td class="sc">--success</td></tr>
-          <tr><td><span class="mdi" style="color:var(--success)"><svg width="22" height="22" viewBox="0 0 24 24"><use href="#i-check-circle"/></svg></span></td><td class="rn">check-circle</td><td>Verified status, job complete</td><td class="sc">--success</td></tr>
-          <tr><td><span class="mdi" style="color:var(--warning)"><svg width="22" height="22" viewBox="0 0 24 24"><use href="#i-alert"/></svg></span></td><td class="rn">alert-circle</td><td>Document expiring, warning</td><td class="sc">--warning</td></tr>
-          <tr><td><span class="mdi" style="color:var(--danger)"><svg width="22" height="22" viewBox="0 0 24 24"><use href="#i-close-circle"/></svg></span></td><td class="rn">close-circle</td><td>Expired document, error state</td><td class="sc">--danger</td></tr>
-          <tr><td><span class="mdi" style="color:var(--stone)"><svg width="22" height="22" viewBox="0 0 24 24"><use href="#i-wifi-off"/></svg></span></td><td class="rn">wifi-off</td><td>Offline mode indicator</td><td class="sc">--warning / --stone</td></tr>
-          <tr><td><span class="mdi" style="color:var(--success)"><svg width="22" height="22" viewBox="0 0 24 24"><use href="#i-wifi"/></svg></span></td><td class="rn">wifi</td><td>Online indicator</td><td class="sc">--success</td></tr>
-          <tr><td><span class="mdi" style="color:var(--cta)"><svg width="22" height="22" viewBox="0 0 24 24"><use href="#i-plus"/></svg></span></td><td class="rn">plus</td><td>New Job FAB button</td><td class="sc">--cta</td></tr>
-          <tr><td><span class="mdi" style="color:var(--text-primary)"><svg width="22" height="22" viewBox="0 0 24 24"><use href="#i-camera"/></svg></span></td><td class="rn">camera</td><td>Photo attachment, avatar change</td><td class="sc">--text-primary</td></tr>
-          <tr><td><span class="mdi" style="color:var(--text-primary)"><svg width="22" height="22" viewBox="0 0 24 24"><use href="#i-scan"/></svg></span></td><td class="rn">barcode-scan</td><td>Scan Invoice FAB</td><td class="sc">--text-primary</td></tr>
-          <tr><td><span class="mdi" style="color:var(--warning)"><svg width="22" height="22" viewBox="0 0 24 24"><use href="#i-star"/></svg></span></td><td class="rn">star</td><td>Rating display, reviews</td><td class="sc">--warning</td></tr>
-          <tr><td><span class="mdi" style="color:var(--text-muted)"><svg width="22" height="22" viewBox="0 0 24 24"><use href="#i-account"/></svg></span></td><td class="rn">account-circle</td><td>Profile tab, tradie avatar fallback</td><td class="sc">--text-muted</td></tr>
-          <tr><td><span class="mdi" style="color:var(--text-muted)"><svg width="22" height="22" viewBox="0 0 24 24"><use href="#i-pencil"/></svg></span></td><td class="rn">pencil</td><td>Edit profile, edit invoice item</td><td class="sc">--text-muted</td></tr>
-          <tr><td><span class="mdi" style="color:var(--danger)"><svg width="22" height="22" viewBox="0 0 24 24"><use href="#i-trash"/></svg></span></td><td class="rn">trash-can</td><td>Delete invoice item, remove doc</td><td class="sc">--danger</td></tr>
-          <tr><td><span class="mdi" style="color:var(--text-muted)"><svg width="22" height="22" viewBox="0 0 24 24"><use href="#i-chevron-r"/></svg></span></td><td class="rn">chevron-right</td><td>List item drill-down arrow</td><td class="sc">--text-muted</td></tr>
-          <tr><td><span class="mdi" style="color:var(--text-primary)"><svg width="22" height="22" viewBox="0 0 24 24"><use href="#i-arrow-l"/></svg></span></td><td class="rn">arrow-left</td><td>Back navigation</td><td class="sc">--text-primary</td></tr>
-          <tr><td><span class="mdi" style="color:var(--success)"><svg width="22" height="22" viewBox="0 0 24 24"><use href="#i-shield"/></svg></span></td><td class="rn">shield-check</td><td>Verified tradie badge, trust signal</td><td class="sc">--success</td></tr>
-          <tr><td><span class="mdi" style="color:var(--text-muted)"><svg width="22" height="22" viewBox="0 0 24 24"><use href="#i-clock"/></svg></span></td><td class="rn">clock-outline</td><td>ETA, job time, timestamps</td><td class="sc">--text-muted</td></tr>
-          <tr><td><span class="mdi" style="color:var(--text-primary)"><svg width="22" height="22" viewBox="0 0 24 24"><use href="#i-calendar"/></svg></span></td><td class="rn">calendar</td><td>Schedule screen tab</td><td class="sc">--text-primary</td></tr>
-          <tr><td><span class="mdi" style="color:var(--text-primary)"><svg width="22" height="22" viewBox="0 0 24 24"><use href="#i-home"/></svg></span></td><td class="rn">home</td><td>Dashboard tab bar</td><td class="sc">--text-primary (active: --cta)</td></tr>
-          <tr><td><span class="mdi" style="color:var(--text-primary)"><svg width="22" height="22" viewBox="0 0 24 24"><use href="#i-briefcase"/></svg></span></td><td class="rn">briefcase</td><td>Jobs tab bar</td><td class="sc">--text-primary</td></tr>
-          <tr><td><span class="mdi" style="color:var(--text-primary)"><svg width="22" height="22" viewBox="0 0 24 24"><use href="#i-receipt"/></svg></span></td><td class="rn">receipt</td><td>Invoice tab, GST summary line</td><td class="sc">--text-primary</td></tr>
-          <tr><td><span class="mdi" style="color:var(--text-muted)"><svg width="22" height="22" viewBox="0 0 24 24"><use href="#i-truck"/></svg></span></td><td class="rn">truck</td><td>Commute in progress, van icon on map</td><td class="sc">--cta (tracking)</td></tr>
-          <tr><td><span class="mdi" style="color:var(--cta)"><svg width="22" height="22" viewBox="0 0 24 24"><use href="#i-wrench"/></svg></span></td><td class="rn">wrench</td><td>Plumbing job type tag</td><td class="sc">trade-specific</td></tr>
-          <tr><td><span class="mdi" style="color:var(--warning)"><svg width="22" height="22" viewBox="0 0 24 24"><use href="#i-lightning"/></svg></span></td><td class="rn">lightning-bolt</td><td>Electrical job type tag</td><td class="sc">trade-specific</td></tr>
-          <tr><td><span class="mdi" style="color:var(--stone)"><svg width="22" height="22" viewBox="0 0 24 24"><use href="#i-hammer"/></svg></span></td><td class="rn">hammer</td><td>Carpentry job type tag</td><td class="sc">trade-specific</td></tr>
-          <tr><td><span class="mdi" style="color:var(--info)"><svg width="22" height="22" viewBox="0 0 24 24"><use href="#i-water"/></svg></span></td><td class="rn">water-pump</td><td>Plumbing specialisation chip</td><td class="sc">trade-specific</td></tr>
-          <tr><td><span class="mdi" style="color:var(--text-muted)"><svg width="22" height="22" viewBox="0 0 24 24"><use href="#i-map"/></svg></span></td><td class="rn">map</td><td>Service area map control</td><td class="sc">--text-muted</td></tr>
-          <tr><td><span class="mdi" style="color:var(--text-muted)"><svg width="22" height="22" viewBox="0 0 24 24"><use href="#i-settings"/></svg></span></td><td class="rn">cog-outline</td><td>Settings, edit profile menu</td><td class="sc">--text-muted</td></tr>
-          <tr><td><span class="mdi" style="color:var(--success)"><svg width="22" height="22" viewBox="0 0 24 24"><use href="#i-xero"/></svg></span></td><td class="rn">alpha-x-circle (Xero logo)</td><td>Xero sync badge</td><td class="sc">--success (synced)</td></tr>
-        </tbody>
-      </table>
-    </div>
-
-    <div class="sub">Icon grid — all app icons</div>
     <div class="igrid">
-      <div class="icard" onclick="copyText('navigation',this)"><span class="mdi" style="color:var(--text-primary)"><svg width="28" height="28" viewBox="0 0 24 24"><use href="#i-navigate"/></svg></span><span class="iname">navigation</span></div>
-      <div class="icard" onclick="copyText('map-marker',this)"><span class="mdi" style="color:var(--text-primary)"><svg width="28" height="28" viewBox="0 0 24 24"><use href="#i-marker"/></svg></span><span class="iname">map-marker</span></div>
-      <div class="icard" onclick="copyText('phone',this)"><span class="mdi" style="color:var(--text-primary)"><svg width="28" height="28" viewBox="0 0 24 24"><use href="#i-phone"/></svg></span><span class="iname">phone</span></div>
-      <div class="icard" onclick="copyText('message-text',this)"><span class="mdi" style="color:var(--text-primary)"><svg width="28" height="28" viewBox="0 0 24 24"><use href="#i-message"/></svg></span><span class="iname">message-text</span></div>
-      <div class="icard" onclick="copyText('bell',this)"><span class="mdi" style="color:var(--text-primary)"><svg width="28" height="28" viewBox="0 0 24 24"><use href="#i-bell"/></svg></span><span class="iname">bell</span></div>
-      <div class="icard" onclick="copyText('file-document',this)"><span class="mdi" style="color:var(--text-primary)"><svg width="28" height="28" viewBox="0 0 24 24"><use href="#i-file"/></svg></span><span class="iname">file-document</span></div>
-      <div class="icard" onclick="copyText('currency-usd',this)"><span class="mdi" style="color:var(--text-primary)"><svg width="28" height="28" viewBox="0 0 24 24"><use href="#i-dollar"/></svg></span><span class="iname">currency-usd</span></div>
-      <div class="icard" onclick="copyText('check-circle',this)"><span class="mdi" style="color:var(--text-primary)"><svg width="28" height="28" viewBox="0 0 24 24"><use href="#i-check-circle"/></svg></span><span class="iname">check-circle</span></div>
-      <div class="icard" onclick="copyText('alert-circle',this)"><span class="mdi" style="color:var(--text-primary)"><svg width="28" height="28" viewBox="0 0 24 24"><use href="#i-alert"/></svg></span><span class="iname">alert-circle</span></div>
-      <div class="icard" onclick="copyText('close-circle',this)"><span class="mdi" style="color:var(--text-primary)"><svg width="28" height="28" viewBox="0 0 24 24"><use href="#i-close-circle"/></svg></span><span class="iname">close-circle</span></div>
-      <div class="icard" onclick="copyText('information',this)"><span class="mdi" style="color:var(--text-primary)"><svg width="28" height="28" viewBox="0 0 24 24"><use href="#i-info"/></svg></span><span class="iname">information</span></div>
-      <div class="icard" onclick="copyText('wifi-off',this)"><span class="mdi" style="color:var(--text-primary)"><svg width="28" height="28" viewBox="0 0 24 24"><use href="#i-wifi-off"/></svg></span><span class="iname">wifi-off</span></div>
-      <div class="icard" onclick="copyText('wifi',this)"><span class="mdi" style="color:var(--text-primary)"><svg width="28" height="28" viewBox="0 0 24 24"><use href="#i-wifi"/></svg></span><span class="iname">wifi</span></div>
-      <div class="icard" onclick="copyText('plus',this)"><span class="mdi" style="color:var(--text-primary)"><svg width="28" height="28" viewBox="0 0 24 24"><use href="#i-plus"/></svg></span><span class="iname">plus</span></div>
-      <div class="icard" onclick="copyText('camera',this)"><span class="mdi" style="color:var(--text-primary)"><svg width="28" height="28" viewBox="0 0 24 24"><use href="#i-camera"/></svg></span><span class="iname">camera</span></div>
-      <div class="icard" onclick="copyText('barcode-scan',this)"><span class="mdi" style="color:var(--text-primary)"><svg width="28" height="28" viewBox="0 0 24 24"><use href="#i-scan"/></svg></span><span class="iname">barcode-scan</span></div>
-      <div class="icard" onclick="copyText('star',this)"><span class="mdi" style="color:var(--text-primary)"><svg width="28" height="28" viewBox="0 0 24 24"><use href="#i-star"/></svg></span><span class="iname">star</span></div>
-      <div class="icard" onclick="copyText('account-circle',this)"><span class="mdi" style="color:var(--text-primary)"><svg width="28" height="28" viewBox="0 0 24 24"><use href="#i-account"/></svg></span><span class="iname">account-circle</span></div>
-      <div class="icard" onclick="copyText('pencil',this)"><span class="mdi" style="color:var(--text-primary)"><svg width="28" height="28" viewBox="0 0 24 24"><use href="#i-pencil"/></svg></span><span class="iname">pencil</span></div>
-      <div class="icard" onclick="copyText('trash-can',this)"><span class="mdi" style="color:var(--text-primary)"><svg width="28" height="28" viewBox="0 0 24 24"><use href="#i-trash"/></svg></span><span class="iname">trash-can</span></div>
-      <div class="icard" onclick="copyText('chevron-right',this)"><span class="mdi" style="color:var(--text-primary)"><svg width="28" height="28" viewBox="0 0 24 24"><use href="#i-chevron-r"/></svg></span><span class="iname">chevron-right</span></div>
-      <div class="icard" onclick="copyText('arrow-left',this)"><span class="mdi" style="color:var(--text-primary)"><svg width="28" height="28" viewBox="0 0 24 24"><use href="#i-arrow-l"/></svg></span><span class="iname">arrow-left</span></div>
-      <div class="icard" onclick="copyText('shield-check',this)"><span class="mdi" style="color:var(--text-primary)"><svg width="28" height="28" viewBox="0 0 24 24"><use href="#i-shield"/></svg></span><span class="iname">shield-check</span></div>
-      <div class="icard" onclick="copyText('clock-outline',this)"><span class="mdi" style="color:var(--text-primary)"><svg width="28" height="28" viewBox="0 0 24 24"><use href="#i-clock"/></svg></span><span class="iname">clock-outline</span></div>
-      <div class="icard" onclick="copyText('calendar',this)"><span class="mdi" style="color:var(--text-primary)"><svg width="28" height="28" viewBox="0 0 24 24"><use href="#i-calendar"/></svg></span><span class="iname">calendar</span></div>
-      <div class="icard" onclick="copyText('home',this)"><span class="mdi" style="color:var(--text-primary)"><svg width="28" height="28" viewBox="0 0 24 24"><use href="#i-home"/></svg></span><span class="iname">home</span></div>
-      <div class="icard" onclick="copyText('briefcase',this)"><span class="mdi" style="color:var(--text-primary)"><svg width="28" height="28" viewBox="0 0 24 24"><use href="#i-briefcase"/></svg></span><span class="iname">briefcase</span></div>
-      <div class="icard" onclick="copyText('receipt',this)"><span class="mdi" style="color:var(--text-primary)"><svg width="28" height="28" viewBox="0 0 24 24"><use href="#i-receipt"/></svg></span><span class="iname">receipt</span></div>
-      <div class="icard" onclick="copyText('truck',this)"><span class="mdi" style="color:var(--text-primary)"><svg width="28" height="28" viewBox="0 0 24 24"><use href="#i-truck"/></svg></span><span class="iname">truck</span></div>
-      <div class="icard" onclick="copyText('wrench',this)"><span class="mdi" style="color:var(--text-primary)"><svg width="28" height="28" viewBox="0 0 24 24"><use href="#i-wrench"/></svg></span><span class="iname">wrench</span></div>
-      <div class="icard" onclick="copyText('lightning-bolt',this)"><span class="mdi" style="color:var(--text-primary)"><svg width="28" height="28" viewBox="0 0 24 24"><use href="#i-lightning"/></svg></span><span class="iname">lightning-bolt</span></div>
-      <div class="icard" onclick="copyText('hammer',this)"><span class="mdi" style="color:var(--text-primary)"><svg width="28" height="28" viewBox="0 0 24 24"><use href="#i-hammer"/></svg></span><span class="iname">hammer</span></div>
-      <div class="icard" onclick="copyText('tools',this)"><span class="mdi" style="color:var(--text-primary)"><svg width="28" height="28" viewBox="0 0 24 24"><use href="#i-tools"/></svg></span><span class="iname">tools</span></div>
-      <div class="icard" onclick="copyText('water-pump',this)"><span class="mdi" style="color:var(--text-primary)"><svg width="28" height="28" viewBox="0 0 24 24"><use href="#i-water"/></svg></span><span class="iname">water-pump</span></div>
-      <div class="icard" onclick="copyText('account-hard-hat',this)"><span class="mdi" style="color:var(--text-primary)"><svg width="28" height="28" viewBox="0 0 24 24"><use href="#i-hardhat"/></svg></span><span class="iname">account-hard-hat</span></div>
-      <div class="icard" onclick="copyText('map',this)"><span class="mdi" style="color:var(--text-primary)"><svg width="28" height="28" viewBox="0 0 24 24"><use href="#i-map"/></svg></span><span class="iname">map</span></div>
-      <div class="icard" onclick="copyText('cog-outline',this)"><span class="mdi" style="color:var(--text-primary)"><svg width="28" height="28" viewBox="0 0 24 24"><use href="#i-settings"/></svg></span><span class="iname">cog-outline</span></div>
-    </div>
-
-    <div class="sub" style="margin-top:var(--sp6)">React Native usage</div>
-    <div class="code">
-<span class="cc">// Install</span>
-npm install @react-native-vector-icons/MaterialCommunityIcons
-
-<span class="cc">// Import</span>
-<span class="ck">import</span> Icon <span class="ck">from</span> <span class="cv">'@react-native-vector-icons/MaterialCommunityIcons'</span>;
-
-<span class="cc">// Usage — always pass size and color explicitly</span>
-&lt;Icon name=<span class="cv">"navigation"</span>     size={<span class="cv">24</span>} color={<span class="cv">"#2E6B45"</span>} /&gt;  <span class="cc">// CTA</span>
-&lt;Icon name=<span class="cv">"map-marker"</span>     size={<span class="cv">20</span>} color={<span class="cv">"#888888"</span>} /&gt;  <span class="cc">// muted</span>
-&lt;Icon name=<span class="cv">"check-circle"</span>   size={<span class="cv">16</span>} color={<span class="cv">"#639922"</span>} /&gt;  <span class="cc">// success</span>
-&lt;Icon name=<span class="cv">"alert-circle"</span>   size={<span class="cv">16</span>} color={<span class="cv">"#BA7517"</span>} /&gt;  <span class="cc">// warning</span>
-&lt;Icon name=<span class="cv">"close-circle"</span>   size={<span class="cv">16</span>} color={<span class="cv">"#E24B4A"</span>} /&gt;  <span class="cc">// danger</span>
-&lt;Icon name=<span class="cv">"wifi-off"</span>       size={<span class="cv">16</span>} color={<span class="cv">"#BA7517"</span>} /&gt;  <span class="cc">// offline</span>
-
-<span class="cc">// In a button — always center with flexbox</span>
-&lt;TouchableOpacity style={styles.btn}&gt;
-  &lt;Icon name=<span class="cv">"phone"</span> size={<span class="cv">20</span>} color=<span class="cv">"#FFFFFF"</span> /&gt;
-  &lt;Text style={styles.btnText}&gt;Call Customer&lt;/Text&gt;
-&lt;/TouchableOpacity&gt;
+      <div class="icard" onclick="copyText('navigation',this)"><span class="mdi"><svg width="24" height="24" viewBox="0 0 24 24"><use href="#i-navigate"/></svg></span><span class="iname">navigation</span></div>
+      <div class="icard" onclick="copyText('map-marker',this)"><span class="mdi"><svg width="24" height="24" viewBox="0 0 24 24"><use href="#i-marker"/></svg></span><span class="iname">map-marker</span></div>
+      <div class="icard" onclick="copyText('phone',this)"><span class="mdi"><svg width="24" height="24" viewBox="0 0 24 24"><use href="#i-phone"/></svg></span><span class="iname">phone</span></div>
+      <div class="icard" onclick="copyText('message-text',this)"><span class="mdi"><svg width="24" height="24" viewBox="0 0 24 24"><use href="#i-message"/></svg></span><span class="iname">message-text</span></div>
+      <div class="icard" onclick="copyText('bell',this)"><span class="mdi"><svg width="24" height="24" viewBox="0 0 24 24"><use href="#i-bell"/></svg></span><span class="iname">bell</span></div>
+      <div class="icard" onclick="copyText('file-document',this)"><span class="mdi"><svg width="24" height="24" viewBox="0 0 24 24"><use href="#i-file"/></svg></span><span class="iname">file-document</span></div>
+      <div class="icard" onclick="copyText('currency-usd',this)"><span class="mdi"><svg width="24" height="24" viewBox="0 0 24 24"><use href="#i-dollar"/></svg></span><span class="iname">currency-usd</span></div>
+      <div class="icard" onclick="copyText('check-circle',this)"><span class="mdi"><svg width="24" height="24" viewBox="0 0 24 24"><use href="#i-check-circle"/></svg></span><span class="iname">check-circle</span></div>
+      <div class="icard" onclick="copyText('alert-circle',this)"><span class="mdi"><svg width="24" height="24" viewBox="0 0 24 24"><use href="#i-alert"/></svg></span><span class="iname">alert-circle</span></div>
+      <div class="icard" onclick="copyText('wifi-off',this)"><span class="mdi"><svg width="24" height="24" viewBox="0 0 24 24"><use href="#i-wifi-off"/></svg></span><span class="iname">wifi-off</span></div>
+      <div class="icard" onclick="copyText('camera',this)"><span class="mdi"><svg width="24" height="24" viewBox="0 0 24 24"><use href="#i-camera"/></svg></span><span class="iname">camera</span></div>
+      <div class="icard" onclick="copyText('barcode-scan',this)"><span class="mdi"><svg width="24" height="24" viewBox="0 0 24 24"><use href="#i-scan"/></svg></span><span class="iname">barcode-scan</span></div>
+      <div class="icard" onclick="copyText('sync',this)"><span class="mdi"><svg width="24" height="24" viewBox="0 0 24 24"><use href="#i-sync"/></svg></span><span class="iname">sync</span></div>
+      <div class="icard" onclick="copyText('signature',this)"><span class="mdi"><svg width="24" height="24" viewBox="0 0 24 24"><use href="#i-signature"/></svg></span><span class="iname">signature</span></div>
+      <div class="icard" onclick="copyText('xero',this)"><span class="mdi"><svg width="24" height="24" viewBox="0 0 24 24"><use href="#i-xero"/></svg></span><span class="iname">xero</span></div>
     </div>
   </div>
 
   <!-- BUTTONS -->
   <div class="sec" id="buttons">
-    <div class="sec-title">Buttons</div>
-    <div class="sec-desc">Min height 44px. Icons từ MCI. Không dùng emoji trong button.</div>
-    <div class="sub">Variants — với MCI icon</div>
+    <div class="sec-title">Buttons (Synchronized $\ge 44\text{px}$)</div>
+    <div class="sec-desc">Every control has a minimum height of 44px (48px for field primary actions). Icons sourced from MaterialCommunityIcons outline.</div>
+    <div class="sub">Variants</div>
     <div class="demo">
-      <button class="btn btn-p"><span class="mdi" style="color:#fff"><svg width="18" height="18" viewBox="0 0 24 24"><use href="#i-navigate"/></svg></span> Start Navigation</button>
-      <button class="btn btn-s"><span class="mdi" style="color:var(--text-muted)"><svg width="18" height="18" viewBox="0 0 24 24"><use href="#i-file"/></svg></span> View Details</button>
-      <button class="btn btn-o"><span class="mdi" style="color:var(--cta)"><svg width="18" height="18" viewBox="0 0 24 24"><use href="#i-message"/></svg></span> Message</button>
-      <button class="btn btn-g"><span class="mdi" style="color:var(--text-muted)"><svg width="18" height="18" viewBox="0 0 24 24"><use href="#i-close-circle"/></svg></span> Cancel</button>
-    </div>
-    <div class="demo">
-      <button class="btn btn-d"><span class="mdi" style="color:#fff"><svg width="18" height="18" viewBox="0 0 24 24"><use href="#i-close-circle"/></svg></span> Cancel Booking</button>
-      <button class="btn btn-ok"><span class="mdi" style="color:#fff"><svg width="18" height="18" viewBox="0 0 24 24"><use href="#i-check-circle"/></svg></span> Accept Job</button>
-      <button class="btn btn-p"><span class="mdi" style="color:#fff"><svg width="18" height="18" viewBox="0 0 24 24"><use href="#i-dollar"/></svg></span> Collect Payment</button>
-    </div>
-    <div class="sub">FAB row (Dashboard)</div>
-    <div class="demo">
-      <button class="btn btn-p btn-sm"><span class="mdi" style="color:#fff"><svg width="16" height="16" viewBox="0 0 24 24"><use href="#i-plus"/></svg></span> New Job</button>
-      <button class="btn btn-s btn-sm"><span class="mdi" style="color:var(--text-muted)"><svg width="16" height="16" viewBox="0 0 24 24"><use href="#i-scan"/></svg></span> Scan Invoice</button>
-      <button class="btn btn-s btn-sm"><span class="mdi" style="color:var(--warning)"><svg width="16" height="16" viewBox="0 0 24 24"><use href="#i-wifi-off"/></svg></span> Offline Mode</button>
-    </div>
-    <div class="sub">Slide to Start</div>
-    <div class="demo">
-      <button class="slide">
-        <div class="thumb"><svg width="22" height="22" viewBox="0 0 24 24" fill="var(--cta)"><use href="#i-navigate"/></svg></div>
-        Slide to Start Commute
-      </button>
+      <button class="btn btn-p"><span class="mdi"><svg width="18" height="18" viewBox="0 0 24 24" fill="#fff"><use href="#i-navigate"/></svg></span> Start Navigation (48px)</button>
+      <button class="btn btn-s"><span class="mdi"><svg width="18" height="18" viewBox="0 0 24 24" fill="var(--stone)"><use href="#i-file"/></svg></span> View Details (44px)</button>
+      <button class="btn btn-o"><span class="mdi"><svg width="18" height="18" viewBox="0 0 24 24" fill="var(--cta)"><use href="#i-message"/></svg></span> Message</button>
+      <button class="btn btn-g"><span class="mdi"><svg width="18" height="18" viewBox="0 0 24 24" fill="var(--stone)"><use href="#i-close-circle"/></svg></span> Cancel</button>
+      <button class="btn btn-p btn-sm"><span class="mdi"><svg width="16" height="16" viewBox="0 0 24 24" fill="#fff"><use href="#i-plus"/></svg></span> Small Button (44px target)</button>
     </div>
   </div>
 
   <!-- BADGES -->
   <div class="sec" id="badges">
     <div class="sec-title">Badges</div>
-    <div class="sec-desc">Dùng MCI icon nhỏ (16px) thay emoji/dot khi có semantic meaning.</div>
-    <div class="sub">Document status</div>
+    <div class="sec-desc">Micro outline icons (12px) replace emojis and raw dots. Foreground text contrasts meet WCAG AA standards.</div>
     <div class="demo">
-      <span class="badge b-ok"><span class="mdi"><svg width="12" height="12" viewBox="0 0 24 24" fill="#639922"><use href="#i-check-circle"/></svg></span> Verified</span>
-      <span class="badge b-w"><span class="mdi"><svg width="12" height="12" viewBox="0 0 24 24" fill="#BA7517"><use href="#i-alert"/></svg></span> Expiring Soon</span>
-      <span class="badge b-d"><span class="mdi"><svg width="12" height="12" viewBox="0 0 24 24" fill="#E24B4A"><use href="#i-close-circle"/></svg></span> Expired</span>
-      <span class="badge b-i"><span class="mdi"><svg width="12" height="12" viewBox="0 0 24 24" fill="#378ADD"><use href="#i-info"/></svg></span> In Progress</span>
-      <span class="badge b-c"><span class="mdi"><svg width="12" height="12" viewBox="0 0 24 24" fill="#2E6B45"><use href="#i-check-circle"/></svg></span> Available Now</span>
-    </div>
-    <div class="sub">Connectivity</div>
-    <div class="demo">
-      <span class="badge b-ok"><span class="mdi"><svg width="12" height="12" viewBox="0 0 24 24" fill="#639922"><use href="#i-wifi"/></svg></span> Online</span>
-      <span class="badge b-w"><span class="mdi"><svg width="12" height="12" viewBox="0 0 24 24" fill="#BA7517"><use href="#i-wifi-off"/></svg></span> Offline</span>
-      <span class="badge b-n"><span class="mdi"><svg width="12" height="12" viewBox="0 0 24 24" fill="#5F5E5A"><use href="#i-clock"/></svg></span> Busy until 2PM</span>
-    </div>
-    <div class="sub">Trust signals (Public Profile)</div>
-    <div class="demo">
-      <span class="badge b-ok"><span class="mdi"><svg width="12" height="12" viewBox="0 0 24 24" fill="#639922"><use href="#i-shield"/></svg></span> Licensed</span>
-      <span class="badge b-ok"><span class="mdi"><svg width="12" height="12" viewBox="0 0 24 24" fill="#639922"><use href="#i-shield"/></svg></span> Insured</span>
-      <span class="badge b-ok"><span class="mdi"><svg width="12" height="12" viewBox="0 0 24 24" fill="#639922"><use href="#i-hardhat" /></svg></span> White Card</span>
-      <span class="badge b-i"><span class="mdi"><svg width="12" height="12" viewBox="0 0 24 24" fill="#378ADD"><use href="#i-star"/></svg></span> 4.4 Rating</span>
+      <span class="badge b-ok"><span class="mdi"><svg width="12" height="12" viewBox="0 0 24 24" fill="var(--success)"><use href="#i-check-circle"/></svg></span> Verified</span>
+      <span class="badge b-w"><span class="mdi"><svg width="12" height="12" viewBox="0 0 24 24" fill="var(--warning-text)"><use href="#i-alert"/></svg></span> Expiring Soon</span>
+      <span class="badge b-d"><span class="mdi"><svg width="12" height="12" viewBox="0 0 24 24" fill="var(--danger)"><use href="#i-close-circle"/></svg></span> Expired</span>
+      <span class="badge b-c"><span class="mdi"><svg width="12" height="12" viewBox="0 0 24 24" fill="var(--cta)"><use href="#i-wifi"/></svg></span> Online</span>
+      <span class="badge b-w"><span class="mdi"><svg width="12" height="12" viewBox="0 0 24 24" fill="var(--warning-text)"><use href="#i-wifi-off"/></svg></span> Offline Queue</span>
+      <span class="xero-badge"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><use href="#i-xero"/></svg> Xero Synced</span>
     </div>
   </div>
 
   <!-- CARDS -->
   <div class="sec" id="cards">
-    <div class="sec-title">Cards</div>
-    <div class="sec-desc">Icons thay thế emoji trong card header và list icons.</div>
-    <div class="sub">Next job card</div>
-    <div class="card" style="max-width:380px;border-left:3px solid var(--cta)">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:var(--sp3)">
+    <div class="sec-title">Cards & Field Workflows</div>
+    <div class="sec-desc">The Next Job card is the primary visual anchor on the tradie's dashboard (Rule ALWAYS).</div>
+    <div class="card" style="max-width:400px;border-left:4px solid var(--cta)">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
         <div>
-          <div style="font-size:10px;color:var(--text-muted);margin-bottom:3px;display:flex;align-items:center;gap:4px;text-transform:uppercase;letter-spacing:.05em">
-            <span class="mdi"><svg width="11" height="11" viewBox="0 0 24 24" fill="#888"><use href="#i-clock"/></svg></span> Next job · 9:30 AM
-          </div>
-          <div style="font-size:17px;font-weight:500">Hot water system repair</div>
-          <div style="font-size:13px;color:var(--text-muted);margin-top:3px;display:flex;align-items:center;gap:4px">
-            <span class="mdi"><svg width="13" height="13" viewBox="0 0 24 24" fill="#888"><use href="#i-marker"/></svg></span> 42 Churchill St, Paddington
+          <div style="font-size:10px;color:var(--stone);margin-bottom:3px;text-transform:uppercase;letter-spacing:.05em;font-weight:600">Next job · 9:30 AM</div>
+          <div style="font-size:16px;font-weight:600">Hot water system repair</div>
+          <div style="font-size:13px;color:var(--stone);margin-top:3px;display:flex;align-items:center;gap:4px">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="var(--stone)"><use href="#i-marker"/></svg> 42 Churchill St, Paddington
           </div>
         </div>
-        <span class="badge b-c" style="margin-top:2px"><span class="mdi"><svg width="11" height="11" viewBox="0 0 24 24" fill="#2E6B45"><use href="#i-dollar"/></svg></span> $380 est.</span>
+        <span class="badge b-c" style="font-weight:600">$380 est.</span>
       </div>
       <div style="display:flex;gap:var(--sp2);margin-top:var(--sp4)">
-        <button class="btn btn-p" style="flex:1;font-size:13px;min-height:40px;gap:6px">
-          <span class="mdi"><svg width="16" height="16" viewBox="0 0 24 24" fill="#fff"><use href="#i-navigate"/></svg></span> Start Navigation
+        <button class="btn btn-p" style="flex:1;font-size:13.5px;min-height:48px;gap:6px">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="#fff"><use href="#i-navigate"/></svg> Start Navigation
         </button>
-        <button class="btn btn-g" style="font-size:13px;min-height:40px;padding:0 var(--sp4)">Details</button>
+        <button class="btn btn-g" style="font-size:13.5px;min-height:48px;padding:0 var(--sp4)">Details</button>
       </div>
-    </div>
-    <div class="sub" style="margin-top:var(--sp6)">Stat boxes</div>
-    <div class="sg" style="max-width:480px">
-      <div class="sb"><div class="sl" style="display:flex;align-items:center;gap:4px"><span class="mdi"><svg width="12" height="12" viewBox="0 0 24 24" fill="#888"><use href="#i-briefcase"/></svg></span> Today's jobs</div><div class="sv">4</div><div class="ss">2 remaining</div></div>
-      <div class="sb"><div class="sl" style="display:flex;align-items:center;gap:4px"><span class="mdi"><svg width="12" height="12" viewBox="0 0 24 24" fill="#888"><use href="#i-clock"/></svg></span> Pending</div><div class="sv" style="color:var(--warning)">2</div><div class="ss">awaiting</div></div>
-      <div class="sb"><div class="sl" style="display:flex;align-items:center;gap:4px"><span class="mdi"><svg width="12" height="12" viewBox="0 0 24 24" fill="#888"><use href="#i-dollar"/></svg></span> Est. revenue</div><div class="sv">$840</div><div class="ss" style="color:var(--success)">↑ 12%</div></div>
     </div>
   </div>
 
-  <!-- FORMS -->
+  <!-- FORMS & INPUTS -->
   <div class="sec" id="forms">
-    <div class="sec-title">Forms</div>
-    <div class="sec-desc">Icons dùng cho input prefix (phone, ABN). Min height 44px.</div>
-    <div style="max-width:400px;display:grid;gap:var(--sp5)">
+    <div class="sec-title">Forms & Selection</div>
+    <div class="sec-desc">Touch target $\ge$ 44px. Persistent labels. Placeholders tuned for high sunlight contrast.</div>
+    <div style="max-width:420px;display:grid;gap:var(--sp4)">
       <div class="fg">
-        <label class="fl">Full name</label>
-        <input class="input" value="Jake Morrison">
+        <label class="fl">Customer full name</label>
+        <input class="input" value="Sarah Mitchell">
       </div>
       <div class="fg">
-        <label class="fl" style="display:flex;align-items:center;gap:4px"><span class="mdi"><svg width="14" height="14" viewBox="0 0 24 24" fill="#888"><use href="#i-phone"/></svg></span> Phone</label>
-        <input class="input" placeholder="+61 4XX XXX XXX">
-        <span class="fh">Australian mobile</span>
+        <label class="fl">Phone number (AU)</label>
+        <input class="input" value="+61 412 345 678">
       </div>
       <div class="fg">
-        <label class="fl" style="display:flex;align-items:center;gap:4px"><span class="mdi"><svg width="14" height="14" viewBox="0 0 24 24" fill="#639922"><use href="#i-shield"/></svg></span> ABN</label>
+        <label class="fl">ABN (Australian Business Number)</label>
         <input class="input input-ok" value="51 824 753 556">
-        <span class="fh" style="color:var(--success);display:flex;align-items:center;gap:4px"><span class="mdi"><svg width="12" height="12" viewBox="0 0 24 24" fill="#639922"><use href="#i-check-circle"/></svg></span> ABN verified via ATO</span>
-      </div>
-      <div class="fg">
-        <label class="fl" style="display:flex;align-items:center;gap:4px"><span class="mdi"><svg width="14" height="14" viewBox="0 0 24 24" fill="#E24B4A"><use href="#i-file"/></svg></span> Trade licence</label>
-        <input class="input input-err" placeholder="QLD-XXXX-XXXX">
-        <span class="ferr" style="display:flex;align-items:center;gap:4px"><span class="mdi"><svg width="12" height="12" viewBox="0 0 24 24" fill="#E24B4A"><use href="#i-alert"/></svg></span> Licence format invalid for QLD</span>
-      </div>
-      <div class="fg">
-        <label class="fl">Trade type</label>
-        <select class="sel"><option>Plumber</option><option>Electrician</option><option>Carpenter</option></select>
-      </div>
-      <div>
-        <div class="fl" style="margin-bottom:var(--sp3)">Availability</div>
-        <div style="display:grid;gap:var(--sp3)">
-          <div class="twrap"><label class="tog"><input type="checkbox" checked><div class="ttrack"></div><div class="tthumb"></div></label><div><div class="tlabel">Emergency callouts</div><div class="thint">Urgent same-day jobs</div></div></div>
-          <div class="twrap"><label class="tog"><input type="checkbox"><div class="ttrack"></div><div class="tthumb"></div></label><div><div class="tlabel">Weekend availability</div><div class="thint">Saturday and Sunday</div></div></div>
-          <div class="twrap"><label class="tog"><input type="checkbox" checked><div class="ttrack"></div><div class="tthumb"></div></label><div><div class="tlabel">After hours</div><div class="thint">After 5pm weekdays</div></div></div>
-        </div>
+        <span class="fh" style="color:var(--success)">✓ ABN verified via ATO Registry</span>
       </div>
     </div>
   </div>
 
   <!-- CHIPS -->
   <div class="sec" id="chips">
-    <div class="sec-title">Chips</div>
-    <div class="sec-desc">Multi-select trade specialties. Icons MCI nhỏ trong chip.</div>
-    <div class="sub">Trade specialties</div>
+    <div class="sec-title">Trade Chips ($\ge 44\text{px}$ Hit Box)</div>
     <div class="demo">
-      <span class="chip on" onclick="toggleChip(this)"><span class="mdi"><svg width="14" height="14" viewBox="0 0 24 24" fill="#fff"><use href="#i-wrench"/></svg></span> Plumbing</span>
-      <span class="chip on" onclick="toggleChip(this)"><span class="mdi"><svg width="14" height="14" viewBox="0 0 24 24" fill="#fff"><use href="#i-water"/></svg></span> Gas fitting</span>
-      <span class="chip" onclick="toggleChip(this)"><span class="mdi"><svg width="14" height="14" viewBox="0 0 24 24" fill="#888"><use href="#i-lightning"/></svg></span> Electrical</span>
-      <span class="chip" onclick="toggleChip(this)"><span class="mdi"><svg width="14" height="14" viewBox="0 0 24 24" fill="#888"><use href="#i-hammer"/></svg></span> Carpentry</span>
-      <span class="chip" onclick="toggleChip(this)"><span class="mdi"><svg width="14" height="14" viewBox="0 0 24 24" fill="#888"><use href="#i-tools"/></svg></span> General</span>
+      <span class="chip on" onclick="toggleChip(this)"><svg width="15" height="15" viewBox="0 0 24 24" fill="#fff"><use href="#i-wrench"/></svg> Plumbing</span>
+      <span class="chip on" onclick="toggleChip(this)"><svg width="15" height="15" viewBox="0 0 24 24" fill="#fff"><use href="#i-water"/></svg> Gas fitting</span>
+      <span class="chip" onclick="toggleChip(this)"><svg width="15" height="15" viewBox="0 0 24 24" fill="var(--stone)"><use href="#i-lightning"/></svg> Electrical</span>
+      <span class="chip" onclick="toggleChip(this)"><svg width="15" height="15" viewBox="0 0 24 24" fill="var(--stone)"><use href="#i-hammer"/></svg> Carpentry</span>
     </div>
   </div>
 
   <!-- LIST ITEMS -->
   <div class="sec" id="lists">
-    <div class="sec-title">List items</div>
-    <div class="sec-desc">Icon trong liico thay emoji. Màu icon theo trade type.</div>
+    <div class="sec-title">List Items</div>
     <div style="max-width:480px">
       <div class="li">
-        <div class="liico"><svg width="22" height="22" viewBox="0 0 24 24" fill="#2E6B45"><use href="#i-wrench"/></svg></div>
-        <div class="libody"><div class="lit">Bathroom tap replacement</div><div class="lis" style="display:flex;align-items:center;gap:3px"><svg width="11" height="11" viewBox="0 0 24 24" fill="#888"><use href="#i-marker"/></svg> Newstead · Sarah Chen</div></div>
-        <div class="lir"><div class="lia">$220</div><div class="litm" style="display:flex;align-items:center;gap:2px;justify-content:flex-end"><svg width="10" height="10" viewBox="0 0 24 24" fill="#aaa"><use href="#i-clock"/></svg> 11:00 AM</div></div>
+        <div class="liico"><svg width="22" height="22" viewBox="0 0 24 24" fill="var(--cta)"><use href="#i-wrench"/></svg></div>
+        <div class="libody"><div class="lit">Kitchen tap replacement</div><div class="lis">Sarah Mitchell · Newstead</div></div>
+        <div class="lir"><div class="lia">$220</div><div class="litm">11:00 AM</div></div>
       </div>
       <div class="li">
-        <div class="liico" style="background:var(--warning-pale)"><svg width="22" height="22" viewBox="0 0 24 24" fill="#BA7517"><use href="#i-lightning"/></svg></div>
-        <div class="libody"><div class="lit">Switchboard upgrade</div><div class="lis" style="display:flex;align-items:center;gap:3px"><svg width="11" height="11" viewBox="0 0 24 24" fill="#888"><use href="#i-marker"/></svg> Fortitude Valley · Tom Wu</div></div>
-        <div class="lir"><div class="lia" style="color:var(--text-muted)">$580</div><span class="badge b-w" style="font-size:9px;padding:2px 7px">2:00 PM</span></div>
-      </div>
-      <div class="li" style="opacity:.45">
-        <div class="liico" style="background:var(--bg-surface)"><svg width="22" height="22" viewBox="0 0 24 24" fill="#888"><use href="#i-hammer"/></svg></div>
-        <div class="libody"><div class="lit">Door hinge repair</div><div class="lis" style="display:flex;align-items:center;gap:3px"><svg width="11" height="11" viewBox="0 0 24 24" fill="#888"><use href="#i-marker"/></svg> West End · Mike Johnson</div></div>
-        <div class="lir"><div class="lia" style="color:var(--text-muted)">$95</div><div class="litm">4:30 PM</div></div>
+        <div class="liico" style="background:var(--warning-pale)"><svg width="22" height="22" viewBox="0 0 24 24" fill="var(--warning)"><use href="#i-lightning"/></svg></div>
+        <div class="libody"><div class="lit">Switchboard inspection</div><div class="lis">James Wilson · Valley</div></div>
+        <div class="lir"><div class="lia">$420</div><span class="badge b-w" style="font-size:9px">2:00 PM</span></div>
       </div>
     </div>
   </div>
 
-  <!-- AVATARS -->
+  <!-- AVATARS (CLEAN FOREST GREEN & NEUTRAL PALETTE) -->
   <div class="sec" id="avatars">
-    <div class="sec-title">Avatars</div>
-    <div class="sec-desc">Initials 2 chữ. Sizes: 28 / 40 / 56px. Dùng account-circle icon khi không có initials.</div>
-    <div class="demo" style="align-items:flex-end;gap:var(--sp6)">
-      <div style="text-align:center"><div class="av av-sm" style="margin:0 auto var(--sp2)">JM</div><div style="font-size:10px;color:var(--text-muted)">28px</div></div>
-      <div style="text-align:center"><div class="av" style="margin:0 auto var(--sp2)">JM</div><div style="font-size:10px;color:var(--text-muted)">40px</div></div>
-      <div style="text-align:center"><div class="av av-lg" style="margin:0 auto var(--sp2)">JM</div><div style="font-size:10px;color:var(--text-muted)">56px</div></div>
-      <div style="text-align:center"><div class="av av-lg" style="background:var(--stone-pale);color:var(--stone);margin:0 auto var(--sp2);display:flex;align-items:center;justify-content:center"><svg width="28" height="28" viewBox="0 0 24 24" fill="#5F5E5A"><use href="#i-account"/></svg></div><div style="font-size:10px;color:var(--text-muted)">no photo</div></div>
+    <div class="sec-title">Avatars (Forest Green Supersedes Rust)</div>
+    <div class="demo" style="gap:var(--sp4);align-items:center">
+      <div class="av av-sm">JM</div>
+      <div class="av">JM</div>
+      <div class="av av-lg">JM</div>
+      <div class="av av-lg" style="background:var(--stone-pale);color:var(--stone)"><svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><use href="#i-account"/></svg></div>
     </div>
   </div>
 
   <!-- NOTIFICATIONS -->
   <div class="sec" id="notifs">
     <div class="sec-title">Notifications</div>
-    <div class="sec-desc">Icons xác định loại notification. Unread: cta bg. Read: white bg.</div>
     <div style="max-width:480px">
       <div class="notif unread">
-        <span class="mdi" style="margin-top:2px;flex-shrink:0"><svg width="18" height="18" viewBox="0 0 24 24" fill="#2E6B45"><use href="#i-briefcase"/></svg></span>
-        <div class="nbody"><div class="nt">New job assigned — Paddington</div><div class="ns">Hot water repair · $380 est. · 9:30 AM tomorrow</div><div style="display:flex;gap:var(--sp2);margin-top:var(--sp3)"><button class="btn btn-p btn-sm"><svg width="13" height="13" viewBox="0 0 24 24" fill="#fff"><use href="#i-check-circle"/></svg> Accept</button><button class="btn btn-g btn-sm">View details</button></div></div>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="var(--cta)"><use href="#i-briefcase"/></svg>
+        <div class="nbody"><div class="nt">New job assigned — Paddington</div><div class="ns">Hot water valve · $380 est. · 9:30 AM tomorrow</div></div>
         <div class="ntm">2m ago</div>
       </div>
-      <div class="notif unread">
-        <span class="mdi" style="margin-top:2px;flex-shrink:0"><svg width="18" height="18" viewBox="0 0 24 24" fill="#639922"><use href="#i-dollar"/></svg></span>
-        <div class="nbody"><div class="nt">Payment received — $220.00</div><div class="ns">Bathroom tap replacement · Sarah Chen</div></div>
+      <div class="notif">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="var(--success)"><use href="#i-dollar"/></svg>
+        <div class="nbody"><div class="nt">Payment received — $220.00</div><div class="ns">Kitchen tap replacement · Sarah Mitchell</div></div>
         <div class="ntm">1h ago</div>
-      </div>
-      <div class="notif">
-        <span class="mdi" style="margin-top:2px;flex-shrink:0"><svg width="18" height="18" viewBox="0 0 24 24" fill="#BA7517"><use href="#i-alert"/></svg></span>
-        <div class="nbody"><div class="nt">White Card expires in 28 days</div><div class="ns">Renew before 22 June 2026 to keep receiving jobs</div></div>
-        <div class="ntm">3h ago</div>
-      </div>
-      <div class="notif">
-        <span class="mdi" style="margin-top:2px;flex-shrink:0"><svg width="18" height="18" viewBox="0 0 24 24" fill="#BA7517"><use href="#i-star"/></svg></span>
-        <div class="nbody"><div class="nt">New 5-star review from Tom Wu</div><div class="ns">"Jake was on time and fixed the issue fast."</div></div>
-        <div class="ntm">Yesterday</div>
-      </div>
-      <div class="notif">
-        <span class="mdi" style="margin-top:2px;flex-shrink:0"><svg width="18" height="18" viewBox="0 0 24 24" fill="#888"><use href="#i-wifi-off"/></svg></span>
-        <div class="nbody"><div class="nt">Back online — syncing 3 items</div><div class="ns">Invoice #0042, 2 photos queued</div></div>
-        <div class="ntm">Just now</div>
       </div>
     </div>
   </div>
 
-  <!-- TOKENS -->
+  <!-- INTERACTIVE PATTERNS (FULLY WIRED JAVASCRIPT) -->
+  <section class="sec" id="navigation">
+    <h2 class="sec-title">Navigation & Disclosure</h2>
+    <div class="ds-grid">
+      <article class="ds-card">
+        <h3>Job detail tabs (Interactive Panel Switch)</h3>
+        <div class="ds-tabs" role="tablist">
+          <button id="tab-overview" role="tab" aria-selected="true" aria-controls="panel-overview" onclick="switchDocTab('overview')">Overview</button>
+          <button id="tab-activity" role="tab" aria-selected="false" aria-controls="panel-activity" onclick="switchDocTab('activity')">Activity</button>
+        </div>
+        <div id="panel-overview" role="tabpanel" aria-labelledby="tab-overview" tabindex="0">
+          <span class="badge b-c">Scheduled</span>
+          <h3 style="margin-top:12px">Kitchen tap replacement</h3>
+          <p>Sarah Mitchell · 12 Oak Street</p>
+          <p class="ds-note">Monday, 7 September · 9:00–10:30 am</p>
+        </div>
+        <div id="panel-activity" role="tabpanel" aria-labelledby="tab-activity" tabindex="0" hidden>
+          <ol class="ds-timeline">
+            <li>Quote accepted<small>Today, 8:30 am</small></li>
+            <li>Visit scheduled<small>Today, 8:45 am</small></li>
+            <li>Xero Invoice #INV-0042 draft created<small>Today, 9:00 am</small></li>
+          </ol>
+        </div>
+      </article>
+
+      <article class="ds-card">
+        <h3>Accordion</h3>
+        <details open>
+          <summary>What does the quote include?</summary>
+          <p>Labour, listed materials and the itemised tax breakdown. Additional work requires a revised quote.</p>
+        </details>
+        <details>
+          <summary>Can I work offline?</summary>
+          <p>Saved job details remain available. Changes are queued and synced when connection returns.</p>
+        </details>
+      </article>
+    </div>
+  </section>
+
+  <!-- DATA & FILTERING -->
+  <section class="sec" id="data-display">
+    <h2 class="sec-title">Data & Filtering</h2>
+    <div class="ds-card">
+      <div class="ds-toolbar">
+        <label class="ds-field" style="flex:2">Search jobs<input type="search" class="input" id="job-search" placeholder="Search customer or address"></label>
+        <label class="ds-field">Status<select class="sel" id="job-status"><option value="all">All statuses</option><option>Scheduled</option><option>Completed</option><option>Draft</option></select></label>
+        <button class="btn btn-o" id="clear-filters" style="min-height:44px">Clear</button>
+      </div>
+      <div class="ds-table-wrap" tabindex="0">
+        <table class="ds-table">
+          <caption id="job-count" style="text-align:left;padding:8px 0;color:var(--stone)">3 jobs</caption>
+          <thead><tr><th>Job / Customer</th><th>Status</th><th style="text-align:right">Amount</th></tr></thead>
+          <tbody id="job-rows">
+            <tr data-status="Scheduled"><td>Tap replacement<br><small style="color:var(--stone)">Sarah Mitchell</small></td><td><span class="badge b-c">Scheduled</span></td><td style="text-align:right">$280.00</td></tr>
+            <tr data-status="Completed"><td>Switchboard inspection<br><small style="color:var(--stone)">James Wilson</small></td><td><span class="badge b-n">Completed</span></td><td style="text-align:right">$420.00</td></tr>
+            <tr data-status="Draft"><td>Deck repair<br><small style="color:var(--stone)">Alex Chen</small></td><td><span class="badge b-n">Draft</span></td><td style="text-align:right">$650.00</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- CSS TOKENS -->
   <div class="sec" id="tokens">
-    <div class="sec-title">CSS tokens</div>
-    <div class="sec-desc">Copy-paste toàn bộ vào project.</div>
-    <div class="code" style="font-size:11.5px">
+    <div class="sec-title">CSS Tokens (v2.0)</div>
+    <div class="code">
       <button class="cbtn" onclick="copyCode(this)">Copy all</button>
-<span class="cc">/* TradieMate Design Tokens v1.0 — May 2026 */</span>
+<span class="cc">/* TradieMate Design Tokens v2.0 — Production Ready */</span>
 :root {
-  <span class="cc">/* Backgrounds */</span>
-  <span class="ck">--bg-base:</span>        <span class="cv">#FAFAF8</span>;
+  <span class="ck">--bg-base:</span>        <span class="cv">#FAFAF8</span>; <span class="cc">/* Warm canvas for outdoor glare */</span>
   <span class="ck">--bg-surface:</span>     <span class="cv">#EDECEA</span>;
   <span class="ck">--bg-elevated:</span>    <span class="cv">#FFFFFF</span>;
   <span class="ck">--border:</span>         <span class="cv">#E8E6E0</span>;
   <span class="ck">--border-strong:</span>  <span class="cv">#D4D1CB</span>;
-
-  <span class="cc">/* Text */</span>
   <span class="ck">--text-primary:</span>   <span class="cv">#1A1A1A</span>;
-  <span class="ck">--text-muted:</span>     <span class="cv">#888888</span>;
-  <span class="ck">--text-subtle:</span>    <span class="cv">#AAAAAA</span>;
+  <span class="ck">--text-muted:</span>     <span class="cv">#605E58</span>; <span class="cc">/* WCAG AA Tuned >= 5.8:1 */</span>
+  <span class="ck">--text-subtle:</span>    <span class="cv">#686660</span>; <span class="cc">/* WCAG AA Tuned >= 4.8:1 */</span>
 
   <span class="cc">/* CTA — Forest Green */</span>
   <span class="ck">--cta:</span>            <span class="cv">#2E6B45</span>;
@@ -767,58 +1962,48 @@ npm install @react-native-vector-icons/MaterialCommunityIcons
   <span class="ck">--cta-pale:</span>       <span class="cv">#EAF3DE</span>;
 
   <span class="cc">/* Semantic */</span>
-  <span class="ck">--success:</span>        <span class="cv">#639922</span>;  <span class="ck">--success-pale:</span> <span class="cv">#EAF3DE</span>;
-  <span class="ck">--warning:</span>        <span class="cv">#BA7517</span>;  <span class="ck">--warning-pale:</span> <span class="cv">#FAEEDA</span>;
-  <span class="ck">--danger:</span>         <span class="cv">#E24B4A</span>;  <span class="ck">--danger-pale:</span>  <span class="cv">#FCEBEB</span>;
-  <span class="ck">--info:</span>           <span class="cv">#378ADD</span>;  <span class="ck">--info-pale:</span>    <span class="cv">#E6F1FB</span>;
-  <span class="ck">--rust:</span>           <span class="cv">#D85A30</span>;  <span class="ck">--rust-pale:</span>    <span class="cv">#FAECE7</span>;
-  <span class="ck">--stone:</span>          <span class="cv">#5F5E5A</span>;  <span class="ck">--stone-pale:</span>   <span class="cv">#F1EFE8</span>;
+  <span class="ck">--success:</span>        <span class="cv">#5B8E1F</span>;  <span class="ck">--success-pale:</span> <span class="cv">#EAF3DE</span>;
+  <span class="ck">--warning:</span>        <span class="cv">#B26F12</span>;  <span class="ck">--warning-pale:</span> <span class="cv">#FAEEDA</span>;
+  <span class="ck">--danger:</span>         <span class="cv">#D94140</span>;  <span class="ck">--danger-pale:</span>  <span class="cv">#FCEBEB</span>;
+  <span class="ck">--info:</span>           <span class="cv">#2F7EC9</span>;  <span class="ck">--info-pale:</span>    <span class="cv">#E6F1FB</span>;
+  <span class="ck">--stone:</span>          <span class="cv">#5A5955</span>;  <span class="ck">--stone-pale:</span>   <span class="cv">#F1EFE8</span>;
 
-  <span class="cc">/* Spacing (4px base) */</span>
-  <span class="ck">--sp1:</span><span class="cv">4px</span>; <span class="ck">--sp2:</span><span class="cv">8px</span>; <span class="ck">--sp3:</span><span class="cv">12px</span>; <span class="ck">--sp4:</span><span class="cv">16px</span>;
-  <span class="ck">--sp5:</span><span class="cv">20px</span>; <span class="ck">--sp6:</span><span class="cv">24px</span>; <span class="ck">--sp8:</span><span class="cv">32px</span>; <span class="ck">--sp10:</span><span class="cv">40px</span>;
-  <span class="ck">--sp12:</span><span class="cv">48px</span>; <span class="ck">--sp16:</span><span class="cv">64px</span>;
+  <span class="cc">/* Touch Constraints */</span>
+  <span class="ck">--touch:</span>          <span class="cv">44px</span>;   <span class="cc">/* Synchronized absolute minimum */</span>
+  <span class="ck">--touch-field:</span>    <span class="cv">48px</span>;   <span class="cc">/* Gloved field target */</span>
 
-  <span class="cc">/* Radius */</span>
-  <span class="ck">--r-sm:</span><span class="cv">8px</span>; <span class="ck">--r-md:</span><span class="cv">12px</span>; <span class="ck">--r-lg:</span><span class="cv">16px</span>;
-  <span class="ck">--r-pill:</span><span class="cv">20px</span>; <span class="ck">--r-full:</span><span class="cv">9999px</span>;
-
-  <span class="cc">/* Typography */</span>
-  <span class="ck">--font:</span> <span class="cv">'Inter', -apple-system, sans-serif</span>;
-  <span class="ck">--mono:</span> <span class="cv">'SF Mono', 'Fira Code', monospace</span>;
-
-  <span class="cc">/* Constraints */</span>
-  <span class="ck">--touch:</span> <span class="cv">44px</span>;   <span class="cc">/* min touch target — gloved hands */</span>
-  <span class="ck">--bw:</span>    <span class="cv">0.5px</span>;  <span class="cc">/* always thin border */</span>
+  <span class="cc">/* Animation Tokens */</span>
+  <span class="ck">--duration-fast:</span>  <span class="cv">120ms</span>;
+  <span class="ck">--duration-base:</span>  <span class="cv">200ms</span>;
+  <span class="ck">--duration-slow:</span>  <span class="cv">300ms</span>;
+  <span class="ck">--ease-standard:</span>  <span class="cv">cubic-bezier(0.2, 0, 0, 1)</span>;
+  <span class="ck">--ease-spring:</span>    <span class="cv">cubic-bezier(0.19, 1, 0.22, 1)</span>;
 }
     </div>
   </div>
 
-  <!-- RULES -->
+  <!-- DESIGN RULES (V2.0 RESOLVED CONTRADICTIONS) -->
   <div class="sec" id="rules">
-    <div class="sec-title">Design rules</div>
-    <div class="sec-desc">Không phá vỡ bất kỳ rule nào dưới đây.</div>
+    <div class="sec-title">Design Rules v2.0</div>
     <div style="display:grid;gap:var(--sp4)">
-      <div class="card" style="border-left:3px solid var(--danger)">
-        <div style="font-size:11px;font-weight:600;color:var(--danger);letter-spacing:.05em;text-transform:uppercase;margin-bottom:var(--sp3)">NEVER</div>
-        <div style="display:grid;gap:var(--sp2)">
-          <div style="font-size:13px;display:flex;align-items:flex-start;gap:var(--sp2)"><svg width="16" height="16" viewBox="0 0 24 24" fill="#E24B4A" style="flex-shrink:0;margin-top:1px"><use href="#i-close-circle"/></svg> Drop shadows — không box-shadow trên bất kỳ component nào</div>
-          <div style="font-size:13px;display:flex;align-items:flex-start;gap:var(--sp2)"><svg width="16" height="16" viewBox="0 0 24 24" fill="#E24B4A" style="flex-shrink:0;margin-top:1px"><use href="#i-close-circle"/></svg> Gradients — không linear/radial-gradient cho UI</div>
-          <div style="font-size:13px;display:flex;align-items:flex-start;gap:var(--sp2)"><svg width="16" height="16" viewBox="0 0 24 24" fill="#E24B4A" style="flex-shrink:0;margin-top:1px"><use href="#i-close-circle"/></svg> Font weight 700 — max là 500 cho heading</div>
-          <div style="font-size:13px;display:flex;align-items:flex-start;gap:var(--sp2)"><svg width="16" height="16" viewBox="0 0 24 24" fill="#E24B4A" style="flex-shrink:0;margin-top:1px"><use href="#i-close-circle"/></svg> Touch target dưới 44px — tradies đeo găng</div>
-          <div style="font-size:13px;display:flex;align-items:flex-start;gap:var(--sp2)"><svg width="16" height="16" viewBox="0 0 24 24" fill="#E24B4A" style="flex-shrink:0;margin-top:1px"><use href="#i-close-circle"/></svg> Emoji / unicode icons trong UI — chỉ dùng MaterialCommunityIcons</div>
-          <div style="font-size:13px;display:flex;align-items:flex-start;gap:var(--sp2)"><svg width="16" height="16" viewBox="0 0 24 24" fill="#E24B4A" style="flex-shrink:0;margin-top:1px"><use href="#i-close-circle"/></svg> Border width trên 0.5px</div>
+      <div class="card" style="border-left:4px solid var(--danger)">
+        <div style="font-size:11px;font-weight:600;color:var(--danger);letter-spacing:.05em;text-transform:uppercase;margin-bottom:var(--sp2)">NEVER</div>
+        <div style="display:grid;gap:var(--sp2);font-size:13px">
+          <div>✕ <strong>Never use dark, blurry, or colored decorative drop shadows:</strong> Only hairline borders and soft micro-elevation are permitted for surface separation (<a href="#cards" style="color:var(--cta)">See Cards example</a>).</div>
+          <div>✕ <strong>Never use multi-color gradients for interface backgrounds:</strong> Only subtle single-tone directional sheens are permitted on interactive gesture sliders (<a href="#mobile-slider" style="color:var(--cta)">See Slide to Confirm</a>).</div>
+          <div>✕ <strong>Never use font weight 700 (Bold):</strong> Maximum weight is 600 (Semi-bold) for display headings and micro-badges (<a href="#typography" style="color:var(--cta)">See Typography Scale</a>).</div>
+          <div>✕ <strong>Never create touch targets smaller than 44px:</strong> Strictly enforced hit-areas to support one-handed use and work gloves (<a href="#buttons" style="color:var(--cta)">See Buttons & Chips</a>).</div>
+          <div>✕ <strong>Never use emojis in place of system icons:</strong> Use standardized vector outline icons from MaterialCommunityIcons (<a href="#icons" style="color:var(--cta)">See Icons Grid</a>).</div>
         </div>
       </div>
-      <div class="card" style="border-left:3px solid var(--success)">
-        <div style="font-size:11px;font-weight:600;color:var(--success);letter-spacing:.05em;text-transform:uppercase;margin-bottom:var(--sp3)">ALWAYS</div>
-        <div style="display:grid;gap:var(--sp2)">
-          <div style="font-size:13px;display:flex;align-items:flex-start;gap:var(--sp2)"><svg width="16" height="16" viewBox="0 0 24 24" fill="#639922" style="flex-shrink:0;margin-top:1px"><use href="#i-check-circle"/></svg> Background #FAFAF8 — không pure white #FFFFFF cho base</div>
-          <div style="font-size:13px;display:flex;align-items:flex-start;gap:var(--sp2)"><svg width="16" height="16" viewBox="0 0 24 24" fill="#639922" style="flex-shrink:0;margin-top:1px"><use href="#i-check-circle"/></svg> Offline indicator luôn visible trên Dashboard</div>
-          <div style="font-size:13px;display:flex;align-items:flex-start;gap:var(--sp2)"><svg width="16" height="16" viewBox="0 0 24 24" fill="#639922" style="flex-shrink:0;margin-top:1px"><use href="#i-check-circle"/></svg> "Next job" card phải là element lớn nhất Dashboard</div>
-          <div style="font-size:13px;display:flex;align-items:flex-start;gap:var(--sp2)"><svg width="16" height="16" viewBox="0 0 24 24" fill="#639922" style="flex-shrink:0;margin-top:1px"><use href="#i-check-circle"/></svg> "Slide to start" cho critical irreversible actions</div>
-          <div style="font-size:13px;display:flex;align-items:flex-start;gap:var(--sp2)"><svg width="16" height="16" viewBox="0 0 24 24" fill="#639922" style="flex-shrink:0;margin-top:1px"><use href="#i-check-circle"/></svg> GST line rõ ràng trên invoice — bắt buộc luật Úc</div>
-          <div style="font-size:13px;display:flex;align-items:flex-start;gap:var(--sp2)"><svg width="16" height="16" viewBox="0 0 24 24" fill="#639922" style="flex-shrink:0;margin-top:1px"><use href="#i-check-circle"/></svg> Pass size + color rõ ràng cho mọi Icon component</div>
+      <div class="card" style="border-left:4px solid var(--success)">
+        <div style="font-size:11px;font-weight:600;color:var(--success);letter-spacing:.05em;text-transform:uppercase;margin-bottom:var(--sp2)">ALWAYS (WITH LIVE EXAMPLES)</div>
+        <div style="display:grid;gap:var(--sp2);font-size:13px">
+          <div>✓ <strong>Always use warm canvas #FAFAF8:</strong> Maximizes glare resistance and readability under harsh sunlight (<a href="#colors" style="color:var(--cta)">See Background Swatch</a>).</div>
+          <div>✓ <strong>Always show unified offline & sync status:</strong> Informs the technician and queues actions when out of cell reception (<a href="#sim-network-status" style="color:var(--cta)">See Unified Network Bar</a>).</div>
+          <div>✓ <strong>Always make 'Next Job' the largest card on Dashboard:</strong> Serves as the immediate operational focal point (<a href="#cards" style="color:var(--cta)">See Next Job Card</a>).</div>
+          <div>✓ <strong>Always itemize 10% GST on all invoices:</strong> Legally required by Australian Tax Office (ATO) regulations (<a href="#mobile-gst" style="color:var(--cta)">See Australian GST Engine</a>).</div>
+          <div>✓ <strong>Always design for the natural Thumb Zone:</strong> Pin primary action buttons and navigation to the bottom half of the screen (<a href="#mobile-tabs" style="color:var(--cta)">See Bottom Navigation</a>).</div>
         </div>
       </div>
     </div>
@@ -827,17 +2012,432 @@ npm install @react-native-vector-icons/MaterialCommunityIcons
 </main>
 </div>
 
-<div id="toast">Copied</div>
+<!-- TOAST MESSAGE -->
+<div id="toast" role="status" aria-live="polite">Action completed</div>
 
 <script>
-function goTo(id){document.getElementById(id).scrollIntoView({behavior:'smooth'});document.querySelectorAll('.ni').forEach(e=>e.classList.remove('active'));event.target.classList.add('active')}
-function copyHex(h,el){navigator.clipboard.writeText(h).then(()=>{const c=el.querySelector('.scopy');c.textContent='Copied!';c.style.opacity='1';showToast(h);setTimeout(()=>{c.textContent=h;c.style.opacity=''},1500)})}
-function copyText(t,el){navigator.clipboard.writeText(t).then(()=>{const n=el.querySelector('.iname');const orig=n.textContent;n.textContent='Copied!';showToast(t);setTimeout(()=>{n.textContent=orig},1200)})}
-function copyCode(btn){const txt=btn.parentElement.innerText.replace(/^Copy all\n/,'').trim();navigator.clipboard.writeText(txt).then(()=>{btn.textContent='Copied!';btn.classList.add('done');showToast('Tokens copied');setTimeout(()=>{btn.textContent='Copy all';btn.classList.remove('done')},2000)})}
-function showToast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1800)}
-function toggleChip(el){el.classList.toggle('on');const ico=el.querySelector('svg');if(ico){ico.setAttribute('fill',el.classList.contains('on')?'#fff':'#888')}}
-const obs=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting)document.querySelectorAll('.ni').forEach(n=>n.classList.toggle('active',n.getAttribute('onclick')?.includes(e.target.id)))})},{threshold:.2});
-document.querySelectorAll('.sec').forEach(s=>obs.observe(s));
+// ═══ TOAST SYSTEM ═══
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+// ═══ COPY UTILITIES ═══
+function copyHex(h, el) {
+  navigator.clipboard.writeText(h).then(() => {
+    const c = el.querySelector('.scopy');
+    if (c) {
+      c.textContent = 'Copied!';
+      c.style.opacity = '1';
+      setTimeout(() => { c.textContent = h; c.style.opacity = ''; }, 1500);
+    }
+    showToast('Copied hex: ' + h);
+  });
+}
+function copyText(t, el) {
+  navigator.clipboard.writeText(t).then(() => {
+    showToast('Icon copied: ' + t);
+  });
+}
+function copyCode(btn) {
+  const txt = btn.parentElement.innerText.replace(/^Copy all\n/, '').trim();
+  navigator.clipboard.writeText(txt).then(() => {
+    btn.textContent = 'Copied!';
+    btn.classList.add('done');
+    showToast('Tokens copied to clipboard');
+    setTimeout(() => { btn.textContent = 'Copy all'; btn.classList.remove('done'); }, 2000);
+  });
+}
+function toggleChip(el) {
+  el.classList.toggle('on');
+  const ico = el.querySelector('svg');
+  if (ico) {
+    ico.setAttribute('fill', el.classList.contains('on') ? '#fff' : '#5A5955');
+  }
+}
+
+// ═══ VIEW MODE SWITCHER (DOC VS SIMULATOR) ═══
+function toggleViewMode(mode) {
+  const sim = document.getElementById('sim-container');
+  const btnDoc = document.getElementById('btn-view-doc');
+  const btnSim = document.getElementById('btn-view-sim');
+  if (mode === 'simulator') {
+    sim.classList.add('active');
+    btnSim.classList.add('active');
+    btnDoc.classList.remove('active');
+    sim.scrollIntoView({ behavior: 'smooth' });
+    initSimCanvas();
+  } else {
+    sim.classList.remove('active');
+    btnDoc.classList.add('active');
+    btnSim.classList.remove('active');
+  }
+}
+
+// ═══ MOBILE DRAWER ═══
+const drawer = document.getElementById('mobile-drawer');
+const openDrawerBtn = document.getElementById('btn-open-drawer');
+const closeDrawerBtn = document.getElementById('btn-close-drawer');
+if (openDrawerBtn) openDrawerBtn.addEventListener('click', () => drawer.classList.add('open'));
+if (closeDrawerBtn) closeDrawerBtn.addEventListener('click', () => drawer.classList.remove('open'));
+if (drawer) drawer.addEventListener('click', (e) => {
+  if (e.target === drawer) drawer.classList.remove('open');
+});
+function closeDrawer() {
+  if (drawer) drawer.classList.remove('open');
+}
+
+// ═══ SIMULATOR BOTTOM SHEET ═══
+function openSimSheet() {
+  document.getElementById('sim-sheet').classList.add('open');
+}
+function closeSimSheet() {
+  document.getElementById('sim-sheet').classList.remove('open');
+}
+document.getElementById('sim-sheet').addEventListener('click', (e) => {
+  if (e.target === document.getElementById('sim-sheet')) closeSimSheet();
+});
+
+// ═══ SIMULATOR SCREEN SWITCHING ═══
+function switchSimScreen(name, tabBtn) {
+  document.querySelectorAll('.sim-screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tm-tab-item').forEach(t => t.classList.remove('active'));
+  const target = document.getElementById('screen-' + name);
+  if (target) target.classList.add('active');
+  if (tabBtn) tabBtn.classList.add('active');
+  
+  const titleMap = {
+    home: 'Dashboard',
+    jobs: 'Jobs & Schedule',
+    field: 'On-Site Proof',
+    invoices: 'Fast Invoice'
+  };
+  const titleEl = document.getElementById('sim-appbar-title');
+  if (titleEl && titleMap[name]) titleEl.textContent = titleMap[name];
+  
+  if (name === 'field') initSimCanvas();
+}
+
+function switchSimJobTab(btn, filter) {
+  document.querySelectorAll('.tm-seg-item').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  showToast('Filtered jobs: ' + filter);
+}
+
+// ═══ UNIFIED NETWORK STATUS SIMULATION ═══
+let isSimOnline = true;
+function toggleNetworkMode() {
+  isSimOnline = !isSimOnline;
+  const bar = document.getElementById('sim-network-status');
+  const text = document.getElementById('sim-net-status-text');
+  const btnText = document.getElementById('sim-net-toggle-text');
+  if (isSimOnline) {
+    bar.className = 'tm-network-bar online';
+    text.textContent = 'Online · Local cache synced';
+    btnText.textContent = 'Toggle Offline';
+    showToast('Network restored: Connected online');
+  } else {
+    bar.className = 'tm-network-bar offline';
+    text.textContent = 'Offline Mode · 3 items in local queue';
+    btnText.textContent = 'Toggle Online';
+    showToast('Offline Mode: Changes safely queued');
+  }
+}
+function triggerSync() {
+  if (isSimOnline) {
+    showToast('Synchronizing with Supabase & Xero...');
+  } else {
+    showToast('Cannot sync: Device is currently offline. Will retry automatically.');
+  }
+}
+
+// ═══ SHARED UNIFIED GST ENGINE (ATO COMPLIANCE) ═══
+function calculateGST({ labourHours = 0, hourlyRate = 120.0, partsCost = 0, calloutFee = 0 }) {
+  const labour = labourHours * hourlyRate;
+  const parts = partsCost;
+  const callout = calloutFee;
+  const subtotal = labour + parts + callout;
+  const gst = subtotal * 0.10; // Mandatory Australian 10% GST
+  const total = subtotal + gst;
+  return { labour, parts, callout, subtotal, gst, total };
+}
+
+function runSimGST() {
+  const hrs = parseFloat(document.getElementById('sim-labor-hrs').value) || 0;
+  const parts = parseFloat(document.getElementById('sim-parts-cost').value) || 0;
+  const callout = parseFloat(document.getElementById('sim-callout-cost').value) || 0;
+  const res = calculateGST({ labourHours: hrs, hourlyRate: 120.0, partsCost: parts, calloutFee: callout });
+
+  document.getElementById('sim-val-labor').textContent = '$' + res.labour.toFixed(2);
+  document.getElementById('sim-val-parts').textContent = '$' + res.parts.toFixed(2);
+  document.getElementById('sim-val-callout').textContent = '$' + res.callout.toFixed(2);
+  document.getElementById('sim-val-sub').textContent = '$' + res.subtotal.toFixed(2);
+  document.getElementById('sim-val-gst').textContent = '$' + res.gst.toFixed(2);
+  document.getElementById('sim-val-total').textContent = '$' + res.total.toFixed(2);
+}
+
+function runDocGST() {
+  const hrs = parseFloat(document.getElementById('doc-labor-hrs').value) || 0;
+  const parts = parseFloat(document.getElementById('doc-parts-cost').value) || 0;
+  const callout = parseFloat(document.getElementById('doc-callout-cost').value) || 0;
+  const res = calculateGST({ labourHours: hrs, hourlyRate: 120.0, partsCost: parts, calloutFee: callout });
+
+  document.getElementById('doc-val-labor').textContent = '$' + res.labour.toFixed(2);
+  document.getElementById('doc-val-parts').textContent = '$' + res.parts.toFixed(2);
+  document.getElementById('doc-val-callout').textContent = '$' + res.callout.toFixed(2);
+  document.getElementById('doc-val-sub').textContent = '$' + res.subtotal.toFixed(2);
+  document.getElementById('doc-val-gst').textContent = '$' + res.gst.toFixed(2);
+  document.getElementById('doc-val-total').textContent = '$' + res.total.toFixed(2);
+}
+
+// ═══ INTERACTIVE SLIDE TO CONFIRM LOGIC ═══
+function setupSlider(sliderId, onConfirm) {
+  const slider = document.getElementById(sliderId);
+  if (!slider) return;
+  const thumb = slider.querySelector('.tm-slider-thumb');
+  const fill = slider.querySelector('.tm-slider-fill');
+  const text = slider.querySelector('.tm-slider-text');
+  let isDragging = false;
+  let startX = 0;
+  let maxDelta = 0;
+
+  function handleStart(e) {
+    if (slider.classList.contains('confirmed')) return;
+    isDragging = true;
+    const clientX = e.clientX !== undefined ? e.clientX : (e.touches && e.touches[0].clientX);
+    startX = clientX - (thumb.offsetLeft - 4);
+    maxDelta = slider.offsetWidth - thumb.offsetWidth - 8;
+  }
+  function handleMove(e) {
+    if (!isDragging) return;
+    const clientX = e.clientX !== undefined ? e.clientX : (e.touches && e.touches[0].clientX);
+    let delta = clientX - startX;
+    if (delta < 0) delta = 0;
+    if (delta > maxDelta) delta = maxDelta;
+    thumb.style.left = (delta + 4) + 'px';
+    fill.style.width = (delta + thumb.offsetWidth) + 'px';
+    
+    // Smooth text fade as thumb progresses
+    const progress = delta / maxDelta;
+    if (text) text.style.opacity = Math.max(0, 1 - progress * 1.6);
+  }
+  function handleEnd() {
+    if (!isDragging) return;
+    isDragging = false;
+    const currentLeft = thumb.offsetLeft - 4;
+    if (currentLeft >= maxDelta * 0.82) {
+      thumb.style.left = (maxDelta + 4) + 'px';
+      fill.style.width = '100%';
+      slider.classList.add('confirmed');
+      if (text) {
+        text.textContent = '✓ Confirmed!';
+        text.style.opacity = '1';
+      }
+      if (onConfirm) onConfirm();
+    } else {
+      thumb.style.transition = 'left 0.26s cubic-bezier(0.19, 1, 0.22, 1)';
+      fill.style.transition = 'width 0.26s cubic-bezier(0.19, 1, 0.22, 1)';
+      if (text) text.style.transition = 'opacity 0.26s ease';
+      thumb.style.left = '4px';
+      fill.style.width = '54px';
+      if (text) text.style.opacity = '1';
+      setTimeout(() => {
+        thumb.style.transition = '';
+        fill.style.transition = '';
+        if (text) text.style.transition = '';
+      }, 280);
+    }
+  }
+
+  thumb.addEventListener('mousedown', handleStart);
+  thumb.addEventListener('touchstart', handleStart, { passive: true });
+  window.addEventListener('mousemove', handleMove);
+  window.addEventListener('touchmove', handleMove, { passive: true });
+  window.addEventListener('mouseup', handleEnd);
+  window.addEventListener('touchend', handleEnd);
+}
+
+setupSlider('sim-slider-start', () => {
+  showToast('Commute Started! Turn-by-turn navigation active.');
+});
+setupSlider('doc-slider', () => {
+  const lbl = document.getElementById('slider-status-label');
+  if (lbl) lbl.textContent = 'Completed at ' + new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+  showToast('Job marked complete successfully!');
+});
+
+function resetSlider(id) {
+  const slider = document.getElementById(id);
+  if (!slider) return;
+  slider.classList.remove('confirmed');
+  const thumb = slider.querySelector('.tm-slider-thumb');
+  const fill = slider.querySelector('.tm-slider-fill');
+  const text = slider.querySelector('.tm-slider-text');
+  thumb.style.left = '4px';
+  fill.style.width = '54px';
+  if (text) {
+    text.innerHTML = 'Slide to ' + (slider.dataset.action || 'Confirm') + ' <span class="tm-chevrons">›››</span>';
+    text.style.opacity = '1';
+  }
+  const lbl = document.getElementById('slider-status-label');
+  if (lbl) lbl.textContent = '';
+}
+
+// ═══ BEZIER CURVE SMOOTHED DIGITAL SIGNATURE CANVAS ═══
+function setupCanvas(canvasId) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  let drawing = false;
+  let points = [];
+
+  function getPos(e) {
+    const rect = canvas.getBoundingClientRect();
+    const clientX = e.clientX !== undefined ? e.clientX : (e.touches && e.touches[0].clientX);
+    const clientY = e.clientY !== undefined ? e.clientY : (e.touches && e.touches[0].clientY);
+    return {
+      x: (clientX - rect.left) * (canvas.width / rect.width),
+      y: (clientY - rect.top) * (canvas.height / rect.height)
+    };
+  }
+
+  function start(e) {
+    drawing = true;
+    points = [getPos(e)];
+  }
+  
+  function draw(e) {
+    if (!drawing) return;
+    const current = getPos(e);
+    points.push(current);
+
+    if (points.length >= 3) {
+      const p0 = points[points.length - 3];
+      const p1 = points[points.length - 2];
+      const p2 = points[points.length - 1];
+      const mid1 = { x: (p0.x + p1.x) / 2, y: (p0.y + p1.y) / 2 };
+      const mid2 = { x: (p1.x + p2.x) / 2, y: (p1.y + p2.y) / 2 };
+
+      ctx.beginPath();
+      ctx.moveTo(mid1.x, mid1.y);
+      ctx.quadraticCurveTo(p1.x, p1.y, mid2.x, mid2.y);
+      ctx.lineWidth = 2.4;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.strokeStyle = '#1A1A1A';
+      ctx.stroke();
+    }
+  }
+  
+  function stop() {
+    drawing = false;
+    points = [];
+  }
+
+  canvas.addEventListener('mousedown', start);
+  canvas.addEventListener('touchstart', start, { passive: true });
+  canvas.addEventListener('mousemove', draw);
+  canvas.addEventListener('touchmove', draw, { passive: true });
+  window.addEventListener('mouseup', stop);
+  window.addEventListener('touchend', stop);
+}
+
+function clearSimCanvas() {
+  const c = document.getElementById('sim-sig-canvas');
+  if (c) c.getContext('2d').clearRect(0, 0, c.width, c.height);
+}
+function clearDocCanvas() {
+  const c = document.getElementById('doc-sig-canvas');
+  if (c) c.getContext('2d').clearRect(0, 0, c.width, c.height);
+}
+
+function initSimCanvas() {
+  setupCanvas('sim-sig-canvas');
+}
+setupCanvas('doc-sig-canvas');
+
+// ═══ DOCUMENTATION TAB PANEL SWITCH (OVERVIEW / ACTIVITY) ═══
+function switchDocTab(tabName) {
+  const tabOverview = document.getElementById('tab-overview');
+  const tabActivity = document.getElementById('tab-activity');
+  const panelOverview = document.getElementById('panel-overview');
+  const panelActivity = document.getElementById('panel-activity');
+
+  if (tabName === 'overview') {
+    tabOverview.setAttribute('aria-selected', 'true');
+    tabActivity.setAttribute('aria-selected', 'false');
+    tabOverview.tabIndex = 0;
+    tabActivity.tabIndex = -1;
+    panelOverview.hidden = false;
+    panelActivity.hidden = true;
+  } else {
+    tabOverview.setAttribute('aria-selected', 'false');
+    tabActivity.setAttribute('aria-selected', 'true');
+    tabOverview.tabIndex = -1;
+    tabActivity.tabIndex = 0;
+    panelOverview.hidden = true;
+    panelActivity.hidden = false;
+  }
+}
+
+// Keyboard navigation for doc tabs
+[document.getElementById('tab-overview'), document.getElementById('tab-activity')].forEach((btn, idx, arr) => {
+  btn?.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+      const nextIdx = (idx + (e.key === 'ArrowRight' ? 1 : -1) + arr.length) % arr.length;
+      arr[nextIdx].focus();
+      arr[nextIdx].click();
+    }
+  });
+});
+
+// ═══ ACTIVE NAVIGATION OBSERVER ═══
+const navLinks = document.querySelectorAll('.sidebar .ni');
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      const id = entry.target.getAttribute('id');
+      navLinks.forEach(link => {
+        link.classList.toggle('active', link.getAttribute('href') === '#' + id);
+      });
+    }
+  });
+}, { threshold: 0.15 });
+document.querySelectorAll('.sec').forEach(s => observer.observe(s));
+
+// ═══ JOBS FILTER ═══
+const searchInput = document.getElementById('job-search');
+const statusSelect = document.getElementById('job-status');
+const clearBtn = document.getElementById('clear-filters');
+function filterJobsTable() {
+  const q = (searchInput?.value || '').toLowerCase().trim();
+  const st = statusSelect?.value || 'all';
+  let count = 0;
+  document.querySelectorAll('#job-rows tr').forEach(row => {
+    const text = row.textContent.toLowerCase();
+    const rowStatus = row.dataset.status;
+    const matchesQ = text.includes(q);
+    const matchesSt = st === 'all' || rowStatus === st;
+    const show = matchesQ && matchesSt;
+    row.hidden = !show;
+    if (show) count++;
+  });
+  const countEl = document.getElementById('job-count');
+  if (countEl) countEl.textContent = count + ' matching job' + (count === 1 ? '' : 's');
+}
+if (searchInput) searchInput.addEventListener('input', filterJobsTable);
+if (statusSelect) statusSelect.addEventListener('change', filterJobsTable);
+if (clearBtn) clearBtn.addEventListener('click', () => {
+  if (searchInput) searchInput.value = '';
+  if (statusSelect) statusSelect.value = 'all';
+  filterJobsTable();
+});
+
+// Run initial GST calculation on both views
+runSimGST();
+runDocGST();
 </script>
 </body>
 </html>

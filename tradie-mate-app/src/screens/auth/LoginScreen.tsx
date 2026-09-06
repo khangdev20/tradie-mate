@@ -13,6 +13,7 @@ import {
   KeyboardAvoidingView,
 } from 'react-native'
 import { useAuthStore } from '../../store/auth.store'
+import { GoogleIcon, AppleIcon } from '../../components/icons'
 
 export const LoginScreen = ({ navigation }: any) => {
   const { loginWithGoogle, loginWithApple, loginWithEmail, isLoading } = useAuthStore()
@@ -85,10 +86,9 @@ export const LoginScreen = ({ navigation }: any) => {
             onPress={handleGoogleLogin}
             disabled={isLoading}
           >
-            <Image 
-              source={{ uri: 'https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg' }} 
-              style={styles.socialIcon} 
-            />
+            <View style={styles.socialIconContainer}>
+              <GoogleIcon size={20} />
+            </View>
             <Text style={styles.googleButtonText}>Continue with Google</Text>
           </TouchableOpacity>
 
@@ -98,6 +98,9 @@ export const LoginScreen = ({ navigation }: any) => {
               onPress={handleAppleLogin}
               disabled={isLoading}
             >
+              <View style={styles.socialIconContainer}>
+                <AppleIcon size={20} color="#FFFFFF" />
+              </View>
               <Text style={styles.appleButtonText}>Continue with Apple</Text>
             </TouchableOpacity>
           )}
@@ -241,10 +244,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 12,
   },
-  socialIcon: {
-    width: 20,
-    height: 20,
+  socialIconContainer: {
     marginRight: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   googleButtonText: {
     color: '#1A1A1A',
@@ -255,6 +258,7 @@ const styles = StyleSheet.create({
     height: 52,
     backgroundColor: '#000',
     borderRadius: 12,
+    flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 12,
