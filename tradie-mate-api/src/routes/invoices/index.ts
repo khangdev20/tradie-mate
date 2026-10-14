@@ -4,7 +4,7 @@ import { db } from '../../config/db'
 import { invoices, invoiceItems, invoiceSequence } from '../../db/schema/invoices'
 import { eq, and, desc } from 'drizzle-orm'
 import { EntitlementService } from '../../services/entitlement.service'
-import { GSTService } from '../../services/gst.service'
+import { calculateInvoiceTotals, formatInvoiceNumber } from '../../services/invoice.service'
 import { PaymentService } from '../../services/payment.service'
 import { AppError } from '../../utils/errors'
 import { generateInvoicePdf } from '../../services/pdf.service'
@@ -84,6 +84,7 @@ export async function invoiceRoutes(fastify: FastifyInstance) {
     if (!jobId || !items || items.length === 0) {
       throw new AppError('Job ID and invoice items are required.', 400)
     }
+    const totals = calculateInvoiceTotals(items)
 
     await EntitlementService.requireUsageLimit(tradieId, 'invoicesCreated', 'maxInvoicesPerMonth')
 
@@ -110,23 +111,7 @@ export async function invoiceRoutes(fastify: FastifyInstance) {
           .where(eq(invoiceSequence.tradieId, tradieId))
       }
 
-      const invoiceNumber = `INV-${String(nextCounter).padStart(4, '0')}`
-
-      let subtotalCents = 0
-      const calculatedItems = items.map((item, idx) => {
-        const lineTotalCents = Math.round(item.quantity * item.unitPriceCents)
-        subtotalCents += lineTotalCents
-        return {
-          description: item.description,
-          qty: item.quantity.toString(),
-          unitPriceCents: item.unitPriceCents,
-          lineTotalCents,
-          unit: item.unit ?? 'item',
-          sortOrder: idx,
-        }
-      })
-
-      const gstCalc = GSTService.calculateFromSubtotal(subtotalCents)
+      const invoiceNumber = formatInvoiceNumber(nextCounter)
 
       const [invoice] = await tx
         .insert(invoices)
@@ -138,9 +123,9 @@ export async function invoiceRoutes(fastify: FastifyInstance) {
           invoicePrefix: 'INV',
           sequenceNumber: nextCounter,
           status: 'DRAFT',
-          subtotalCents,
-          gstCents: gstCalc.gst,
-          totalCents: gstCalc.total,
+          subtotalCents: totals.subtotalCents,
+          gstCents: totals.gstCents,
+          totalCents: totals.totalCents,
           dueAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
           createdAt: new Date(),
           updatedAt: new Date(),
@@ -150,7 +135,7 @@ export async function invoiceRoutes(fastify: FastifyInstance) {
       newInvoice = invoice
 
       await tx.insert(invoiceItems).values(
-        calculatedItems.map((item) => ({
+        totals.lines.map((item) => ({
           ...item,
           invoiceId: invoice.id,
           createdAt: new Date(),
