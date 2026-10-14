@@ -1,10 +1,12 @@
-import { eq, and } from 'drizzle-orm'
+import { eq, and, ne } from 'drizzle-orm'
 import { db } from '../config/db'
 import { invoices } from '../db/schema/invoices'
 import { paymentEvents } from '../db/schema/financials'
 import { stripe } from '../config/stripe'
 import { AppError } from '../utils/errors'
 import { StorageService } from './storage.service'
+import { NotificationService } from './notification.service'
+import { formatAUD } from '../utils/currency'
 
 export type PaymentEventSource = 'client' | 'webhook' | 'reconciliation' | 'offline_sync'
 export type PaymentEventType =
@@ -80,8 +82,19 @@ export class PaymentService {
         signedAt: params.signatureData ? new Date() : invoice.signedAt,
         updatedAt: new Date(),
       })
-      .where(eq(invoices.id, params.invoiceId))
+      // Guard against the client confirm and the Stripe webhook racing each
+      // other: only the request that actually flips the status continues.
+      .where(and(eq(invoices.id, params.invoiceId), ne(invoices.status, 'PAID')))
       .returning()
+
+    if (!updated) {
+      const [current] = await db
+        .select()
+        .from(invoices)
+        .where(eq(invoices.id, params.invoiceId))
+        .limit(1)
+      return current
+    }
 
     await this.recordEvent({
       invoiceId: params.invoiceId,
@@ -90,6 +103,16 @@ export class PaymentService {
       source: params.source,
       stripePaymentIntentId: params.stripePaymentIntentId,
     })
+
+    // Cash is recorded by the tradie themselves, so only card payments need a push.
+    if (params.paymentMethod !== 'CASH') {
+      await NotificationService.notifyTradie(params.tradieId, {
+        type: 'PAYMENT_RECEIVED',
+        title: 'Payment received',
+        body: `${formatAUD(updated.totalCents)} paid for ${updated.invoiceNumber}`,
+        data: { invoiceId: updated.id, invoiceNumber: updated.invoiceNumber },
+      })
+    }
 
     return updated
   }
