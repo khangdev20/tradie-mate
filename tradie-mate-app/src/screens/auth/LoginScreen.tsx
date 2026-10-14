@@ -5,7 +5,6 @@ import {
   TouchableOpacity,
   StyleSheet,
   SafeAreaView,
-  Image,
   Platform,
   ActivityIndicator,
   LayoutAnimation,

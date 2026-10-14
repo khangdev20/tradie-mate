@@ -38,15 +38,11 @@ The seed creates a default test tradie "Dave Plumber" (`test@tradiemate.com`, au
 ### Authenticating to protected endpoints in dev
 Route auth (`src/middleware/auth.middleware.ts`) verifies the bearer token via `supabaseAdmin.auth.getUser(token)`, i.e. it calls `${SUPABASE_URL}/auth/v1/user`. With placeholder Supabase creds this fails, so to exercise authenticated endpoints locally point `SUPABASE_URL` at a tiny local stub that returns the seeded user JSON (id `00000000-0000-0000-0000-000000000000`) for `/auth/v1/user`, then send any `Authorization: Bearer <token>`. (Note: the *other*, currently-unused middleware at `src/middleware/requireAuth.ts` instead supports a `mock-token...` bearer in development.)
 
-### Known bug (not an environment issue)
-`src/services/entitlement.service.ts` builds a raw `sql\`... > ${now}\`` fragment with a JS `Date`. drizzle-orm passes the `Date` to postgres-js untyped, which throws `The "string" argument must be of type string ... Received an instance of Date`. This 500s any flow that calls `getEffectiveEntitlements` — notably **creating jobs (`POST /jobs`) and invoices**. It reproduces on Node 20 and 22 and on postgres-js 3.4.5/3.4.9, so it is a code bug, not a version/setup problem. Read/update endpoints that skip entitlement checks (e.g. `GET /jobs`, `PATCH /jobs/:id`, `/jobs/:id/reschedule`, `/billing/plans`) work fine.
+### Entitlement `Date` bug (fixed)
+`src/services/entitlement.service.ts` used to interpolate a JS `Date` into a raw `sql` fragment, which 500'd `POST /jobs` and invoice creation. It now uses drizzle's typed `gt(column, now)`; avoid raw `sql\`... ${date}\`` with `Date` values elsewhere.
 
 ### Mobile app (`tradie-mate-app`) known states
-These are pre-existing repo states, not environment problems — the toolchain is installed and runs:
-
-- `npm run type-check` passes cleanly.
-- `npm run lint` currently reports pre-existing violations (~38 errors / ~41 warnings: unused vars, bitwise/`no-void` warnings). Lint itself works.
-- `npm test` (jest) currently fails to run the single suite `__tests__/App.test.tsx` with `SyntaxError: Cannot use import statement outside a module` from `@react-native-firebase/firestore`. The repo's jest config does not include `@react-native-firebase` in `transformIgnorePatterns`, so the ESM module isn't transformed. Fixing requires a jest config change (out of scope for setup).
+- `npm run type-check`, `npm test -- --runInBand` (jest) and `npm run lint` all pass; lint reports warnings only (inline styles, bitwise/`no-void`). CI fails on any lint **error**, so keep it at 0 errors.
 
 ### Migration metadata
 `drizzle/meta/_journal.json` was malformed (missing `},` between entries) which silently broke `npm run db:migrate`; this has been fixed in the repo.

@@ -58,6 +58,6 @@ export async function registerDeviceForPushNotifications() {
     return { registered: true as const }
   } catch (error) {
     console.warn('Push notification registration failed (Firebase not initialized natively):', error)
-    return { registered: false, reason: 'permission_denied' as const }
+    return { registered: false, reason: 'registration_failed' as const }
   }
 }
