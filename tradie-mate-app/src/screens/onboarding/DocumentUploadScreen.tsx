@@ -20,7 +20,6 @@ import { AppButton } from '../../components/ui/AppButton'
 import { AppCard } from '../../components/ui/AppCard'
 import { StatusBadge, BadgeVariant } from '../../components/ui/StatusBadge'
 import { useAuthStore } from '../../store/auth.store'
-import api from '../../services/apiService'
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window')
 
@@ -57,10 +56,10 @@ export function DocumentUploadScreen() {
       if (!granted) {
         Alert.alert(
           'Camera Permission Required',
-          'TradieMate needs camera access to scan your documents. Alternatively, you can run simulation mode.',
+          'TradieMate needs camera access to scan your documents. You can also choose a photo or PDF from your device.',
           [
             { text: 'Cancel', style: 'cancel' },
-            { text: 'Simulate Upload', onPress: () => triggerSimulation(docType) }
+            { text: 'Choose File', onPress: () => pickFromDevice(docType) }
           ]
         )
         return
@@ -70,10 +69,10 @@ export function DocumentUploadScreen() {
     if (!device) {
       Alert.alert(
         'No Camera Device',
-        'No back camera detected on this device. Running simulation mode instead.',
+        'No back camera detected on this device. Choose a photo or PDF from your device instead.',
         [
           { text: 'Cancel', style: 'cancel' },
-          { text: 'Simulate Upload', onPress: () => triggerSimulation(docType) }
+          { text: 'Choose File', onPress: () => pickFromDevice(docType) }
         ]
       )
       return
@@ -82,32 +81,25 @@ export function DocumentUploadScreen() {
     setCameraModalVisible(true)
   }
 
-  const triggerSimulation = async (docType: string) => {
-    setOcrAnalyzing(true)
+  const pickFromDevice = async (docType: string) => {
     try {
-      // Simulate network & OCR latency
-      await new Promise(resolve => setTimeout(resolve, 2000))
-      
-      // Fetch a real mock image blob from the internet to simulate a file upload cleanly
-      const response = await fetch('https://picsum.photos/400/300')
-      const blob: any = await response.blob()
-      blob.name = `${docType.toLowerCase()}.jpg`
-      blob.type = 'image/jpeg'
-
-      const formData = new FormData()
-      formData.append('doc_type', docType)
-      formData.append('file', blob)
-
-      await api.post('/documents/upload', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
+      const DocumentPicker = require('react-native-document-picker').default
+      const pick = await DocumentPicker.pick({
+        type: [DocumentPicker.types.images, DocumentPicker.types.pdf],
+        copyTo: 'cachesDirectory',
       })
+      const file = Array.isArray(pick) ? pick[0] : pick
 
-      await fetchOnboardingStatus()
-      Alert.alert('Scan Complete', `Successfully uploaded and scanned your ${docType.replace('_', ' ')}.`)
+      setOcrAnalyzing(true)
+      await uploadOnboardingDocument(docType, {
+        uri: file.fileCopyUri || file.uri,
+        name: file.name || `${docType.toLowerCase()}`,
+        type: file.type || 'application/octet-stream',
+      })
+      Alert.alert('Upload Complete', `Your ${docType.replace('_', ' ')} was submitted for verification.`)
     } catch (err: any) {
-      Alert.alert('Upload Failed', err.message || 'Failed to upload mock document.')
+      if (err?.code === 'DOCUMENT_PICKER_CANCELED') return
+      Alert.alert('Upload Failed', err?.message || 'Could not upload the document. Please try again.')
     } finally {
       setOcrAnalyzing(false)
       setActiveUploadDoc(null)
@@ -287,11 +279,11 @@ export function DocumentUploadScreen() {
               <View style={styles.captureInner} />
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.simulateBtn} onPress={() => {
+            <TouchableOpacity style={styles.chooseFileBtn} onPress={() => {
               setCameraModalVisible(false)
-              triggerSimulation(activeUploadDoc!)
+              pickFromDevice(activeUploadDoc!)
             }}>
-              <Text style={styles.simulateText}>Simulate</Text>
+              <Text style={styles.chooseFileText}>Choose File</Text>
             </TouchableOpacity>
           </View>
         </SafeAreaView>
@@ -522,10 +514,10 @@ const styles = StyleSheet.create({
     fontWeight: Typography.weights.medium,
     fontFamily: Typography.fontFamily,
   },
-  simulateBtn: {
+  chooseFileBtn: {
     padding: Spacing.md,
   },
-  simulateText: {
+  chooseFileText: {
     color: Colors.ctaLight,
     fontSize: Typography.sizes.body,
     fontWeight: Typography.weights.medium,
