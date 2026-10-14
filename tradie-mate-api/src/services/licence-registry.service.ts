@@ -23,7 +23,7 @@ export async function checkLicenceRegistry(
   docType: string,
   state: string,
   licenceNumber?: string,
-): Promise<LicenceCheckResult> {
+): Promise<LicenceCheckResult | null> {
   const endpoint = REGISTRY_ENDPOINTS[state.toUpperCase()]
 
   if (endpoint && licenceNumber) {
@@ -45,6 +45,13 @@ export async function checkLicenceRegistry(
     } catch (err) {
       console.warn(`[Licence] Registry API failed for ${state}:`, err)
     }
+  }
+
+  // Without a registry answer we cannot verify anything. Returning a fake
+  // "valid" result outside development would silently renew expiring licences.
+  if (process.env.NODE_ENV === 'production') {
+    console.warn(`[Licence] No registry result for ${docType} in ${state} (tradie ${tradieId})`)
+    return null
   }
 
   // Development fallback when registry APIs are not configured

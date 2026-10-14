@@ -151,7 +151,8 @@ export function DocumentUploadScreen() {
   const getBadgeVariant = (status: string): BadgeVariant => {
     switch (status) {
       case 'VERIFIED': return 'success'
-      case 'PENDING': return 'warning'
+      case 'PENDING':
+      case 'EXPIRING_SOON': return 'warning'
       case 'EXPIRED': return 'danger'
       default: return 'stone'
     }
