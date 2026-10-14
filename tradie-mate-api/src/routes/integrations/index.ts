@@ -8,6 +8,8 @@ import { eq } from 'drizzle-orm'
 import { AppError } from '../../utils/errors'
 import { Queue } from 'bullmq'
 import crypto from 'crypto'
+import { VapiCallPayload } from '../../services/call-to-job.service'
+import { WebhookInboxService } from '../../services/webhook-inbox.service'
 
 const XERO_CLIENT_ID = process.env.XERO_CLIENT_ID || ''
 const XERO_CLIENT_SECRET = process.env.XERO_CLIENT_SECRET || ''
@@ -15,7 +17,13 @@ const XERO_REDIRECT_URI = process.env.XERO_REDIRECT_URI || 'https://api.tradiema
 const XERO_SCOPES = 'openid profile email accounting.transactions accounting.contacts offline_access'
 
 export async function integrationRoutes(fastify: FastifyInstance) {
-  fastify.addHook('preHandler', requireAuth)
+  // Routes called by third parties (Xero redirect, Vapi webhook) carry no
+  // bearer token; they opt out with `config: { public: true }` and verify the
+  // caller themselves (OAuth state / webhook secret).
+  fastify.addHook('preHandler', async (request, reply) => {
+    if (request.routeOptions.config?.public) return
+    return requireAuth(request, reply)
+  })
 
   // ─── Xero ─────────────────────────────────────────────────────────────────
 
@@ -58,7 +66,7 @@ export async function integrationRoutes(fastify: FastifyInstance) {
    */
   fastify.get<{
     Querystring: { code: string; state: string; error?: string }
-  }>('/xero/callback', async (request, reply) => {
+  }>('/xero/callback', { config: { public: true } }, async (request, reply) => {
     const { code, state, error } = request.query
 
     if (error) {
@@ -77,12 +85,12 @@ export async function integrationRoutes(fastify: FastifyInstance) {
         await redisConnection.del(`xero_oauth_state:${state}`)
       }
     } catch (redisErr) {
-      fastify.log.warn({ redisErr }, 'Redis unavailable — using request tradie ID')
+      fastify.log.warn({ redisErr }, 'Redis unavailable — cannot validate Xero OAuth state')
     }
 
-    // Fallback to the request tradie if state lookup fails
+    // The state is the only proof of which tradie started this OAuth flow.
     if (!tradieId) {
-      tradieId = request.tradie.id
+      return reply.redirect('tradiemate://integrations/xero?error=invalid_state')
     }
 
     // Exchange code for tokens
@@ -211,8 +219,8 @@ export async function integrationRoutes(fastify: FastifyInstance) {
    * Public endpoint (secured by API key in header).
    */
   fastify.post('/vapi/webhook', {
-    // Remove the preHandler auth for Vapi webhooks — secured by API key
-    preHandler: [],
+    // No bearer auth for Vapi webhooks — secured by the x-vapi-secret header
+    config: { public: true },
   }, async (request: FastifyRequest, reply) => {
     const apiKey = request.headers['x-vapi-secret'] as string | undefined
     const expectedKey = process.env.VAPI_WEBHOOK_SECRET || ''
@@ -232,6 +240,7 @@ export async function integrationRoutes(fastify: FastifyInstance) {
         // Call started — begin recording/transcript
         break
       case 'call-end':
+      case 'end-of-call-report':
         // Call ended — process transcript, extract job data
         await handleVapiCallEnd(payload, fastify)
         break
@@ -249,23 +258,33 @@ export async function integrationRoutes(fastify: FastifyInstance) {
 // ─── Vapi Helpers ─────────────────────────────────────────────────────────────
 
 async function handleVapiCallEnd(payload: any, fastify: any) {
+  const message = payload?.message || {}
+  const call = message.call || payload?.call || {}
+  const job: VapiCallPayload = {
+    callId: call.id,
+    transcript: message.artifact?.transcript || message.transcript || call.transcript || '',
+    // customer.number is the caller; the tradie is identified by the assistant
+    // or by the number that was called.
+    callerNumber: message.customer?.number || call.customer?.number || '',
+    tradieNumber: message.phoneNumber?.number || call.phoneNumber?.number || null,
+    assistantId: message.assistant?.id || call.assistantId || null,
+    recordingUrl: message.artifact?.recordingUrl || message.recordingUrl || call.recordingUrl || null,
+  }
+
+  fastify.log.info({ callId: job.callId, transcriptLength: job.transcript.length }, 'Vapi call ended')
+
+  if (!job.callId) {
+    fastify.log.warn('Vapi call-end event without a call id — ignoring')
+    return
+  }
+
   try {
-    const call = payload?.call || {}
-    const transcript = call?.transcript || ''
-    const tradiePhoneNumber = call?.customer?.number || ''
-
-    fastify.log.info({ tradiePhone: tradiePhoneNumber, transcriptLength: transcript.length }, 'Vapi call ended')
-
-    // Queue transcript processing
     const transcriptQueue = new Queue('vapi-transcript', { connection: redisConnection })
-    await transcriptQueue.add('process', {
-      callId: call.id,
-      transcript,
-      tradiePhoneNumber,
-      recordingUrl: call.recordingUrl,
-    }, { attempts: 3 })
+    await transcriptQueue.add('process', job, { attempts: 3, jobId: `vapi-${job.callId}` })
   } catch (err) {
-    fastify.log.error({ err }, 'Failed to queue Vapi transcript processing')
+    fastify.log.error({ err, callId: job.callId }, 'Failed to queue Vapi transcript — saving for replay')
+    await WebhookInboxService.ingest({ provider: 'vapi-call', eventId: job.callId, payload: job })
+      .catch((ingestErr) => fastify.log.error({ ingestErr }, 'Failed to save Vapi call for replay'))
   }
 }
 

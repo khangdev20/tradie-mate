@@ -6,6 +6,8 @@
  *   - vapi-transcript: Processing Vapi.ai call transcripts
  *   - licence-verify: Automated licence verification via state registries
  *   - escrow-release: Releasing escrow after job completion approval
+ *   - licence-schedule: Nightly document expiry reminders + licence re-checks
+ *   - webhook-replay: Retrying Twilio/Vapi webhooks saved to the inbox
  *
  * Run with: npm run queue:worker
  */
@@ -16,19 +18,16 @@ import { db } from '../config/db'
 import { tradeDocuments } from '../db/schema/documents'
 import { invoices } from '../db/schema/invoices'
 import { xeroConnections } from '../db/schema/xero'
-import { callLogs } from '../db/schema/calls'
 import { licenceAutomationRuns } from '../db/schema/licenceAutomation'
 import { escrowPayments, marketplaceBookings } from '../db/schema/marketplace'
-import { tradies } from '../db/schema/tradies'
 import { jobs } from '../db/schema/jobs'
 import { stripe } from '../config/stripe'
-import { eq, and, lt } from 'drizzle-orm'
-import OpenAI from 'openai'
+import { eq, and, or, isNull, lt } from 'drizzle-orm'
 import { extractDocumentFields, evaluateOcrForDocumentType } from '../services/textract.service'
 import { checkLicenceRegistry } from '../services/licence-registry.service'
-import { WebhookInboxService } from '../services/webhook-inbox.service'
-
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY || '' })
+import { CallToJobService, VapiCallPayload } from '../services/call-to-job.service'
+import { DocumentExpiryService, LicenceVerifyJob } from '../services/document-expiry.service'
+import { replayPendingWebhooks } from '../services/webhook-replay.service'
 
 // ─── Document OCR Worker ───────────────────────────────────────────────────
 
@@ -129,49 +128,10 @@ const xeroSyncWorker = new Worker(
 
 const vapiTranscriptWorker = new Worker(
   'vapi-transcript',
-  async (job: Job) => {
-    const { callId, transcript, tradiePhoneNumber, recordingUrl } = job.data
-
-    console.log(`[Vapi] Processing transcript for call ${callId}`)
-
-    try {
-      if (!transcript || transcript.length < 10) {
-        console.warn(`[Vapi] Empty transcript for call ${callId}`)
-        return
-      }
-
-      // Extract job details using OpenAI
-      let extractedData: any = null
-      if (process.env.OPENAI_API_KEY) {
-        const completion = await openai.chat.completions.create({
-          model: 'gpt-4o-mini',
-          messages: [
-            {
-              role: 'system',
-              content: `Extract job booking details from this Australian tradie voicemail. Return ONLY valid JSON:
-{
-  "customerName": "string or null",
-  "customerPhone": "string or null",
-  "jobDescription": "string",
-  "address": "string or null",
-  "suburb": "string or null",
-  "urgency": "EMERGENCY | TODAY | THIS_WEEK | FLEXIBLE",
-  "confidence": 0-100
-}`,
-            },
-            { role: 'user', content: transcript },
-          ],
-          temperature: 0.1,
-          max_tokens: 300,
-        })
-        extractedData = JSON.parse(completion.choices[0]?.message?.content?.trim() || '{}')
-      }
-
-      console.log(`[Vapi] Transcript processed for call ${callId}:`, extractedData)
-    } catch (err) {
-      console.error(`[Vapi] Transcript processing failed for call ${callId}:`, err)
-      throw err
-    }
+  async (job: Job<VapiCallPayload>) => {
+    console.log(`[Vapi] Processing transcript for call ${job.data.callId}`)
+    const result = await CallToJobService.processVapiCall(job.data)
+    console.log(`[Vapi] Call ${job.data.callId} processed:`, result)
   },
   { connection: redisConnection, concurrency: 2 }
 )
@@ -180,8 +140,8 @@ const vapiTranscriptWorker = new Worker(
 
 const licenceVerifyWorker = new Worker(
   'licence-verify',
-  async (job: Job) => {
-    const { runId, tradieId, docType, state } = job.data
+  async (job: Job<LicenceVerifyJob>) => {
+    const { runId, tradieId, documentId, docType, state, licenceNumber } = job.data
 
     console.log(`[Licence] Verifying ${docType} for tradie ${tradieId} in ${state}`)
 
@@ -191,7 +151,16 @@ const licenceVerifyWorker = new Worker(
       .where(eq(licenceAutomationRuns.id, runId))
 
     try {
-      const result = await checkLicenceRegistry(tradieId, docType, state)
+      const result = await checkLicenceRegistry(tradieId, docType, state, licenceNumber)
+
+      if (!result) {
+        // Registry could not answer — leave the document untouched.
+        await db
+          .update(licenceAutomationRuns)
+          .set({ status: 'NOT_FOUND', checkedAt: new Date() })
+          .where(eq(licenceAutomationRuns.id, runId))
+        return
+      }
 
       await db
         .update(licenceAutomationRuns)
@@ -203,17 +172,26 @@ const licenceVerifyWorker = new Worker(
         })
         .where(eq(licenceAutomationRuns.id, runId))
 
-      // Update trade document if found
-      if (result.valid) {
+      // Only a later expiry date means the licence was renewed: that resets the
+      // document and its reminders. "Still valid, same expiry" changes nothing,
+      // otherwise the reminders would be re-sent every night.
+      if (result.valid && result.expiresAt) {
         await db
           .update(tradeDocuments)
           .set({
             status: 'VERIFIED',
             verifiedAt: new Date(),
-            expiresAt: result.expiresAt || null,
+            expiresAt: result.expiresAt,
+            expiry60DaySentAt: null,
+            expiry30DaySentAt: null,
+            expiry7DaySentAt: null,
             updatedAt: new Date(),
           })
-          .where(and(eq(tradeDocuments.tradieId, tradieId), eq(tradeDocuments.docType, docType as any)))
+          .where(and(
+            eq(tradeDocuments.id, documentId),
+            eq(tradeDocuments.tradieId, tradieId),
+            or(isNull(tradeDocuments.expiresAt), lt(tradeDocuments.expiresAt, result.expiresAt)),
+          ))
       }
 
       console.log(`[Licence] Verification complete for tradie ${tradieId}: ${result.valid ? 'VALID' : 'INVALID'}`)
@@ -290,38 +268,42 @@ const escrowReleaseWorker = new Worker(
   { connection: redisConnection, concurrency: 2 }
 )
 
-// ─── Scheduled Cron Jobs ──────────────────────────────────────────────────
+// ─── Scheduled Jobs ───────────────────────────────────────────────────────
 
-/**
- * Scheduled queue — runs licence checks nightly
- */
+const licenceVerifyQueue = new Queue('licence-verify', { connection: redisConnection })
 const licenceScheduleQueue = new Queue('licence-schedule', { connection: redisConnection })
+const webhookReplayQueue = new Queue('webhook-replay', { connection: redisConnection })
 
-async function scheduleNightlyLicenceChecks() {
-  // Find all tradies with documents expiring in 60 days
-  const sixtyDaysFromNow = new Date(Date.now() + 60 * 24 * 60 * 60 * 1000)
-  const expiring = await db
-    .select({
-      tradieId: tradeDocuments.tradieId,
-      docType: tradeDocuments.docType,
+const licenceScheduleWorker = new Worker(
+  'licence-schedule',
+  async () => {
+    const today = new Date().toISOString().slice(0, 10)
+    const summary = await DocumentExpiryService.runNightlyChecks(async (verifyJob) => {
+      await licenceVerifyQueue.add('verify', verifyJob, {
+        jobId: `licence-${verifyJob.documentId}-${today}`, // one check per document per day
+        attempts: 3,
+        backoff: { type: 'exponential', delay: 60_000 },
+      })
     })
-    .from(tradeDocuments)
-    .where(
-      and(
-        lt(tradeDocuments.expiresAt as any, sixtyDaysFromNow),
-        eq(tradeDocuments.status, 'VERIFIED')
-      )
-    )
-    .limit(100)
+    console.log('[Cron] Nightly document checks:', summary)
+  },
+  { connection: redisConnection, concurrency: 1 }
+)
 
-  for (const doc of expiring) {
-    await licenceScheduleQueue.add('check', { tradieId: doc.tradieId, docType: doc.docType }, {
-      jobId: `licence-${doc.tradieId}-${doc.docType}`, // Deduplicate
-    })
-  }
-
-  console.log(`[Cron] Scheduled ${expiring.length} licence verification checks`)
+async function registerSchedules() {
+  await licenceScheduleQueue.upsertJobScheduler(
+    'nightly-document-checks',
+    { pattern: '0 2 * * *', tz: 'Australia/Brisbane' },
+    { name: 'nightly' },
+  )
+  await webhookReplayQueue.upsertJobScheduler(
+    'webhook-replay-every-5-min',
+    { every: 5 * 60 * 1000 },
+    { name: 'replay' },
+  )
 }
+
+registerSchedules().catch((err) => console.error('[Cron] Failed to register schedules:', err))
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -387,17 +369,9 @@ async function syncInvoiceToXero(accessToken: string, tenantId: string, invoice:
 
 const webhookReplayWorker = new Worker(
   'webhook-replay',
-  async (job: Job) => {
-    const pending = await WebhookInboxService.getPendingBatch(10)
-    for (const row of pending) {
-      try {
-        console.log(`[WebhookReplay] Replaying ${row.provider} ${row.eventId}`)
-        await WebhookInboxService.markProcessed(row.id)
-      } catch (err) {
-        await WebhookInboxService.markFailed(row.id, String(err))
-        throw err
-      }
-    }
+  async () => {
+    const summary = await replayPendingWebhooks(10)
+    if (summary.processed || summary.failed) console.log('[WebhookReplay]', summary)
   },
   { connection: redisConnection, concurrency: 1 },
 )
@@ -405,7 +379,7 @@ const webhookReplayWorker = new Worker(
 // ─── Start All Workers ────────────────────────────────────────────────────
 
 console.log('🚀 TradieMate BullMQ Worker started')
-console.log('  Workers: document-ocr, xero-sync, vapi-transcript, licence-verify, escrow-release, webhook-replay')
+console.log('  Workers: document-ocr, xero-sync, vapi-transcript, licence-verify, licence-schedule, escrow-release, webhook-replay')
 
 // Graceful shutdown
 process.on('SIGTERM', async () => {
@@ -415,6 +389,7 @@ process.on('SIGTERM', async () => {
     xeroSyncWorker.close(),
     vapiTranscriptWorker.close(),
     licenceVerifyWorker.close(),
+    licenceScheduleWorker.close(),
     escrowReleaseWorker.close(),
     webhookReplayWorker.close(),
   ])

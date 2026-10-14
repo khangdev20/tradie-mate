@@ -47,6 +47,19 @@ export class WebhookInboxService {
       .where(eq(rawWebhooks.id, id))
   }
 
+  /** Keep the row pending for another replay, or give up after maxAttempts. */
+  static async recordAttemptFailure(id: string, previousAttempts: string, error: string, maxAttempts = 5) {
+    const attempts = (parseInt(previousAttempts, 10) || 0) + 1
+    await db
+      .update(rawWebhooks)
+      .set({
+        attempts: String(attempts),
+        lastError: error,
+        status: attempts >= maxAttempts ? 'failed' : 'pending',
+      })
+      .where(eq(rawWebhooks.id, id))
+  }
+
   static async getPendingBatch(limit = 20) {
     return db
       .select()

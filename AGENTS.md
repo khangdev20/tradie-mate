@@ -31,7 +31,9 @@ The dev DB role/db used by `.env` is `tradiemate`/`tradiemate` on `127.0.0.1:543
 - `FIREBASE_PRIVATE_KEY` must be a **real, parseable** PEM RSA key (firebase-admin parses it at boot). A throwaway key from `openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048` works; store it with literal `\n` escapes inside double quotes.
 
 ### Running and migrating
-From `tradie-mate-api`: `npm run db:migrate` then `npm run db:seed`, then `npm run dev` (listens on `:3000`, Swagger UI at `/docs`, health at `/health`). The BullMQ background worker is a separate process: `npm run queue:worker`.
+From `tradie-mate-api`: `npm run db:migrate` then `npm run db:seed`, then `npm run dev` (listens on `:3000`, Swagger UI at `/docs`, health at `/health`). The BullMQ background worker is a separate process: `npm run queue:worker`. On start it registers two repeatable jobs: `licence-schedule` (02:00 Australia/Brisbane — document expiry reminders + licence registry re-checks) and `webhook-replay` (every 5 min — retries Twilio/Vapi calls saved to `raw_webhooks` when processing failed).
+
+Server-side pushes go through `NotificationService.notifyTradie` (stores a `notifications` row, then FCM to all `fcm_tokens`); it never throws, so a push failure cannot fail the action that triggered it.
 
 The seed creates a default test tradie "Dave Plumber" (`test@tradiemate.com`, authUserId `00000000-0000-0000-0000-000000000000`) plus a demo customer, jobs, and invoices. It degrades gracefully when Supabase Auth is unreachable (falls back to that mock auth user id).
 
